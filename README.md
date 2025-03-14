@@ -22,32 +22,28 @@ Before cloning and running this project, ensure you have:
 ```sh
 git clone https://github.com/YOUR_USERNAME/nerd-facts-dbt.git
 cd nerd-facts-dbt
+
+```
 2. Set Up Python Virtual Environment
-sh
-Kopiera
-Redigera
+```sh
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+```
+
 3. Configure PostgreSQL
 Make sure PostgreSQL is running and create the required database:
-
-sh
-Kopiera
-Redigera
+```sh
 sudo -u postgres psql
-sql
-Kopiera
-Redigera
+```sql
 CREATE DATABASE nerd_facts;
 CREATE USER dbt_user WITH PASSWORD 'your_secure_password';
 GRANT ALL PRIVILEGES ON DATABASE nerd_facts TO dbt_user;
+```
+
 4. Set Up DBT Profile
 Ensure your ~/.dbt/profiles.yml is configured like this:
-
-yaml
-Kopiera
-Redigera
+```yaml
 nerd_facts_dbt:
   target: dev
   outputs:
@@ -59,26 +55,36 @@ nerd_facts_dbt:
       port: 5432
       dbname: nerd_facts
       schema: public
+```
+
 5. Install Node.js Dependencies
-sh
-Kopiera
-Redigera
+```sh
 npm install
+```
+
 6. Fetch and Load Data into PostgreSQL
-sh
-Kopiera
-Redigera
+```sh
 python etl/load_data.py
+```
+
 7. Run DBT Models
-sh
-Kopiera
-Redigera
+```sh
 dbt run
+```
+
 8. Set Up and Run Metabase
 Start Metabase to visualize the data:
-
-sh
-Kopiera
-Redigera
+```sh
 java -jar metabase.jar
+```
 Access it in a web browser at http://localhost:3000 and connect it to the nerd_facts database.
+
+Current Status & Next Steps
+✅ ETL pipeline fetches data from APIs
+✅ Data loads into PostgreSQL
+✅ DBT models transform and store in public schema
+✅ Metabase connects for visualization
+🔄 Next Steps: Improve data models, add more analytics, and automate updates
+
+License
+📜 MIT License – Free to use and modify.
