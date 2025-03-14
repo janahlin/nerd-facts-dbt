@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: swapi_people
+      - name: swapi_planets
+      - name: swapi_starships
+      - name: swapi_vehicles
+      - name: swapi_species
+      - name: swapi_films
+      - name: pokeapi_pokemon
+      - name: pokeapi_types
+      - name: pokeapi_abilities
+      - name: pokeapi_moves
+      - name: pokeapi_items

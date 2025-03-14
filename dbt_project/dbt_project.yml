@@ -17,5 +17,5 @@ clean-targets:
   - "dbt_packages"
 
 models:
-  nerd_facts_dbt:
+  nerd_facts_dbt:    
     +materialized: view
