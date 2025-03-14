@@ -1,1 +1,4 @@
-
+*venv/*
+metabase.jar
+dbt_project/debug.log
+metabase/.env

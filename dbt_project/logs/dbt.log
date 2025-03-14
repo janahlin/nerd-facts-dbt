@@ -1,0 +1,1516 @@
+[0m09:24:30.192729 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fe31be7c970>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fe31cc7acb0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fe31cc7ac20>]}
+
+
+============================== 09:24:30.195763 | 4fa17a17-1716-422e-a50f-f4f59a1287af ==============================
+[0m09:24:30.195763 [info ] [MainThread]: Running with dbt=1.9.3
+[0m09:24:30.196171 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'write_json': 'True', 'log_cache_events': 'False', 'partial_parse': 'True', 'cache_selected_only': 'False', 'warn_error': 'None', 'fail_fast': 'False', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'log_path': 'logs', 'debug': 'False', 'version_check': 'True', 'use_colors': 'True', 'use_experimental_parser': 'False', 'no_print': 'None', 'quiet': 'False', 'empty': 'None', 'log_format': 'default', 'introspect': 'True', 'invocation_command': 'dbt debug', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'target_path': 'None', 'static_parser': 'True', 'send_anonymous_usage_stats': 'True'}
+[0m09:24:30.205833 [info ] [MainThread]: dbt version: 1.9.3
+[0m09:24:30.206201 [info ] [MainThread]: python version: 3.10.12
+[0m09:24:30.206450 [info ] [MainThread]: python path: /home/janne/nerd-facts-dbt/venv/bin/python3
+[0m09:24:30.206691 [info ] [MainThread]: os info: Linux-5.15.0-134-generic-x86_64-with-glibc2.35
+[0m09:24:30.207136 [error] [MainThread]: Encountered an error:
+local variable 'summary_message' referenced before assignment
+[0m09:24:30.208393 [error] [MainThread]: Traceback (most recent call last):
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/cli/requires.py", line 153, in wrapper
+    result, success = func(*args, **kwargs)
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/cli/requires.py", line 103, in wrapper
+    return func(*args, **kwargs)
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/cli/main.py", line 414, in debug
+    results = task.run()
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/task/debug.py", line 114, in run
+    load_profile_status: SubtaskStatus = self._load_profile()
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/task/debug.py", line 201, in _load_profile
+    profile_names, summary_message = self._choose_profile_names()
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/task/debug.py", line 276, in _choose_profile_names
+    return profiles, summary_message
+UnboundLocalError: local variable 'summary_message' referenced before assignment
+
+[0m09:24:30.209450 [debug] [MainThread]: Resource report: {"command_name": "debug", "command_success": false, "command_wall_clock_time": 0.01886777, "process_in_blocks": "32064", "process_kernel_time": 0.063574, "process_mem_max_rss": "85644", "process_out_blocks": "16", "process_user_time": 0.970532}
+[0m09:24:30.209813 [debug] [MainThread]: Command `dbt debug` failed at 09:24:30.209723 after 0.02 seconds
+[0m09:24:30.210115 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fe31be7c970>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fe31cc7b9a0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fe31ae3f5e0>]}
+[0m09:24:30.210404 [debug] [MainThread]: Flushing usage events
+[0m09:24:30.599013 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m09:25:00.934211 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f00f08a4820>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f00f1817b20>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f00f1817ac0>]}
+
+
+============================== 09:25:00.937212 | eff28e44-ace8-40e6-be51-ab5030d1e08c ==============================
+[0m09:25:00.937212 [info ] [MainThread]: Running with dbt=1.9.2
+[0m09:25:00.937670 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'write_json': 'True', 'log_cache_events': 'False', 'partial_parse': 'True', 'cache_selected_only': 'False', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'fail_fast': 'False', 'debug': 'False', 'log_path': 'logs', 'warn_error': 'None', 'version_check': 'True', 'use_colors': 'True', 'use_experimental_parser': 'False', 'no_print': 'None', 'quiet': 'False', 'empty': 'None', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'static_parser': 'True', 'log_format': 'default', 'invocation_command': 'dbt debug', 'target_path': 'None', 'introspect': 'True', 'send_anonymous_usage_stats': 'True'}
+[0m09:25:00.950777 [info ] [MainThread]: dbt version: 1.9.2
+[0m09:25:00.951159 [info ] [MainThread]: python version: 3.10.12
+[0m09:25:00.951424 [info ] [MainThread]: python path: /usr/bin/python3
+[0m09:25:00.951666 [info ] [MainThread]: os info: Linux-5.15.0-134-generic-x86_64-with-glibc2.35
+[0m09:25:00.952120 [error] [MainThread]: Encountered an error:
+local variable 'summary_message' referenced before assignment
+[0m09:25:00.953487 [error] [MainThread]: Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/dist-packages/dbt/cli/requires.py", line 153, in wrapper
+    result, success = func(*args, **kwargs)
+  File "/usr/local/lib/python3.10/dist-packages/dbt/cli/requires.py", line 103, in wrapper
+    return func(*args, **kwargs)
+  File "/usr/local/lib/python3.10/dist-packages/dbt/cli/main.py", line 414, in debug
+    results = task.run()
+  File "/usr/local/lib/python3.10/dist-packages/dbt/task/debug.py", line 114, in run
+    load_profile_status: SubtaskStatus = self._load_profile()
+  File "/usr/local/lib/python3.10/dist-packages/dbt/task/debug.py", line 201, in _load_profile
+    profile_names, summary_message = self._choose_profile_names()
+  File "/usr/local/lib/python3.10/dist-packages/dbt/task/debug.py", line 276, in _choose_profile_names
+    return profiles, summary_message
+UnboundLocalError: local variable 'summary_message' referenced before assignment
+
+[0m09:25:00.954202 [debug] [MainThread]: Resource report: {"command_name": "debug", "command_success": false, "command_wall_clock_time": 0.022016058, "process_in_blocks": "29432", "process_kernel_time": 0.061838, "process_mem_max_rss": "84820", "process_out_blocks": "16", "process_user_time": 0.960141}
+[0m09:25:00.954623 [debug] [MainThread]: Command `dbt debug` failed at 09:25:00.954545 after 0.02 seconds
+[0m09:25:00.954891 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f00f08a4820>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f00f1817a60>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f00efa680a0>]}
+[0m09:25:00.955181 [debug] [MainThread]: Flushing usage events
+[0m09:25:01.387100 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m09:25:50.858270 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fcdec1b8880>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fcdecf8abc0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fcdecf8ab60>]}
+
+
+============================== 09:25:50.860484 | c5e11c67-e008-4f34-bde7-6c38fa570137 ==============================
+[0m09:25:50.860484 [info ] [MainThread]: Running with dbt=1.9.3
+[0m09:25:50.860907 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'write_json': 'True', 'log_cache_events': 'False', 'partial_parse': 'True', 'cache_selected_only': 'False', 'warn_error': 'None', 'fail_fast': 'False', 'debug': 'False', 'log_path': 'logs', 'version_check': 'True', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'use_colors': 'True', 'use_experimental_parser': 'False', 'empty': 'None', 'quiet': 'False', 'no_print': 'None', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'static_parser': 'True', 'log_format': 'default', 'invocation_command': 'dbt debug --config-dir', 'target_path': 'None', 'introspect': 'True', 'send_anonymous_usage_stats': 'True'}
+[0m09:25:50.866255 [info ] [MainThread]: To view your profiles.yml file, run:
+
+xdg-open /home/janne/nerd-facts-dbt/dbt_project
+[0m09:25:50.867032 [debug] [MainThread]: Resource report: {"command_name": "debug", "command_success": true, "command_wall_clock_time": 0.010643467, "process_in_blocks": "0", "process_kernel_time": 0.032158, "process_mem_max_rss": "85412", "process_out_blocks": "16", "process_user_time": 0.904295}
+[0m09:25:50.867375 [debug] [MainThread]: Command `dbt debug` succeeded at 09:25:50.867298 after 0.01 seconds
+[0m09:25:50.867656 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fcdec1b8880>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fcdecf8ab00>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fcdecf8abc0>]}
+[0m09:25:50.867940 [debug] [MainThread]: Flushing usage events
+[0m09:25:51.256496 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m09:27:03.526809 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f2c20764850>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f2c21566b90>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f2c21566b30>]}
+
+
+============================== 09:27:03.529409 | f6b013c3-8f75-4d2f-8fe8-58ed5fd93b3e ==============================
+[0m09:27:03.529409 [info ] [MainThread]: Running with dbt=1.9.3
+[0m09:27:03.529973 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'log_cache_events': 'False', 'write_json': 'True', 'partial_parse': 'True', 'cache_selected_only': 'False', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'fail_fast': 'False', 'debug': 'False', 'log_path': 'logs', 'warn_error': 'None', 'version_check': 'True', 'use_colors': 'True', 'use_experimental_parser': 'False', 'empty': 'None', 'quiet': 'False', 'no_print': 'None', 'log_format': 'default', 'introspect': 'True', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'static_parser': 'True', 'target_path': 'None', 'invocation_command': 'dbt debug --config-dir', 'send_anonymous_usage_stats': 'True'}
+[0m09:27:03.535937 [info ] [MainThread]: To view your profiles.yml file, run:
+
+xdg-open /home/janne/nerd-facts-dbt/dbt_project
+[0m09:27:03.536768 [debug] [MainThread]: Resource report: {"command_name": "debug", "command_success": true, "command_wall_clock_time": 0.011985836, "process_in_blocks": "0", "process_kernel_time": 0.036019, "process_mem_max_rss": "85456", "process_out_blocks": "8", "process_user_time": 0.887775}
+[0m09:27:03.537198 [debug] [MainThread]: Command `dbt debug` succeeded at 09:27:03.537106 after 0.01 seconds
+[0m09:27:03.537556 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f2c20764850>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f2c21566ad0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f2c21566b90>]}
+[0m09:27:03.537937 [debug] [MainThread]: Flushing usage events
+[0m09:27:03.941871 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m09:27:08.811573 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7ff6761b8970>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7ff676f8acb0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7ff676f8ac50>]}
+
+
+============================== 09:27:08.813901 | e6f9c77f-9a83-43f4-9e6c-0e1d619f77e7 ==============================
+[0m09:27:08.813901 [info ] [MainThread]: Running with dbt=1.9.3
+[0m09:27:08.814309 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'log_cache_events': 'False', 'write_json': 'True', 'partial_parse': 'True', 'cache_selected_only': 'False', 'warn_error': 'None', 'version_check': 'True', 'fail_fast': 'False', 'log_path': 'logs', 'debug': 'False', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'use_colors': 'True', 'use_experimental_parser': 'False', 'no_print': 'None', 'quiet': 'False', 'empty': 'None', 'log_format': 'default', 'introspect': 'True', 'static_parser': 'True', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'target_path': 'None', 'invocation_command': 'dbt debug', 'send_anonymous_usage_stats': 'True'}
+[0m09:27:08.819564 [info ] [MainThread]: dbt version: 1.9.3
+[0m09:27:08.819878 [info ] [MainThread]: python version: 3.10.12
+[0m09:27:08.820117 [info ] [MainThread]: python path: /home/janne/nerd-facts-dbt/venv/bin/python3
+[0m09:27:08.820352 [info ] [MainThread]: os info: Linux-5.15.0-134-generic-x86_64-with-glibc2.35
+[0m09:27:08.820797 [error] [MainThread]: Encountered an error:
+local variable 'summary_message' referenced before assignment
+[0m09:27:08.821493 [error] [MainThread]: Traceback (most recent call last):
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/cli/requires.py", line 153, in wrapper
+    result, success = func(*args, **kwargs)
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/cli/requires.py", line 103, in wrapper
+    return func(*args, **kwargs)
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/cli/main.py", line 414, in debug
+    results = task.run()
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/task/debug.py", line 114, in run
+    load_profile_status: SubtaskStatus = self._load_profile()
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/task/debug.py", line 201, in _load_profile
+    profile_names, summary_message = self._choose_profile_names()
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/task/debug.py", line 276, in _choose_profile_names
+    return profiles, summary_message
+UnboundLocalError: local variable 'summary_message' referenced before assignment
+
+[0m09:27:08.822166 [debug] [MainThread]: Resource report: {"command_name": "debug", "command_success": false, "command_wall_clock_time": 0.012489452, "process_in_blocks": "0", "process_kernel_time": 0.031999, "process_mem_max_rss": "85596", "process_out_blocks": "8", "process_user_time": 0.931124}
+[0m09:27:08.822499 [debug] [MainThread]: Command `dbt debug` failed at 09:27:08.822410 after 0.01 seconds
+[0m09:27:08.822764 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7ff6761b8970>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7ff676f8b9a0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7ff6770335e0>]}
+[0m09:27:08.823053 [debug] [MainThread]: Flushing usage events
+[0m09:27:09.212482 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m09:28:08.104523 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f1fda2288e0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f1fdb02ec20>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f1fdb02ebc0>]}
+
+
+============================== 09:28:08.106793 | fe349e36-04b7-4c81-889d-c69b87b72496 ==============================
+[0m09:28:08.106793 [info ] [MainThread]: Running with dbt=1.9.3
+[0m09:28:08.107223 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'write_json': 'True', 'log_cache_events': 'False', 'partial_parse': 'True', 'cache_selected_only': 'False', 'warn_error': 'None', 'version_check': 'True', 'fail_fast': 'False', 'log_path': '/home/janne/nerd-facts-dbt/dbt_project/logs', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'debug': 'False', 'use_colors': 'True', 'use_experimental_parser': 'False', 'empty': 'None', 'quiet': 'False', 'no_print': 'None', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'invocation_command': 'dbt debug', 'static_parser': 'True', 'introspect': 'True', 'target_path': 'None', 'log_format': 'default', 'send_anonymous_usage_stats': 'True'}
+[0m09:28:08.112478 [info ] [MainThread]: dbt version: 1.9.3
+[0m09:28:08.112812 [info ] [MainThread]: python version: 3.10.12
+[0m09:28:08.113080 [info ] [MainThread]: python path: /home/janne/nerd-facts-dbt/venv/bin/python3
+[0m09:28:08.113317 [info ] [MainThread]: os info: Linux-5.15.0-134-generic-x86_64-with-glibc2.35
+[0m09:28:08.114001 [error] [MainThread]: Encountered an error:
+local variable 'summary_message' referenced before assignment
+[0m09:28:08.114671 [error] [MainThread]: Traceback (most recent call last):
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/cli/requires.py", line 153, in wrapper
+    result, success = func(*args, **kwargs)
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/cli/requires.py", line 103, in wrapper
+    return func(*args, **kwargs)
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/cli/main.py", line 414, in debug
+    results = task.run()
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/task/debug.py", line 114, in run
+    load_profile_status: SubtaskStatus = self._load_profile()
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/task/debug.py", line 201, in _load_profile
+    profile_names, summary_message = self._choose_profile_names()
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/task/debug.py", line 276, in _choose_profile_names
+    return profiles, summary_message
+UnboundLocalError: local variable 'summary_message' referenced before assignment
+
+[0m09:28:08.115380 [debug] [MainThread]: Resource report: {"command_name": "debug", "command_success": false, "command_wall_clock_time": 0.012873661, "process_in_blocks": "0", "process_kernel_time": 0.048112, "process_mem_max_rss": "85756", "process_out_blocks": "16", "process_user_time": 0.876172}
+[0m09:28:08.115742 [debug] [MainThread]: Command `dbt debug` failed at 09:28:08.115634 after 0.01 seconds
+[0m09:28:08.116046 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f1fda2288e0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f1fdb0d7430>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f1fdb0d73d0>]}
+[0m09:28:08.116331 [debug] [MainThread]: Flushing usage events
+[0m09:28:08.521045 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m09:28:23.625544 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fb44ffa8940>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fb450d7acb0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fb450d7ac50>]}
+
+
+============================== 09:28:23.628055 | 7df280e9-92f8-47fc-9f75-fcdf40fe0a80 ==============================
+[0m09:28:23.628055 [info ] [MainThread]: Running with dbt=1.9.3
+[0m09:28:23.628711 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'write_json': 'True', 'log_cache_events': 'False', 'partial_parse': 'True', 'cache_selected_only': 'False', 'warn_error': 'None', 'version_check': 'True', 'debug': 'False', 'log_path': '/home/janne/nerd-facts-dbt/dbt_project/logs', 'fail_fast': 'False', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'use_colors': 'True', 'use_experimental_parser': 'False', 'empty': 'None', 'quiet': 'False', 'no_print': 'None', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'static_parser': 'True', 'introspect': 'True', 'invocation_command': 'dbt debug', 'target_path': 'None', 'log_format': 'default', 'send_anonymous_usage_stats': 'True'}
+[0m09:28:23.636910 [info ] [MainThread]: dbt version: 1.9.3
+[0m09:28:23.637394 [info ] [MainThread]: python version: 3.10.12
+[0m09:28:23.637844 [info ] [MainThread]: python path: /home/janne/nerd-facts-dbt/venv/bin/python3
+[0m09:28:23.638193 [info ] [MainThread]: os info: Linux-5.15.0-134-generic-x86_64-with-glibc2.35
+[0m09:28:23.639280 [error] [MainThread]: Encountered an error:
+local variable 'summary_message' referenced before assignment
+[0m09:28:23.640386 [error] [MainThread]: Traceback (most recent call last):
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/cli/requires.py", line 153, in wrapper
+    result, success = func(*args, **kwargs)
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/cli/requires.py", line 103, in wrapper
+    return func(*args, **kwargs)
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/cli/main.py", line 414, in debug
+    results = task.run()
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/task/debug.py", line 114, in run
+    load_profile_status: SubtaskStatus = self._load_profile()
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/task/debug.py", line 201, in _load_profile
+    profile_names, summary_message = self._choose_profile_names()
+  File "/home/janne/nerd-facts-dbt/venv/lib/python3.10/site-packages/dbt/task/debug.py", line 276, in _choose_profile_names
+    return profiles, summary_message
+UnboundLocalError: local variable 'summary_message' referenced before assignment
+
+[0m09:28:23.641547 [debug] [MainThread]: Resource report: {"command_name": "debug", "command_success": false, "command_wall_clock_time": 0.018077997, "process_in_blocks": "0", "process_kernel_time": 0.063977, "process_mem_max_rss": "85612", "process_out_blocks": "16", "process_user_time": 0.859905}
+[0m09:28:23.642172 [debug] [MainThread]: Command `dbt debug` failed at 09:28:23.642033 after 0.02 seconds
+[0m09:28:23.642632 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fb44ffa8940>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fb450e274c0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fb450e27460>]}
+[0m09:28:23.643139 [debug] [MainThread]: Flushing usage events
+[0m09:28:24.027068 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m09:29:28.521066 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fee27974880>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fee287e5750>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fee287e56f0>]}
+
+
+============================== 09:29:28.523147 | 2479a3f7-036e-4cd2-9922-4cb189e05f48 ==============================
+[0m09:29:28.523147 [info ] [MainThread]: Running with dbt=1.9.3
+[0m09:29:28.523589 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'log_cache_events': 'False', 'write_json': 'True', 'partial_parse': 'True', 'cache_selected_only': 'False', 'warn_error': 'None', 'debug': 'False', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'log_path': 'logs', 'fail_fast': 'False', 'version_check': 'True', 'use_colors': 'True', 'use_experimental_parser': 'False', 'no_print': 'None', 'quiet': 'False', 'empty': 'None', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'invocation_command': 'dbt debug', 'log_format': 'default', 'introspect': 'True', 'target_path': 'None', 'static_parser': 'True', 'send_anonymous_usage_stats': 'True'}
+[0m09:29:28.528935 [info ] [MainThread]: dbt version: 1.9.3
+[0m09:29:28.529267 [info ] [MainThread]: python version: 3.10.12
+[0m09:29:28.529561 [info ] [MainThread]: python path: /home/janne/nerd-facts-dbt/venv/bin/python3
+[0m09:29:28.529803 [info ] [MainThread]: os info: Linux-5.15.0-134-generic-x86_64-with-glibc2.35
+[0m09:29:28.592653 [info ] [MainThread]: Using profiles dir at /home/janne/nerd-facts-dbt/dbt_project
+[0m09:29:28.593068 [info ] [MainThread]: Using profiles.yml file at /home/janne/nerd-facts-dbt/dbt_project/profiles.yml
+[0m09:29:28.593465 [info ] [MainThread]: Using dbt_project.yml file at /home/janne/nerd-facts-dbt/dbt_project/dbt_project.yml
+[0m09:29:28.594147 [info ] [MainThread]: adapter type: postgres
+[0m09:29:28.594417 [info ] [MainThread]: adapter version: 1.9.0
+[0m09:29:28.594888 [info ] [MainThread]: Configuration:
+[0m09:29:28.595130 [info ] [MainThread]:   profiles.yml file [[32mOK found and valid[0m]
+[0m09:29:28.595354 [info ] [MainThread]:   dbt_project.yml file [[31mERROR invalid[0m]
+[0m09:29:28.595571 [info ] [MainThread]: Required dependencies:
+[0m09:29:28.595807 [debug] [MainThread]: Executing "git --help"
+[0m09:29:28.597077 [debug] [MainThread]: STDOUT: "b"usage: git [--version] [--help] [-C <path>] [-c <name>=<value>]\n           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]\n           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]\n           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]\n           [--super-prefix=<path>] [--config-env=<name>=<envvar>]\n           <command> [<args>]\n\nThese are common Git commands used in various situations:\n\nstart a working area (see also: git help tutorial)\n   clone     Clone a repository into a new directory\n   init      Create an empty Git repository or reinitialize an existing one\n\nwork on the current change (see also: git help everyday)\n   add       Add file contents to the index\n   mv        Move or rename a file, a directory, or a symlink\n   restore   Restore working tree files\n   rm        Remove files from the working tree and from the index\n\nexamine the history and state (see also: git help revisions)\n   bisect    Use binary search to find the commit that introduced a bug\n   diff      Show changes between commits, commit and working tree, etc\n   grep      Print lines matching a pattern\n   log       Show commit logs\n   show      Show various types of objects\n   status    Show the working tree status\n\ngrow, mark and tweak your common history\n   branch    List, create, or delete branches\n   commit    Record changes to the repository\n   merge     Join two or more development histories together\n   rebase    Reapply commits on top of another base tip\n   reset     Reset current HEAD to the specified state\n   switch    Switch branches\n   tag       Create, list, delete or verify a tag object signed with GPG\n\ncollaborate (see also: git help workflows)\n   fetch     Download objects and refs from another repository\n   pull      Fetch from and integrate with another repository or a local branch\n   push      Update remote refs along with associated objects\n\n'git help -a' and 'git help -g' list available subcommands and some\nconcept guides. See 'git help <command>' or 'git help <concept>'\nto read about a specific subcommand or concept.\nSee 'git help git' for an overview of the system.\n""
+[0m09:29:28.597438 [debug] [MainThread]: STDERR: "b''"
+[0m09:29:28.597694 [info ] [MainThread]:  - git [[32mOK found[0m]
+
+[0m09:29:28.597954 [info ] [MainThread]: Connection:
+[0m09:29:28.598199 [info ] [MainThread]:   host: localhost
+[0m09:29:28.598412 [info ] [MainThread]:   port: 5432
+[0m09:29:28.598622 [info ] [MainThread]:   user: dbt_user
+[0m09:29:28.598839 [info ] [MainThread]:   database: nerd_facts
+[0m09:29:28.599050 [info ] [MainThread]:   schema: public
+[0m09:29:28.599270 [info ] [MainThread]:   connect_timeout: 10
+[0m09:29:28.599482 [info ] [MainThread]:   role: None
+[0m09:29:28.599699 [info ] [MainThread]:   search_path: None
+[0m09:29:28.599914 [info ] [MainThread]:   keepalives_idle: 0
+[0m09:29:28.600140 [info ] [MainThread]:   sslmode: None
+[0m09:29:28.600351 [info ] [MainThread]:   sslcert: None
+[0m09:29:28.600565 [info ] [MainThread]:   sslkey: None
+[0m09:29:28.600775 [info ] [MainThread]:   sslrootcert: None
+[0m09:29:28.600986 [info ] [MainThread]:   application_name: dbt
+[0m09:29:28.601213 [info ] [MainThread]:   retries: 1
+[0m09:29:28.601554 [info ] [MainThread]: Registered adapter: postgres=1.9.0
+[0m09:29:28.669510 [debug] [MainThread]: Acquiring new postgres connection 'debug'
+[0m09:29:28.691643 [debug] [MainThread]: Using postgres connection "debug"
+[0m09:29:28.692020 [debug] [MainThread]: On debug: select 1 as id
+[0m09:29:28.692327 [debug] [MainThread]: Opening a new connection, currently in state init
+[0m09:29:28.705123 [debug] [MainThread]: SQL status: SELECT 1 in 0.013 seconds
+[0m09:29:28.706105 [debug] [MainThread]: On debug: Close
+[0m09:29:28.706569 [info ] [MainThread]:   Connection test: [[32mOK connection ok[0m]
+
+[0m09:29:28.707194 [info ] [MainThread]: [31m1 check failed:[0m
+[0m09:29:28.707705 [info ] [MainThread]: Project loading failed for the following reason:
+Runtime Error
+  dbt_project.yml does not parse to a dictionary
+
+
+[0m09:29:28.708885 [debug] [MainThread]: Resource report: {"command_name": "debug", "command_success": false, "command_wall_clock_time": 0.23143281, "process_in_blocks": "16160", "process_kernel_time": 0.091378, "process_mem_max_rss": "100440", "process_out_blocks": "24", "process_user_time": 1.069261}
+[0m09:29:28.709324 [debug] [MainThread]: Command `dbt debug` failed at 09:29:28.709228 after 0.23 seconds
+[0m09:29:28.709678 [debug] [MainThread]: Connection 'debug' was properly closed.
+[0m09:29:28.709985 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fee27974880>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fee287e5690>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fee26145ab0>]}
+[0m09:29:28.710338 [debug] [MainThread]: Flushing usage events
+[0m09:29:29.100913 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m09:30:24.068104 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbd2eff0880>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbd2fe6bd30>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbd2fe6bd90>]}
+
+
+============================== 09:30:24.070508 | b80b5078-dd5f-4fc6-b48b-18fd3336fdd4 ==============================
+[0m09:30:24.070508 [info ] [MainThread]: Running with dbt=1.9.3
+[0m09:30:24.071036 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'write_json': 'True', 'log_cache_events': 'False', 'partial_parse': 'True', 'cache_selected_only': 'False', 'warn_error': 'None', 'fail_fast': 'False', 'version_check': 'True', 'log_path': '/home/janne/nerd-facts-dbt/dbt_project/logs', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'debug': 'False', 'use_colors': 'True', 'use_experimental_parser': 'False', 'no_print': 'None', 'quiet': 'False', 'empty': 'None', 'log_format': 'default', 'static_parser': 'True', 'invocation_command': 'dbt debug', 'introspect': 'True', 'target_path': 'None', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'send_anonymous_usage_stats': 'True'}
+[0m09:30:24.076922 [info ] [MainThread]: dbt version: 1.9.3
+[0m09:30:24.077311 [info ] [MainThread]: python version: 3.10.12
+[0m09:30:24.077669 [info ] [MainThread]: python path: /home/janne/nerd-facts-dbt/venv/bin/python3
+[0m09:30:24.077988 [info ] [MainThread]: os info: Linux-5.15.0-134-generic-x86_64-with-glibc2.35
+[0m09:30:24.124238 [info ] [MainThread]: Using profiles dir at /home/janne/nerd-facts-dbt/dbt_project
+[0m09:30:24.124723 [info ] [MainThread]: Using profiles.yml file at /home/janne/nerd-facts-dbt/dbt_project/profiles.yml
+[0m09:30:24.125078 [info ] [MainThread]: Using dbt_project.yml file at /home/janne/nerd-facts-dbt/dbt_project/dbt_project.yml
+[0m09:30:24.125563 [info ] [MainThread]: adapter type: postgres
+[0m09:30:24.125874 [info ] [MainThread]: adapter version: 1.9.0
+[0m09:30:24.213143 [info ] [MainThread]: Configuration:
+[0m09:30:24.213654 [info ] [MainThread]:   profiles.yml file [[32mOK found and valid[0m]
+[0m09:30:24.214004 [info ] [MainThread]:   dbt_project.yml file [[32mOK found and valid[0m]
+[0m09:30:24.214310 [info ] [MainThread]: Required dependencies:
+[0m09:30:24.214628 [debug] [MainThread]: Executing "git --help"
+[0m09:30:24.216058 [debug] [MainThread]: STDOUT: "b"usage: git [--version] [--help] [-C <path>] [-c <name>=<value>]\n           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]\n           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]\n           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]\n           [--super-prefix=<path>] [--config-env=<name>=<envvar>]\n           <command> [<args>]\n\nThese are common Git commands used in various situations:\n\nstart a working area (see also: git help tutorial)\n   clone     Clone a repository into a new directory\n   init      Create an empty Git repository or reinitialize an existing one\n\nwork on the current change (see also: git help everyday)\n   add       Add file contents to the index\n   mv        Move or rename a file, a directory, or a symlink\n   restore   Restore working tree files\n   rm        Remove files from the working tree and from the index\n\nexamine the history and state (see also: git help revisions)\n   bisect    Use binary search to find the commit that introduced a bug\n   diff      Show changes between commits, commit and working tree, etc\n   grep      Print lines matching a pattern\n   log       Show commit logs\n   show      Show various types of objects\n   status    Show the working tree status\n\ngrow, mark and tweak your common history\n   branch    List, create, or delete branches\n   commit    Record changes to the repository\n   merge     Join two or more development histories together\n   rebase    Reapply commits on top of another base tip\n   reset     Reset current HEAD to the specified state\n   switch    Switch branches\n   tag       Create, list, delete or verify a tag object signed with GPG\n\ncollaborate (see also: git help workflows)\n   fetch     Download objects and refs from another repository\n   pull      Fetch from and integrate with another repository or a local branch\n   push      Update remote refs along with associated objects\n\n'git help -a' and 'git help -g' list available subcommands and some\nconcept guides. See 'git help <command>' or 'git help <concept>'\nto read about a specific subcommand or concept.\nSee 'git help git' for an overview of the system.\n""
+[0m09:30:24.216400 [debug] [MainThread]: STDERR: "b''"
+[0m09:30:24.216681 [info ] [MainThread]:  - git [[32mOK found[0m]
+
+[0m09:30:24.216988 [info ] [MainThread]: Connection:
+[0m09:30:24.217310 [info ] [MainThread]:   host: localhost
+[0m09:30:24.217634 [info ] [MainThread]:   port: 5432
+[0m09:30:24.217920 [info ] [MainThread]:   user: dbt_user
+[0m09:30:24.218201 [info ] [MainThread]:   database: nerd_facts
+[0m09:30:24.218491 [info ] [MainThread]:   schema: public
+[0m09:30:24.218777 [info ] [MainThread]:   connect_timeout: 10
+[0m09:30:24.219057 [info ] [MainThread]:   role: None
+[0m09:30:24.219333 [info ] [MainThread]:   search_path: None
+[0m09:30:24.219615 [info ] [MainThread]:   keepalives_idle: 0
+[0m09:30:24.219895 [info ] [MainThread]:   sslmode: None
+[0m09:30:24.220176 [info ] [MainThread]:   sslcert: None
+[0m09:30:24.220454 [info ] [MainThread]:   sslkey: None
+[0m09:30:24.220730 [info ] [MainThread]:   sslrootcert: None
+[0m09:30:24.221015 [info ] [MainThread]:   application_name: dbt
+[0m09:30:24.221293 [info ] [MainThread]:   retries: 1
+[0m09:30:24.221730 [info ] [MainThread]: Registered adapter: postgres=1.9.0
+[0m09:30:24.302145 [debug] [MainThread]: Acquiring new postgres connection 'debug'
+[0m09:30:24.323516 [debug] [MainThread]: Using postgres connection "debug"
+[0m09:30:24.323899 [debug] [MainThread]: On debug: select 1 as id
+[0m09:30:24.324198 [debug] [MainThread]: Opening a new connection, currently in state init
+[0m09:30:24.334255 [debug] [MainThread]: SQL status: SELECT 1 in 0.010 seconds
+[0m09:30:24.335202 [debug] [MainThread]: On debug: Close
+[0m09:30:24.335658 [info ] [MainThread]:   Connection test: [[32mOK connection ok[0m]
+
+[0m09:30:24.336271 [info ] [MainThread]: [32mAll checks passed![0m
+[0m09:30:24.337375 [debug] [MainThread]: Resource report: {"command_name": "debug", "command_success": true, "command_wall_clock_time": 0.3124077, "process_in_blocks": "0", "process_kernel_time": 0.068366, "process_mem_max_rss": "102600", "process_out_blocks": "24", "process_user_time": 1.214409}
+[0m09:30:24.337984 [debug] [MainThread]: Command `dbt debug` succeeded at 09:30:24.337887 after 0.31 seconds
+[0m09:30:24.338313 [debug] [MainThread]: Connection 'debug' was properly closed.
+[0m09:30:24.338644 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbd2eff0880>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbd2fe0f820>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbd2eebd270>]}
+[0m09:30:24.339012 [debug] [MainThread]: Flushing usage events
+[0m09:30:24.722972 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m10:16:46.368836 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fdae4cd07c0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fdae5c826e0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fdae5c82680>]}
+
+
+============================== 10:16:46.371167 | 5c816e66-1b75-48a4-b9a8-3f297bce627d ==============================
+[0m10:16:46.371167 [info ] [MainThread]: Running with dbt=1.9.2
+[0m10:16:46.371690 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'log_cache_events': 'False', 'write_json': 'True', 'partial_parse': 'True', 'cache_selected_only': 'False', 'warn_error': 'None', 'debug': 'False', 'fail_fast': 'False', 'log_path': '/home/janne/nerd-facts-dbt/dbt_project/logs', 'version_check': 'True', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'use_colors': 'True', 'use_experimental_parser': 'False', 'no_print': 'None', 'quiet': 'False', 'empty': 'False', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'invocation_command': 'dbt run', 'static_parser': 'True', 'introspect': 'True', 'target_path': 'None', 'log_format': 'default', 'send_anonymous_usage_stats': 'True'}
+[0m10:16:46.376082 [info ] [MainThread]: Error importing adapter: No module named 'dbt.adapters.postgres'
+[0m10:16:46.376589 [error] [MainThread]: Encountered an error:
+Runtime Error
+  Credentials in profile "nerd_facts_dbt", target "dev" invalid: Runtime Error
+    Could not find adapter type postgres!
+[0m10:16:46.377324 [debug] [MainThread]: Resource report: {"command_name": "run", "command_success": false, "command_wall_clock_time": 0.053926922, "process_in_blocks": "0", "process_kernel_time": 0.031927, "process_mem_max_rss": "85140", "process_out_blocks": "8", "process_user_time": 1.003708}
+[0m10:16:46.377828 [debug] [MainThread]: Command `dbt run` failed at 10:16:46.377741 after 0.05 seconds
+[0m10:16:46.378146 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fdae4cd07c0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fdae5c17a30>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fdae5c17910>]}
+[0m10:16:46.378514 [debug] [MainThread]: Flushing usage events
+[0m10:16:46.812409 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m10:17:04.519505 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f1bf30087c0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f1bf2172350>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f1bf21723b0>]}
+
+
+============================== 10:17:04.521872 | a049bf12-938c-4b2d-8df1-ca202db10477 ==============================
+[0m10:17:04.521872 [info ] [MainThread]: Running with dbt=1.9.2
+[0m10:17:04.522428 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'log_cache_events': 'False', 'write_json': 'True', 'partial_parse': 'True', 'cache_selected_only': 'False', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'version_check': 'True', 'fail_fast': 'False', 'log_path': '/home/janne/nerd-facts-dbt/dbt_project/logs', 'debug': 'False', 'warn_error': 'None', 'use_colors': 'True', 'use_experimental_parser': 'False', 'empty': 'False', 'quiet': 'False', 'no_print': 'None', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'introspect': 'True', 'invocation_command': 'dbt run', 'static_parser': 'True', 'target_path': 'None', 'log_format': 'default', 'send_anonymous_usage_stats': 'True'}
+[0m10:17:04.526769 [info ] [MainThread]: Error importing adapter: No module named 'dbt.adapters.postgres'
+[0m10:17:04.527249 [error] [MainThread]: Encountered an error:
+Runtime Error
+  Credentials in profile "nerd_facts_dbt", target "dev" invalid: Runtime Error
+    Could not find adapter type postgres!
+[0m10:17:04.527950 [debug] [MainThread]: Resource report: {"command_name": "run", "command_success": false, "command_wall_clock_time": 0.05624714, "process_in_blocks": "0", "process_kernel_time": 0.028019, "process_mem_max_rss": "85048", "process_out_blocks": "8", "process_user_time": 0.931854}
+[0m10:17:04.528405 [debug] [MainThread]: Command `dbt run` failed at 10:17:04.528319 after 0.06 seconds
+[0m10:17:04.528732 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f1bf30087c0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f1bf3f4fa60>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f1bf3f4f8e0>]}
+[0m10:17:04.529076 [debug] [MainThread]: Flushing usage events
+[0m10:17:04.949489 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m10:18:33.449734 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f651f7f08e0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f6520667b80>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f6520667be0>]}
+
+
+============================== 10:18:33.452013 | 9735f254-4160-4bde-adbc-d36f91b09d31 ==============================
+[0m10:18:33.452013 [info ] [MainThread]: Running with dbt=1.9.3
+[0m10:18:33.452440 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'write_json': 'True', 'log_cache_events': 'False', 'partial_parse': 'True', 'cache_selected_only': 'False', 'warn_error': 'None', 'fail_fast': 'False', 'version_check': 'True', 'log_path': '/home/janne/nerd-facts-dbt/dbt_project/logs', 'debug': 'False', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'use_colors': 'True', 'use_experimental_parser': 'False', 'empty': 'False', 'quiet': 'False', 'no_print': 'None', 'log_format': 'default', 'invocation_command': 'dbt run', 'static_parser': 'True', 'introspect': 'True', 'target_path': 'None', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'send_anonymous_usage_stats': 'True'}
+[0m10:18:33.579375 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': '9735f254-4160-4bde-adbc-d36f91b09d31', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f65207ca710>]}
+[0m10:18:33.628021 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'adapter_info', 'label': '9735f254-4160-4bde-adbc-d36f91b09d31', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f6520667b50>]}
+[0m10:18:33.628743 [info ] [MainThread]: Registered adapter: postgres=1.9.0
+[0m10:18:33.715798 [debug] [MainThread]: checksum: 5671c00892cdbcef29c3b00cc5ba7510c3d18a35c883caeb9ab9ee266dc29c8f, vars: {}, profile: , target: , version: 1.9.3
+[0m10:18:33.716452 [info ] [MainThread]: Unable to do partial parsing because saved manifest not found. Starting full parse.
+[0m10:18:33.716840 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'partial_parser', 'label': '9735f254-4160-4bde-adbc-d36f91b09d31', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f651de4b310>]}
+[0m10:18:34.533416 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'load_project', 'label': '9735f254-4160-4bde-adbc-d36f91b09d31', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f651dd184c0>]}
+[0m10:18:34.585864 [debug] [MainThread]: Wrote artifact WritableManifest to /home/janne/nerd-facts-dbt/dbt_project/target/manifest.json
+[0m10:18:34.587988 [debug] [MainThread]: Wrote artifact SemanticManifest to /home/janne/nerd-facts-dbt/dbt_project/target/semantic_manifest.json
+[0m10:18:34.607091 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'resource_counts', 'label': '9735f254-4160-4bde-adbc-d36f91b09d31', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f651d550700>]}
+[0m10:18:34.607601 [info ] [MainThread]: Found 1 model, 433 macros
+[0m10:18:34.607977 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': '9735f254-4160-4bde-adbc-d36f91b09d31', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f651d550790>]}
+[0m10:18:34.609285 [info ] [MainThread]: 
+[0m10:18:34.609669 [info ] [MainThread]: Concurrency: 4 threads (target='dev')
+[0m10:18:34.609984 [info ] [MainThread]: 
+[0m10:18:34.610488 [debug] [MainThread]: Acquiring new postgres connection 'master'
+[0m10:18:34.611916 [debug] [ThreadPool]: Acquiring new postgres connection 'list_nerd_facts'
+[0m10:18:34.643209 [debug] [ThreadPool]: Using postgres connection "list_nerd_facts"
+[0m10:18:34.643606 [debug] [ThreadPool]: On list_nerd_facts: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "connection_name": "list_nerd_facts"} */
+
+    select distinct nspname from pg_namespace
+  
+[0m10:18:34.643916 [debug] [ThreadPool]: Opening a new connection, currently in state init
+[0m10:18:34.657094 [debug] [ThreadPool]: SQL status: SELECT 5 in 0.013 seconds
+[0m10:18:34.658348 [debug] [ThreadPool]: On list_nerd_facts: Close
+[0m10:18:34.661219 [debug] [ThreadPool]: Re-using an available connection from the pool (formerly list_nerd_facts, now list_nerd_facts_raw)
+[0m10:18:34.667166 [debug] [ThreadPool]: Using postgres connection "list_nerd_facts_raw"
+[0m10:18:34.667555 [debug] [ThreadPool]: On list_nerd_facts_raw: BEGIN
+[0m10:18:34.667855 [debug] [ThreadPool]: Opening a new connection, currently in state closed
+[0m10:18:34.680103 [debug] [ThreadPool]: SQL status: BEGIN in 0.012 seconds
+[0m10:18:34.680516 [debug] [ThreadPool]: Using postgres connection "list_nerd_facts_raw"
+[0m10:18:34.680846 [debug] [ThreadPool]: On list_nerd_facts_raw: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "connection_name": "list_nerd_facts_raw"} */
+select
+      'nerd_facts' as database,
+      tablename as name,
+      schemaname as schema,
+      'table' as type
+    from pg_tables
+    where schemaname ilike 'raw'
+    union all
+    select
+      'nerd_facts' as database,
+      viewname as name,
+      schemaname as schema,
+      'view' as type
+    from pg_views
+    where schemaname ilike 'raw'
+    union all
+    select
+      'nerd_facts' as database,
+      matviewname as name,
+      schemaname as schema,
+      'materialized_view' as type
+    from pg_matviews
+    where schemaname ilike 'raw'
+  
+[0m10:18:34.683232 [debug] [ThreadPool]: SQL status: SELECT 5 in 0.002 seconds
+[0m10:18:34.684449 [debug] [ThreadPool]: On list_nerd_facts_raw: ROLLBACK
+[0m10:18:34.684877 [debug] [ThreadPool]: On list_nerd_facts_raw: Close
+[0m10:18:34.690398 [debug] [MainThread]: Using postgres connection "master"
+[0m10:18:34.690772 [debug] [MainThread]: On master: BEGIN
+[0m10:18:34.691066 [debug] [MainThread]: Opening a new connection, currently in state init
+[0m10:18:34.703394 [debug] [MainThread]: SQL status: BEGIN in 0.012 seconds
+[0m10:18:34.703820 [debug] [MainThread]: Using postgres connection "master"
+[0m10:18:34.704197 [debug] [MainThread]: On master: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "connection_name": "master"} */
+with relation as (
+        select
+            pg_rewrite.ev_class as class,
+            pg_rewrite.oid as id
+        from pg_rewrite
+    ),
+    class as (
+        select
+            oid as id,
+            relname as name,
+            relnamespace as schema,
+            relkind as kind
+        from pg_class
+    ),
+    dependency as (
+        select distinct
+            pg_depend.objid as id,
+            pg_depend.refobjid as ref
+        from pg_depend
+    ),
+    schema as (
+        select
+            pg_namespace.oid as id,
+            pg_namespace.nspname as name
+        from pg_namespace
+        where nspname != 'information_schema' and nspname not like 'pg\_%'
+    ),
+    referenced as (
+        select
+            relation.id AS id,
+            referenced_class.name ,
+            referenced_class.schema ,
+            referenced_class.kind
+        from relation
+        join class as referenced_class on relation.class=referenced_class.id
+        where referenced_class.kind in ('r', 'v', 'm')
+    ),
+    relationships as (
+        select
+            referenced.name as referenced_name,
+            referenced.schema as referenced_schema_id,
+            dependent_class.name as dependent_name,
+            dependent_class.schema as dependent_schema_id,
+            referenced.kind as kind
+        from referenced
+        join dependency on referenced.id=dependency.id
+        join class as dependent_class on dependency.ref=dependent_class.id
+        where
+            (referenced.name != dependent_class.name or
+             referenced.schema != dependent_class.schema)
+    )
+
+    select
+        referenced_schema.name as referenced_schema,
+        relationships.referenced_name as referenced_name,
+        dependent_schema.name as dependent_schema,
+        relationships.dependent_name as dependent_name
+    from relationships
+    join schema as dependent_schema on relationships.dependent_schema_id=dependent_schema.id
+    join schema as referenced_schema on relationships.referenced_schema_id=referenced_schema.id
+    group by referenced_schema, referenced_name, dependent_schema, dependent_name
+    order by referenced_schema, referenced_name, dependent_schema, dependent_name;
+[0m10:18:34.711990 [debug] [MainThread]: SQL status: SELECT 0 in 0.007 seconds
+[0m10:18:34.713180 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': '9735f254-4160-4bde-adbc-d36f91b09d31', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f651df3cdc0>]}
+[0m10:18:34.713694 [debug] [MainThread]: On master: ROLLBACK
+[0m10:18:34.714163 [debug] [MainThread]: Using postgres connection "master"
+[0m10:18:34.714460 [debug] [MainThread]: On master: BEGIN
+[0m10:18:34.714929 [debug] [MainThread]: SQL status: BEGIN in 0.000 seconds
+[0m10:18:34.715225 [debug] [MainThread]: On master: COMMIT
+[0m10:18:34.715517 [debug] [MainThread]: Using postgres connection "master"
+[0m10:18:34.715792 [debug] [MainThread]: On master: COMMIT
+[0m10:18:34.716150 [debug] [MainThread]: SQL status: COMMIT in 0.000 seconds
+[0m10:18:34.716433 [debug] [MainThread]: On master: Close
+[0m10:18:34.720435 [debug] [Thread-1 (]: Began running node model.nerd_facts_dbt.pokemon
+[0m10:18:34.721015 [info ] [Thread-1 (]: 1 of 1 START sql view model raw.pokemon ........................................ [RUN]
+[0m10:18:34.721547 [debug] [Thread-1 (]: Re-using an available connection from the pool (formerly list_nerd_facts_raw, now model.nerd_facts_dbt.pokemon)
+[0m10:18:34.721900 [debug] [Thread-1 (]: Began compiling node model.nerd_facts_dbt.pokemon
+[0m10:18:34.729469 [debug] [Thread-1 (]: Writing injected SQL for node "model.nerd_facts_dbt.pokemon"
+[0m10:18:34.730284 [debug] [Thread-1 (]: Began executing node model.nerd_facts_dbt.pokemon
+[0m10:18:34.763752 [debug] [Thread-1 (]: Writing runtime sql for node "model.nerd_facts_dbt.pokemon"
+[0m10:18:34.764506 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m10:18:34.764894 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: BEGIN
+[0m10:18:34.765227 [debug] [Thread-1 (]: Opening a new connection, currently in state closed
+[0m10:18:34.777443 [debug] [Thread-1 (]: SQL status: BEGIN in 0.012 seconds
+[0m10:18:34.777901 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m10:18:34.778276 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "node_id": "model.nerd_facts_dbt.pokemon"} */
+
+  create view "nerd_facts"."raw"."pokemon__dbt_tmp"
+    
+    
+  as (
+    WITH source AS (
+    SELECT * FROM raw.pokeapi_pokemon
+)
+
+SELECT 
+    id,
+    name,
+    height,
+    weight,
+    ROUND(weight / (height * height), 2) AS bmi
+FROM source
+  );
+[0m10:18:34.779148 [debug] [Thread-1 (]: Postgres adapter: Postgres error: operator does not exist: text * text
+LINE 16:     ROUND(weight / (height * height), 2) AS bmi
+                                    ^
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+
+[0m10:18:34.779515 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: ROLLBACK
+[0m10:18:34.780013 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: Close
+[0m10:18:34.783418 [debug] [Thread-1 (]: Database Error in model pokemon (models/pokemon.sql)
+  operator does not exist: text * text
+  LINE 16:     ROUND(weight / (height * height), 2) AS bmi
+                                      ^
+  HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+  compiled code at target/run/nerd_facts_dbt/models/pokemon.sql
+[0m10:18:34.785235 [debug] [Thread-1 (]: Sending event: {'category': 'dbt', 'action': 'run_model', 'label': '9735f254-4160-4bde-adbc-d36f91b09d31', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f6520a84a60>]}
+[0m10:18:34.785930 [error] [Thread-1 (]: 1 of 1 ERROR creating sql view model raw.pokemon ............................... [[31mERROR[0m in 0.06s]
+[0m10:18:34.786555 [debug] [Thread-1 (]: Finished running node model.nerd_facts_dbt.pokemon
+[0m10:18:34.787093 [debug] [Thread-7 (]: Marking all children of 'model.nerd_facts_dbt.pokemon' to be skipped because of status 'error'.  Reason: Database Error in model pokemon (models/pokemon.sql)
+  operator does not exist: text * text
+  LINE 16:     ROUND(weight / (height * height), 2) AS bmi
+                                      ^
+  HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+  compiled code at target/run/nerd_facts_dbt/models/pokemon.sql.
+[0m10:18:34.788652 [debug] [MainThread]: Using postgres connection "master"
+[0m10:18:34.788975 [debug] [MainThread]: On master: BEGIN
+[0m10:18:34.789255 [debug] [MainThread]: Opening a new connection, currently in state closed
+[0m10:18:34.801373 [debug] [MainThread]: SQL status: BEGIN in 0.012 seconds
+[0m10:18:34.801830 [debug] [MainThread]: On master: COMMIT
+[0m10:18:34.802172 [debug] [MainThread]: Using postgres connection "master"
+[0m10:18:34.802459 [debug] [MainThread]: On master: COMMIT
+[0m10:18:34.802844 [debug] [MainThread]: SQL status: COMMIT in 0.000 seconds
+[0m10:18:34.803128 [debug] [MainThread]: On master: Close
+[0m10:18:34.803613 [debug] [MainThread]: Connection 'master' was properly closed.
+[0m10:18:34.803837 [debug] [MainThread]: Connection 'model.nerd_facts_dbt.pokemon' was properly closed.
+[0m10:18:34.804074 [info ] [MainThread]: 
+[0m10:18:34.804329 [info ] [MainThread]: Finished running 1 view model in 0 hours 0 minutes and 0.19 seconds (0.19s).
+[0m10:18:34.804817 [debug] [MainThread]: Command end result
+[0m10:18:34.820759 [debug] [MainThread]: Wrote artifact WritableManifest to /home/janne/nerd-facts-dbt/dbt_project/target/manifest.json
+[0m10:18:34.822086 [debug] [MainThread]: Wrote artifact SemanticManifest to /home/janne/nerd-facts-dbt/dbt_project/target/semantic_manifest.json
+[0m10:18:34.827835 [debug] [MainThread]: Wrote artifact RunExecutionResult to /home/janne/nerd-facts-dbt/dbt_project/target/run_results.json
+[0m10:18:34.828154 [info ] [MainThread]: 
+[0m10:18:34.828483 [info ] [MainThread]: [31mCompleted with 1 error, 0 partial successes, and 0 warnings:[0m
+[0m10:18:34.828756 [info ] [MainThread]: 
+[0m10:18:34.829054 [error] [MainThread]:   Database Error in model pokemon (models/pokemon.sql)
+  operator does not exist: text * text
+  LINE 16:     ROUND(weight / (height * height), 2) AS bmi
+                                      ^
+  HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+  compiled code at target/run/nerd_facts_dbt/models/pokemon.sql
+[0m10:18:34.829301 [info ] [MainThread]: 
+[0m10:18:34.829576 [info ] [MainThread]: Done. PASS=0 WARN=0 ERROR=1 SKIP=0 TOTAL=1
+[0m10:18:34.830272 [debug] [MainThread]: Resource report: {"command_name": "run", "command_success": false, "command_wall_clock_time": 1.4229543, "process_in_blocks": "2272", "process_kernel_time": 0.06774, "process_mem_max_rss": "110600", "process_out_blocks": "2536", "process_user_time": 2.209926}
+[0m10:18:34.830648 [debug] [MainThread]: Command `dbt run` failed at 10:18:34.830571 after 1.42 seconds
+[0m10:18:34.830947 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f651f7f08e0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f65207ca710>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f651dceffa0>]}
+[0m10:18:34.831277 [debug] [MainThread]: Flushing usage events
+[0m10:18:35.228893 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m10:19:26.272202 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bf25e0910>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bf34537c0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bf3453820>]}
+
+
+============================== 10:19:26.274327 | e6b5d28a-e2d9-438b-8ff2-0707ffc56bef ==============================
+[0m10:19:26.274327 [info ] [MainThread]: Running with dbt=1.9.3
+[0m10:19:26.274753 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'log_cache_events': 'False', 'write_json': 'True', 'partial_parse': 'True', 'cache_selected_only': 'False', 'warn_error': 'None', 'fail_fast': 'False', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'log_path': '/home/janne/nerd-facts-dbt/dbt_project/logs', 'version_check': 'True', 'debug': 'False', 'use_colors': 'True', 'use_experimental_parser': 'False', 'empty': 'False', 'quiet': 'False', 'no_print': 'None', 'log_format': 'default', 'introspect': 'True', 'static_parser': 'True', 'invocation_command': 'dbt run', 'target_path': 'None', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'send_anonymous_usage_stats': 'True'}
+[0m10:19:26.400214 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': 'e6b5d28a-e2d9-438b-8ff2-0707ffc56bef', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bf33f0b80>]}
+[0m10:19:26.448951 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'adapter_info', 'label': 'e6b5d28a-e2d9-438b-8ff2-0707ffc56bef', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bf33afd30>]}
+[0m10:19:26.449623 [info ] [MainThread]: Registered adapter: postgres=1.9.0
+[0m10:19:26.521704 [debug] [MainThread]: checksum: 5671c00892cdbcef29c3b00cc5ba7510c3d18a35c883caeb9ab9ee266dc29c8f, vars: {}, profile: , target: , version: 1.9.3
+[0m10:19:26.591518 [debug] [MainThread]: Partial parsing enabled: 0 files deleted, 0 files added, 0 files changed.
+[0m10:19:26.591866 [debug] [MainThread]: Partial parsing enabled, no changes found, skipping parsing
+[0m10:19:26.613605 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'load_project', 'label': 'e6b5d28a-e2d9-438b-8ff2-0707ffc56bef', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bf0854130>]}
+[0m10:19:26.661993 [debug] [MainThread]: Wrote artifact WritableManifest to /home/janne/nerd-facts-dbt/dbt_project/target/manifest.json
+[0m10:19:26.663893 [debug] [MainThread]: Wrote artifact SemanticManifest to /home/janne/nerd-facts-dbt/dbt_project/target/semantic_manifest.json
+[0m10:19:26.672093 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'resource_counts', 'label': 'e6b5d28a-e2d9-438b-8ff2-0707ffc56bef', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bf08551e0>]}
+[0m10:19:26.672554 [info ] [MainThread]: Found 1 model, 433 macros
+[0m10:19:26.672844 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': 'e6b5d28a-e2d9-438b-8ff2-0707ffc56bef', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bf0855900>]}
+[0m10:19:26.674216 [info ] [MainThread]: 
+[0m10:19:26.674548 [info ] [MainThread]: Concurrency: 4 threads (target='dev')
+[0m10:19:26.674775 [info ] [MainThread]: 
+[0m10:19:26.675140 [debug] [MainThread]: Acquiring new postgres connection 'master'
+[0m10:19:26.675940 [debug] [ThreadPool]: Acquiring new postgres connection 'list_nerd_facts'
+[0m10:19:26.706260 [debug] [ThreadPool]: Using postgres connection "list_nerd_facts"
+[0m10:19:26.706630 [debug] [ThreadPool]: On list_nerd_facts: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "connection_name": "list_nerd_facts"} */
+
+    select distinct nspname from pg_namespace
+  
+[0m10:19:26.706876 [debug] [ThreadPool]: Opening a new connection, currently in state init
+[0m10:19:26.719813 [debug] [ThreadPool]: SQL status: SELECT 5 in 0.013 seconds
+[0m10:19:26.720845 [debug] [ThreadPool]: On list_nerd_facts: Close
+[0m10:19:26.722041 [debug] [ThreadPool]: Acquiring new postgres connection 'list_nerd_facts_raw'
+[0m10:19:26.727777 [debug] [ThreadPool]: Using postgres connection "list_nerd_facts_raw"
+[0m10:19:26.728195 [debug] [ThreadPool]: On list_nerd_facts_raw: BEGIN
+[0m10:19:26.728501 [debug] [ThreadPool]: Opening a new connection, currently in state init
+[0m10:19:26.740716 [debug] [ThreadPool]: SQL status: BEGIN in 0.012 seconds
+[0m10:19:26.741098 [debug] [ThreadPool]: Using postgres connection "list_nerd_facts_raw"
+[0m10:19:26.741355 [debug] [ThreadPool]: On list_nerd_facts_raw: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "connection_name": "list_nerd_facts_raw"} */
+select
+      'nerd_facts' as database,
+      tablename as name,
+      schemaname as schema,
+      'table' as type
+    from pg_tables
+    where schemaname ilike 'raw'
+    union all
+    select
+      'nerd_facts' as database,
+      viewname as name,
+      schemaname as schema,
+      'view' as type
+    from pg_views
+    where schemaname ilike 'raw'
+    union all
+    select
+      'nerd_facts' as database,
+      matviewname as name,
+      schemaname as schema,
+      'materialized_view' as type
+    from pg_matviews
+    where schemaname ilike 'raw'
+  
+[0m10:19:26.743683 [debug] [ThreadPool]: SQL status: SELECT 5 in 0.002 seconds
+[0m10:19:26.744688 [debug] [ThreadPool]: On list_nerd_facts_raw: ROLLBACK
+[0m10:19:26.745080 [debug] [ThreadPool]: On list_nerd_facts_raw: Close
+[0m10:19:26.749930 [debug] [MainThread]: Using postgres connection "master"
+[0m10:19:26.750300 [debug] [MainThread]: On master: BEGIN
+[0m10:19:26.750532 [debug] [MainThread]: Opening a new connection, currently in state init
+[0m10:19:26.762693 [debug] [MainThread]: SQL status: BEGIN in 0.012 seconds
+[0m10:19:26.763069 [debug] [MainThread]: Using postgres connection "master"
+[0m10:19:26.763353 [debug] [MainThread]: On master: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "connection_name": "master"} */
+with relation as (
+        select
+            pg_rewrite.ev_class as class,
+            pg_rewrite.oid as id
+        from pg_rewrite
+    ),
+    class as (
+        select
+            oid as id,
+            relname as name,
+            relnamespace as schema,
+            relkind as kind
+        from pg_class
+    ),
+    dependency as (
+        select distinct
+            pg_depend.objid as id,
+            pg_depend.refobjid as ref
+        from pg_depend
+    ),
+    schema as (
+        select
+            pg_namespace.oid as id,
+            pg_namespace.nspname as name
+        from pg_namespace
+        where nspname != 'information_schema' and nspname not like 'pg\_%'
+    ),
+    referenced as (
+        select
+            relation.id AS id,
+            referenced_class.name ,
+            referenced_class.schema ,
+            referenced_class.kind
+        from relation
+        join class as referenced_class on relation.class=referenced_class.id
+        where referenced_class.kind in ('r', 'v', 'm')
+    ),
+    relationships as (
+        select
+            referenced.name as referenced_name,
+            referenced.schema as referenced_schema_id,
+            dependent_class.name as dependent_name,
+            dependent_class.schema as dependent_schema_id,
+            referenced.kind as kind
+        from referenced
+        join dependency on referenced.id=dependency.id
+        join class as dependent_class on dependency.ref=dependent_class.id
+        where
+            (referenced.name != dependent_class.name or
+             referenced.schema != dependent_class.schema)
+    )
+
+    select
+        referenced_schema.name as referenced_schema,
+        relationships.referenced_name as referenced_name,
+        dependent_schema.name as dependent_schema,
+        relationships.dependent_name as dependent_name
+    from relationships
+    join schema as dependent_schema on relationships.dependent_schema_id=dependent_schema.id
+    join schema as referenced_schema on relationships.referenced_schema_id=referenced_schema.id
+    group by referenced_schema, referenced_name, dependent_schema, dependent_name
+    order by referenced_schema, referenced_name, dependent_schema, dependent_name;
+[0m10:19:26.770742 [debug] [MainThread]: SQL status: SELECT 0 in 0.007 seconds
+[0m10:19:26.771656 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': 'e6b5d28a-e2d9-438b-8ff2-0707ffc56bef', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bf0872110>]}
+[0m10:19:26.772063 [debug] [MainThread]: On master: ROLLBACK
+[0m10:19:26.772476 [debug] [MainThread]: Using postgres connection "master"
+[0m10:19:26.772799 [debug] [MainThread]: On master: BEGIN
+[0m10:19:26.773187 [debug] [MainThread]: SQL status: BEGIN in 0.000 seconds
+[0m10:19:26.773438 [debug] [MainThread]: On master: COMMIT
+[0m10:19:26.773671 [debug] [MainThread]: Using postgres connection "master"
+[0m10:19:26.773908 [debug] [MainThread]: On master: COMMIT
+[0m10:19:26.774279 [debug] [MainThread]: SQL status: COMMIT in 0.000 seconds
+[0m10:19:26.774512 [debug] [MainThread]: On master: Close
+[0m10:19:26.776948 [debug] [Thread-1 (]: Began running node model.nerd_facts_dbt.pokemon
+[0m10:19:26.777457 [info ] [Thread-1 (]: 1 of 1 START sql view model raw.pokemon ........................................ [RUN]
+[0m10:19:26.778039 [debug] [Thread-1 (]: Re-using an available connection from the pool (formerly list_nerd_facts_raw, now model.nerd_facts_dbt.pokemon)
+[0m10:19:26.778357 [debug] [Thread-1 (]: Began compiling node model.nerd_facts_dbt.pokemon
+[0m10:19:26.784297 [debug] [Thread-1 (]: Writing injected SQL for node "model.nerd_facts_dbt.pokemon"
+[0m10:19:26.784812 [debug] [Thread-1 (]: Began executing node model.nerd_facts_dbt.pokemon
+[0m10:19:26.813936 [debug] [Thread-1 (]: Writing runtime sql for node "model.nerd_facts_dbt.pokemon"
+[0m10:19:26.814587 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m10:19:26.814947 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: BEGIN
+[0m10:19:26.815208 [debug] [Thread-1 (]: Opening a new connection, currently in state closed
+[0m10:19:26.827470 [debug] [Thread-1 (]: SQL status: BEGIN in 0.012 seconds
+[0m10:19:26.827893 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m10:19:26.828180 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "node_id": "model.nerd_facts_dbt.pokemon"} */
+
+  create view "nerd_facts"."raw"."pokemon__dbt_tmp"
+    
+    
+  as (
+    WITH source AS (
+    SELECT * FROM raw.pokeapi_pokemon
+)
+
+SELECT 
+    id,
+    name,
+    height,
+    weight,
+    ROUND(weight / (height * height), 2) AS bmi
+FROM source
+  );
+[0m10:19:26.828986 [debug] [Thread-1 (]: Postgres adapter: Postgres error: operator does not exist: text * text
+LINE 16:     ROUND(weight / (height * height), 2) AS bmi
+                                    ^
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+
+[0m10:19:26.829284 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: ROLLBACK
+[0m10:19:26.829838 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: Close
+[0m10:19:26.831531 [debug] [Thread-1 (]: Database Error in model pokemon (models/pokemon.sql)
+  operator does not exist: text * text
+  LINE 16:     ROUND(weight / (height * height), 2) AS bmi
+                                      ^
+  HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+  compiled code at target/run/nerd_facts_dbt/models/pokemon.sql
+[0m10:19:26.833038 [debug] [Thread-1 (]: Sending event: {'category': 'dbt', 'action': 'run_model', 'label': 'e6b5d28a-e2d9-438b-8ff2-0707ffc56bef', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bf27023e0>]}
+[0m10:19:26.833890 [error] [Thread-1 (]: 1 of 1 ERROR creating sql view model raw.pokemon ............................... [[31mERROR[0m in 0.05s]
+[0m10:19:26.834547 [debug] [Thread-1 (]: Finished running node model.nerd_facts_dbt.pokemon
+[0m10:19:26.835115 [debug] [Thread-7 (]: Marking all children of 'model.nerd_facts_dbt.pokemon' to be skipped because of status 'error'.  Reason: Database Error in model pokemon (models/pokemon.sql)
+  operator does not exist: text * text
+  LINE 16:     ROUND(weight / (height * height), 2) AS bmi
+                                      ^
+  HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+  compiled code at target/run/nerd_facts_dbt/models/pokemon.sql.
+[0m10:19:26.836534 [debug] [MainThread]: Using postgres connection "master"
+[0m10:19:26.836814 [debug] [MainThread]: On master: BEGIN
+[0m10:19:26.837031 [debug] [MainThread]: Opening a new connection, currently in state closed
+[0m10:19:26.849044 [debug] [MainThread]: SQL status: BEGIN in 0.012 seconds
+[0m10:19:26.849515 [debug] [MainThread]: On master: COMMIT
+[0m10:19:26.849867 [debug] [MainThread]: Using postgres connection "master"
+[0m10:19:26.850136 [debug] [MainThread]: On master: COMMIT
+[0m10:19:26.850515 [debug] [MainThread]: SQL status: COMMIT in 0.000 seconds
+[0m10:19:26.850810 [debug] [MainThread]: On master: Close
+[0m10:19:26.851396 [debug] [MainThread]: Connection 'master' was properly closed.
+[0m10:19:26.851748 [debug] [MainThread]: Connection 'list_nerd_facts' was properly closed.
+[0m10:19:26.852062 [debug] [MainThread]: Connection 'model.nerd_facts_dbt.pokemon' was properly closed.
+[0m10:19:26.852413 [info ] [MainThread]: 
+[0m10:19:26.852779 [info ] [MainThread]: Finished running 1 view model in 0 hours 0 minutes and 0.18 seconds (0.18s).
+[0m10:19:26.853565 [debug] [MainThread]: Command end result
+[0m10:19:26.872684 [debug] [MainThread]: Wrote artifact WritableManifest to /home/janne/nerd-facts-dbt/dbt_project/target/manifest.json
+[0m10:19:26.874153 [debug] [MainThread]: Wrote artifact SemanticManifest to /home/janne/nerd-facts-dbt/dbt_project/target/semantic_manifest.json
+[0m10:19:26.879473 [debug] [MainThread]: Wrote artifact RunExecutionResult to /home/janne/nerd-facts-dbt/dbt_project/target/run_results.json
+[0m10:19:26.879848 [info ] [MainThread]: 
+[0m10:19:26.880249 [info ] [MainThread]: [31mCompleted with 1 error, 0 partial successes, and 0 warnings:[0m
+[0m10:19:26.880578 [info ] [MainThread]: 
+[0m10:19:26.880947 [error] [MainThread]:   Database Error in model pokemon (models/pokemon.sql)
+  operator does not exist: text * text
+  LINE 16:     ROUND(weight / (height * height), 2) AS bmi
+                                      ^
+  HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+  compiled code at target/run/nerd_facts_dbt/models/pokemon.sql
+[0m10:19:26.881248 [info ] [MainThread]: 
+[0m10:19:26.881592 [info ] [MainThread]: Done. PASS=0 WARN=0 ERROR=1 SKIP=0 TOTAL=1
+[0m10:19:26.882382 [debug] [MainThread]: Resource report: {"command_name": "run", "command_success": false, "command_wall_clock_time": 0.6551281, "process_in_blocks": "0", "process_kernel_time": 0.091696, "process_mem_max_rss": "108044", "process_out_blocks": "1712", "process_user_time": 1.530676}
+[0m10:19:26.882757 [debug] [MainThread]: Command `dbt run` failed at 10:19:26.882673 after 0.66 seconds
+[0m10:19:26.883111 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bf25e0910>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bf33f0b80>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bf249e410>]}
+[0m10:19:26.883468 [debug] [MainThread]: Flushing usage events
+[0m10:19:27.265711 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m10:20:52.502193 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f8409bf08e0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f840aa637c0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f840aa63820>]}
+
+
+============================== 10:20:52.504542 | 89dbec8a-d7e6-4284-b60e-fa8003117cde ==============================
+[0m10:20:52.504542 [info ] [MainThread]: Running with dbt=1.9.3
+[0m10:20:52.505074 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'write_json': 'True', 'log_cache_events': 'False', 'partial_parse': 'True', 'cache_selected_only': 'False', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'version_check': 'True', 'warn_error': 'None', 'log_path': '/home/janne/nerd-facts-dbt/dbt_project/logs', 'debug': 'False', 'fail_fast': 'False', 'use_colors': 'True', 'use_experimental_parser': 'False', 'no_print': 'None', 'quiet': 'False', 'empty': 'False', 'log_format': 'default', 'introspect': 'True', 'static_parser': 'True', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'target_path': 'None', 'invocation_command': 'dbt run', 'send_anonymous_usage_stats': 'True'}
+[0m10:20:52.638514 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': '89dbec8a-d7e6-4284-b60e-fa8003117cde', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f840abca710>]}
+[0m10:20:52.690532 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'adapter_info', 'label': '89dbec8a-d7e6-4284-b60e-fa8003117cde', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f840aa63790>]}
+[0m10:20:52.691237 [info ] [MainThread]: Registered adapter: postgres=1.9.0
+[0m10:20:52.771304 [debug] [MainThread]: checksum: 5671c00892cdbcef29c3b00cc5ba7510c3d18a35c883caeb9ab9ee266dc29c8f, vars: {}, profile: , target: , version: 1.9.3
+[0m10:20:52.845997 [debug] [MainThread]: Partial parsing enabled: 0 files deleted, 0 files added, 1 files changed.
+[0m10:20:52.846617 [debug] [MainThread]: Partial parsing: updated file: nerd_facts_dbt://models/pokemon.sql
+[0m10:20:53.046831 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'load_project', 'label': '89dbec8a-d7e6-4284-b60e-fa8003117cde', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f8407de27d0>]}
+[0m10:20:53.102171 [debug] [MainThread]: Wrote artifact WritableManifest to /home/janne/nerd-facts-dbt/dbt_project/target/manifest.json
+[0m10:20:53.104392 [debug] [MainThread]: Wrote artifact SemanticManifest to /home/janne/nerd-facts-dbt/dbt_project/target/semantic_manifest.json
+[0m10:20:53.112896 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'resource_counts', 'label': '89dbec8a-d7e6-4284-b60e-fa8003117cde', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f8407dbd510>]}
+[0m10:20:53.113394 [info ] [MainThread]: Found 1 model, 433 macros
+[0m10:20:53.113792 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': '89dbec8a-d7e6-4284-b60e-fa8003117cde', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f8407dbcaf0>]}
+[0m10:20:53.115208 [info ] [MainThread]: 
+[0m10:20:53.115575 [info ] [MainThread]: Concurrency: 4 threads (target='dev')
+[0m10:20:53.115877 [info ] [MainThread]: 
+[0m10:20:53.116355 [debug] [MainThread]: Acquiring new postgres connection 'master'
+[0m10:20:53.117157 [debug] [ThreadPool]: Acquiring new postgres connection 'list_nerd_facts'
+[0m10:20:53.148073 [debug] [ThreadPool]: Using postgres connection "list_nerd_facts"
+[0m10:20:53.148537 [debug] [ThreadPool]: On list_nerd_facts: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "connection_name": "list_nerd_facts"} */
+
+    select distinct nspname from pg_namespace
+  
+[0m10:20:53.148860 [debug] [ThreadPool]: Opening a new connection, currently in state init
+[0m10:20:53.162035 [debug] [ThreadPool]: SQL status: SELECT 5 in 0.013 seconds
+[0m10:20:53.163229 [debug] [ThreadPool]: On list_nerd_facts: Close
+[0m10:20:53.165836 [debug] [ThreadPool]: Re-using an available connection from the pool (formerly list_nerd_facts, now list_nerd_facts_raw)
+[0m10:20:53.171270 [debug] [ThreadPool]: Using postgres connection "list_nerd_facts_raw"
+[0m10:20:53.171688 [debug] [ThreadPool]: On list_nerd_facts_raw: BEGIN
+[0m10:20:53.171998 [debug] [ThreadPool]: Opening a new connection, currently in state closed
+[0m10:20:53.184348 [debug] [ThreadPool]: SQL status: BEGIN in 0.012 seconds
+[0m10:20:53.184723 [debug] [ThreadPool]: Using postgres connection "list_nerd_facts_raw"
+[0m10:20:53.184985 [debug] [ThreadPool]: On list_nerd_facts_raw: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "connection_name": "list_nerd_facts_raw"} */
+select
+      'nerd_facts' as database,
+      tablename as name,
+      schemaname as schema,
+      'table' as type
+    from pg_tables
+    where schemaname ilike 'raw'
+    union all
+    select
+      'nerd_facts' as database,
+      viewname as name,
+      schemaname as schema,
+      'view' as type
+    from pg_views
+    where schemaname ilike 'raw'
+    union all
+    select
+      'nerd_facts' as database,
+      matviewname as name,
+      schemaname as schema,
+      'materialized_view' as type
+    from pg_matviews
+    where schemaname ilike 'raw'
+  
+[0m10:20:53.187305 [debug] [ThreadPool]: SQL status: SELECT 5 in 0.002 seconds
+[0m10:20:53.188307 [debug] [ThreadPool]: On list_nerd_facts_raw: ROLLBACK
+[0m10:20:53.188670 [debug] [ThreadPool]: On list_nerd_facts_raw: Close
+[0m10:20:53.192525 [debug] [MainThread]: Using postgres connection "master"
+[0m10:20:53.192857 [debug] [MainThread]: On master: BEGIN
+[0m10:20:53.193100 [debug] [MainThread]: Opening a new connection, currently in state init
+[0m10:20:53.205186 [debug] [MainThread]: SQL status: BEGIN in 0.012 seconds
+[0m10:20:53.205564 [debug] [MainThread]: Using postgres connection "master"
+[0m10:20:53.205865 [debug] [MainThread]: On master: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "connection_name": "master"} */
+with relation as (
+        select
+            pg_rewrite.ev_class as class,
+            pg_rewrite.oid as id
+        from pg_rewrite
+    ),
+    class as (
+        select
+            oid as id,
+            relname as name,
+            relnamespace as schema,
+            relkind as kind
+        from pg_class
+    ),
+    dependency as (
+        select distinct
+            pg_depend.objid as id,
+            pg_depend.refobjid as ref
+        from pg_depend
+    ),
+    schema as (
+        select
+            pg_namespace.oid as id,
+            pg_namespace.nspname as name
+        from pg_namespace
+        where nspname != 'information_schema' and nspname not like 'pg\_%'
+    ),
+    referenced as (
+        select
+            relation.id AS id,
+            referenced_class.name ,
+            referenced_class.schema ,
+            referenced_class.kind
+        from relation
+        join class as referenced_class on relation.class=referenced_class.id
+        where referenced_class.kind in ('r', 'v', 'm')
+    ),
+    relationships as (
+        select
+            referenced.name as referenced_name,
+            referenced.schema as referenced_schema_id,
+            dependent_class.name as dependent_name,
+            dependent_class.schema as dependent_schema_id,
+            referenced.kind as kind
+        from referenced
+        join dependency on referenced.id=dependency.id
+        join class as dependent_class on dependency.ref=dependent_class.id
+        where
+            (referenced.name != dependent_class.name or
+             referenced.schema != dependent_class.schema)
+    )
+
+    select
+        referenced_schema.name as referenced_schema,
+        relationships.referenced_name as referenced_name,
+        dependent_schema.name as dependent_schema,
+        relationships.dependent_name as dependent_name
+    from relationships
+    join schema as dependent_schema on relationships.dependent_schema_id=dependent_schema.id
+    join schema as referenced_schema on relationships.referenced_schema_id=referenced_schema.id
+    group by referenced_schema, referenced_name, dependent_schema, dependent_name
+    order by referenced_schema, referenced_name, dependent_schema, dependent_name;
+[0m10:20:53.213122 [debug] [MainThread]: SQL status: SELECT 0 in 0.007 seconds
+[0m10:20:53.214060 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': '89dbec8a-d7e6-4284-b60e-fa8003117cde', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f8407de2fe0>]}
+[0m10:20:53.214459 [debug] [MainThread]: On master: ROLLBACK
+[0m10:20:53.214886 [debug] [MainThread]: Using postgres connection "master"
+[0m10:20:53.215148 [debug] [MainThread]: On master: BEGIN
+[0m10:20:53.215530 [debug] [MainThread]: SQL status: BEGIN in 0.000 seconds
+[0m10:20:53.215766 [debug] [MainThread]: On master: COMMIT
+[0m10:20:53.215989 [debug] [MainThread]: Using postgres connection "master"
+[0m10:20:53.216197 [debug] [MainThread]: On master: COMMIT
+[0m10:20:53.216474 [debug] [MainThread]: SQL status: COMMIT in 0.000 seconds
+[0m10:20:53.216701 [debug] [MainThread]: On master: Close
+[0m10:20:53.218640 [debug] [Thread-1 (]: Began running node model.nerd_facts_dbt.pokemon
+[0m10:20:53.219141 [info ] [Thread-1 (]: 1 of 1 START sql view model raw.pokemon ........................................ [RUN]
+[0m10:20:53.219569 [debug] [Thread-1 (]: Re-using an available connection from the pool (formerly list_nerd_facts_raw, now model.nerd_facts_dbt.pokemon)
+[0m10:20:53.219860 [debug] [Thread-1 (]: Began compiling node model.nerd_facts_dbt.pokemon
+[0m10:20:53.225228 [debug] [Thread-1 (]: Writing injected SQL for node "model.nerd_facts_dbt.pokemon"
+[0m10:20:53.225753 [debug] [Thread-1 (]: Began executing node model.nerd_facts_dbt.pokemon
+[0m10:20:53.255249 [debug] [Thread-1 (]: Writing runtime sql for node "model.nerd_facts_dbt.pokemon"
+[0m10:20:53.255956 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m10:20:53.256298 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: BEGIN
+[0m10:20:53.256585 [debug] [Thread-1 (]: Opening a new connection, currently in state closed
+[0m10:20:53.268776 [debug] [Thread-1 (]: SQL status: BEGIN in 0.012 seconds
+[0m10:20:53.269196 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m10:20:53.269521 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "node_id": "model.nerd_facts_dbt.pokemon"} */
+
+  create view "nerd_facts"."raw"."pokemon__dbt_tmp"
+    
+    
+  as (
+    WITH source AS (
+    SELECT * FROM raw.pokeapi_pokemon
+)
+
+SELECT 
+    id,
+    name,
+    CAST(height AS NUMERIC) AS height,  -- ✅ Convert to numeric
+    CAST(weight AS NUMERIC) AS weight,  -- ✅ Convert to numeric
+    ROUND(CAST(weight AS NUMERIC) / (CAST(height AS NUMERIC) * CAST(height AS NUMERIC)), 2) AS bmi  -- ✅ Calculate BMI
+FROM source
+  );
+[0m10:20:53.271476 [debug] [Thread-1 (]: SQL status: CREATE VIEW in 0.002 seconds
+[0m10:20:53.312281 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m10:20:53.312690 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "node_id": "model.nerd_facts_dbt.pokemon"} */
+alter table "nerd_facts"."raw"."pokemon__dbt_tmp" rename to "pokemon"
+[0m10:20:53.313408 [debug] [Thread-1 (]: SQL status: ALTER TABLE in 0.000 seconds
+[0m10:20:53.324302 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: COMMIT
+[0m10:20:53.324682 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m10:20:53.324965 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: COMMIT
+[0m10:20:53.331372 [debug] [Thread-1 (]: SQL status: COMMIT in 0.006 seconds
+[0m10:20:53.336701 [debug] [Thread-1 (]: Applying DROP to: "nerd_facts"."raw"."pokemon__dbt_backup"
+[0m10:20:53.340361 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m10:20:53.340726 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "node_id": "model.nerd_facts_dbt.pokemon"} */
+drop view if exists "nerd_facts"."raw"."pokemon__dbt_backup" cascade
+[0m10:20:53.341240 [debug] [Thread-1 (]: SQL status: DROP VIEW in 0.000 seconds
+[0m10:20:53.343217 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: Close
+[0m10:20:53.344754 [debug] [Thread-1 (]: Sending event: {'category': 'dbt', 'action': 'run_model', 'label': '89dbec8a-d7e6-4284-b60e-fa8003117cde', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f8406c7f010>]}
+[0m10:20:53.345351 [info ] [Thread-1 (]: 1 of 1 OK created sql view model raw.pokemon ................................... [[32mCREATE VIEW[0m in 0.12s]
+[0m10:20:53.345875 [debug] [Thread-1 (]: Finished running node model.nerd_facts_dbt.pokemon
+[0m10:20:53.346942 [debug] [MainThread]: Using postgres connection "master"
+[0m10:20:53.347227 [debug] [MainThread]: On master: BEGIN
+[0m10:20:53.347455 [debug] [MainThread]: Opening a new connection, currently in state closed
+[0m10:20:53.359402 [debug] [MainThread]: SQL status: BEGIN in 0.012 seconds
+[0m10:20:53.359813 [debug] [MainThread]: On master: COMMIT
+[0m10:20:53.360094 [debug] [MainThread]: Using postgres connection "master"
+[0m10:20:53.360333 [debug] [MainThread]: On master: COMMIT
+[0m10:20:53.360655 [debug] [MainThread]: SQL status: COMMIT in 0.000 seconds
+[0m10:20:53.360906 [debug] [MainThread]: On master: Close
+[0m10:20:53.361370 [debug] [MainThread]: Connection 'master' was properly closed.
+[0m10:20:53.361671 [debug] [MainThread]: Connection 'model.nerd_facts_dbt.pokemon' was properly closed.
+[0m10:20:53.361946 [info ] [MainThread]: 
+[0m10:20:53.362341 [info ] [MainThread]: Finished running 1 view model in 0 hours 0 minutes and 0.25 seconds (0.25s).
+[0m10:20:53.363036 [debug] [MainThread]: Command end result
+[0m10:20:53.379265 [debug] [MainThread]: Wrote artifact WritableManifest to /home/janne/nerd-facts-dbt/dbt_project/target/manifest.json
+[0m10:20:53.380581 [debug] [MainThread]: Wrote artifact SemanticManifest to /home/janne/nerd-facts-dbt/dbt_project/target/semantic_manifest.json
+[0m10:20:53.386065 [debug] [MainThread]: Wrote artifact RunExecutionResult to /home/janne/nerd-facts-dbt/dbt_project/target/run_results.json
+[0m10:20:53.386379 [info ] [MainThread]: 
+[0m10:20:53.386732 [info ] [MainThread]: [32mCompleted successfully[0m
+[0m10:20:53.387000 [info ] [MainThread]: 
+[0m10:20:53.387268 [info ] [MainThread]: Done. PASS=1 WARN=0 ERROR=0 SKIP=0 TOTAL=1
+[0m10:20:53.387935 [debug] [MainThread]: Resource report: {"command_name": "run", "command_success": true, "command_wall_clock_time": 0.9309484, "process_in_blocks": "0", "process_kernel_time": 0.095683, "process_mem_max_rss": "111104", "process_out_blocks": "2536", "process_user_time": 1.733626}
+[0m10:20:53.388284 [debug] [MainThread]: Command `dbt run` succeeded at 10:20:53.388191 after 0.93 seconds
+[0m10:20:53.388599 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f8409bf08e0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f8409a89f30>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f8407dbc280>]}
+[0m10:20:53.388890 [debug] [MainThread]: Flushing usage events
+[0m10:20:53.787307 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m12:48:33.661100 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f8369b988b0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f8368b4d870>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f8368b4d810>]}
+
+
+============================== 12:48:33.663967 | f944e282-6c0b-4ade-9af5-bad02966a972 ==============================
+[0m12:48:33.663967 [info ] [MainThread]: Running with dbt=1.9.3
+[0m12:48:33.664405 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'write_json': 'True', 'log_cache_events': 'False', 'partial_parse': 'True', 'cache_selected_only': 'False', 'warn_error': 'None', 'fail_fast': 'False', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'log_path': '/home/janne/nerd-facts-dbt/dbt_project/logs', 'debug': 'False', 'version_check': 'True', 'use_colors': 'True', 'use_experimental_parser': 'False', 'empty': 'None', 'quiet': 'False', 'no_print': 'None', 'log_format': 'default', 'invocation_command': 'dbt debug', 'static_parser': 'True', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'target_path': 'None', 'introspect': 'True', 'send_anonymous_usage_stats': 'True'}
+[0m12:48:33.669866 [info ] [MainThread]: dbt version: 1.9.3
+[0m12:48:33.670196 [info ] [MainThread]: python version: 3.10.12
+[0m12:48:33.670454 [info ] [MainThread]: python path: /home/janne/nerd-facts-dbt/venv/bin/python3
+[0m12:48:33.670684 [info ] [MainThread]: os info: Linux-5.15.0-134-generic-x86_64-with-glibc2.35
+[0m12:48:33.712654 [info ] [MainThread]: Using profiles dir at /home/janne/nerd-facts-dbt/dbt_project
+[0m12:48:33.713076 [info ] [MainThread]: Using profiles.yml file at /home/janne/nerd-facts-dbt/dbt_project/profiles.yml
+[0m12:48:33.713351 [info ] [MainThread]: Using dbt_project.yml file at /home/janne/nerd-facts-dbt/dbt_project/dbt_project.yml
+[0m12:48:33.713739 [info ] [MainThread]: adapter type: postgres
+[0m12:48:33.713984 [info ] [MainThread]: adapter version: 1.9.0
+[0m12:48:33.797316 [info ] [MainThread]: Configuration:
+[0m12:48:33.797824 [info ] [MainThread]:   profiles.yml file [[32mOK found and valid[0m]
+[0m12:48:33.798179 [info ] [MainThread]:   dbt_project.yml file [[32mOK found and valid[0m]
+[0m12:48:33.798492 [info ] [MainThread]: Required dependencies:
+[0m12:48:33.798816 [debug] [MainThread]: Executing "git --help"
+[0m12:48:33.800321 [debug] [MainThread]: STDOUT: "b"usage: git [--version] [--help] [-C <path>] [-c <name>=<value>]\n           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]\n           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]\n           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]\n           [--super-prefix=<path>] [--config-env=<name>=<envvar>]\n           <command> [<args>]\n\nThese are common Git commands used in various situations:\n\nstart a working area (see also: git help tutorial)\n   clone     Clone a repository into a new directory\n   init      Create an empty Git repository or reinitialize an existing one\n\nwork on the current change (see also: git help everyday)\n   add       Add file contents to the index\n   mv        Move or rename a file, a directory, or a symlink\n   restore   Restore working tree files\n   rm        Remove files from the working tree and from the index\n\nexamine the history and state (see also: git help revisions)\n   bisect    Use binary search to find the commit that introduced a bug\n   diff      Show changes between commits, commit and working tree, etc\n   grep      Print lines matching a pattern\n   log       Show commit logs\n   show      Show various types of objects\n   status    Show the working tree status\n\ngrow, mark and tweak your common history\n   branch    List, create, or delete branches\n   commit    Record changes to the repository\n   merge     Join two or more development histories together\n   rebase    Reapply commits on top of another base tip\n   reset     Reset current HEAD to the specified state\n   switch    Switch branches\n   tag       Create, list, delete or verify a tag object signed with GPG\n\ncollaborate (see also: git help workflows)\n   fetch     Download objects and refs from another repository\n   pull      Fetch from and integrate with another repository or a local branch\n   push      Update remote refs along with associated objects\n\n'git help -a' and 'git help -g' list available subcommands and some\nconcept guides. See 'git help <command>' or 'git help <concept>'\nto read about a specific subcommand or concept.\nSee 'git help git' for an overview of the system.\n""
+[0m12:48:33.800669 [debug] [MainThread]: STDERR: "b''"
+[0m12:48:33.800952 [info ] [MainThread]:  - git [[32mOK found[0m]
+
+[0m12:48:33.801274 [info ] [MainThread]: Connection:
+[0m12:48:33.801625 [info ] [MainThread]:   host: localhost
+[0m12:48:33.801920 [info ] [MainThread]:   port: 5432
+[0m12:48:33.802208 [info ] [MainThread]:   user: dbt_user
+[0m12:48:33.802490 [info ] [MainThread]:   database: nerd_facts
+[0m12:48:33.802783 [info ] [MainThread]:   schema: public
+[0m12:48:33.803067 [info ] [MainThread]:   connect_timeout: 10
+[0m12:48:33.803353 [info ] [MainThread]:   role: None
+[0m12:48:33.803629 [info ] [MainThread]:   search_path: None
+[0m12:48:33.803916 [info ] [MainThread]:   keepalives_idle: 0
+[0m12:48:33.804194 [info ] [MainThread]:   sslmode: None
+[0m12:48:33.804482 [info ] [MainThread]:   sslcert: None
+[0m12:48:33.804765 [info ] [MainThread]:   sslkey: None
+[0m12:48:33.805053 [info ] [MainThread]:   sslrootcert: None
+[0m12:48:33.805334 [info ] [MainThread]:   application_name: dbt
+[0m12:48:33.805630 [info ] [MainThread]:   retries: 1
+[0m12:48:33.806046 [info ] [MainThread]: Registered adapter: postgres=1.9.0
+[0m12:48:33.887743 [debug] [MainThread]: Acquiring new postgres connection 'debug'
+[0m12:48:33.908945 [debug] [MainThread]: Using postgres connection "debug"
+[0m12:48:33.909337 [debug] [MainThread]: On debug: select 1 as id
+[0m12:48:33.909662 [debug] [MainThread]: Opening a new connection, currently in state init
+[0m12:48:33.922479 [debug] [MainThread]: SQL status: SELECT 1 in 0.013 seconds
+[0m12:48:33.923457 [debug] [MainThread]: On debug: Close
+[0m12:48:33.923983 [info ] [MainThread]:   Connection test: [[32mOK connection ok[0m]
+
+[0m12:48:33.924625 [info ] [MainThread]: [32mAll checks passed![0m
+[0m12:48:33.925751 [debug] [MainThread]: Resource report: {"command_name": "debug", "command_success": true, "command_wall_clock_time": 0.31863078, "process_in_blocks": "32", "process_kernel_time": 0.063884, "process_mem_max_rss": "100936", "process_out_blocks": "24", "process_user_time": 1.153817}
+[0m12:48:33.926286 [debug] [MainThread]: Command `dbt debug` succeeded at 12:48:33.926171 after 0.32 seconds
+[0m12:48:33.926647 [debug] [MainThread]: Connection 'debug' was properly closed.
+[0m12:48:33.926973 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f8369b988b0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f836a9e5630>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f8369a69930>]}
+[0m12:48:33.927340 [debug] [MainThread]: Flushing usage events
+[0m12:48:34.329539 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m12:48:43.992391 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bbd3a4910>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bbe2177c0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bbe217820>]}
+
+
+============================== 12:48:43.994559 | 65757145-758a-49a2-8d78-60db90f70258 ==============================
+[0m12:48:43.994559 [info ] [MainThread]: Running with dbt=1.9.3
+[0m12:48:43.994987 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'log_cache_events': 'False', 'write_json': 'True', 'partial_parse': 'True', 'cache_selected_only': 'False', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'version_check': 'True', 'warn_error': 'None', 'log_path': '/home/janne/nerd-facts-dbt/dbt_project/logs', 'debug': 'False', 'fail_fast': 'False', 'use_colors': 'True', 'use_experimental_parser': 'False', 'empty': 'False', 'quiet': 'False', 'no_print': 'None', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'introspect': 'True', 'invocation_command': 'dbt run', 'static_parser': 'True', 'target_path': 'None', 'log_format': 'default', 'send_anonymous_usage_stats': 'True'}
+[0m12:48:44.129950 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': '65757145-758a-49a2-8d78-60db90f70258', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bbe1c22f0>]}
+[0m12:48:44.178211 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'adapter_info', 'label': '65757145-758a-49a2-8d78-60db90f70258', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bbc41c4f0>]}
+[0m12:48:44.178896 [info ] [MainThread]: Registered adapter: postgres=1.9.0
+[0m12:48:44.252141 [debug] [MainThread]: checksum: 5671c00892cdbcef29c3b00cc5ba7510c3d18a35c883caeb9ab9ee266dc29c8f, vars: {}, profile: , target: , version: 1.9.3
+[0m12:48:44.306570 [info ] [MainThread]: Unable to do partial parsing because profile has changed
+[0m12:48:44.307006 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'partial_parser', 'label': '65757145-758a-49a2-8d78-60db90f70258', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bbcb319c0>]}
+[0m12:48:45.069602 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'load_project', 'label': '65757145-758a-49a2-8d78-60db90f70258', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bbb89b8e0>]}
+[0m12:48:45.122264 [debug] [MainThread]: Wrote artifact WritableManifest to /home/janne/nerd-facts-dbt/dbt_project/target/manifest.json
+[0m12:48:45.124401 [debug] [MainThread]: Wrote artifact SemanticManifest to /home/janne/nerd-facts-dbt/dbt_project/target/semantic_manifest.json
+[0m12:48:45.134326 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'resource_counts', 'label': '65757145-758a-49a2-8d78-60db90f70258', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bbb9ff730>]}
+[0m12:48:45.134803 [info ] [MainThread]: Found 1 model, 433 macros
+[0m12:48:45.135189 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': '65757145-758a-49a2-8d78-60db90f70258', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bbc6db370>]}
+[0m12:48:45.136409 [info ] [MainThread]: 
+[0m12:48:45.136735 [info ] [MainThread]: Concurrency: 4 threads (target='dev')
+[0m12:48:45.136975 [info ] [MainThread]: 
+[0m12:48:45.137360 [debug] [MainThread]: Acquiring new postgres connection 'master'
+[0m12:48:45.138165 [debug] [ThreadPool]: Acquiring new postgres connection 'list_nerd_facts'
+[0m12:48:45.168016 [debug] [ThreadPool]: Using postgres connection "list_nerd_facts"
+[0m12:48:45.168421 [debug] [ThreadPool]: On list_nerd_facts: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "connection_name": "list_nerd_facts"} */
+
+    select distinct nspname from pg_namespace
+  
+[0m12:48:45.168684 [debug] [ThreadPool]: Opening a new connection, currently in state init
+[0m12:48:45.182893 [debug] [ThreadPool]: SQL status: SELECT 5 in 0.014 seconds
+[0m12:48:45.183944 [debug] [ThreadPool]: On list_nerd_facts: Close
+[0m12:48:45.185161 [debug] [ThreadPool]: Acquiring new postgres connection 'list_nerd_facts_public'
+[0m12:48:45.190361 [debug] [ThreadPool]: Using postgres connection "list_nerd_facts_public"
+[0m12:48:45.190695 [debug] [ThreadPool]: On list_nerd_facts_public: BEGIN
+[0m12:48:45.190939 [debug] [ThreadPool]: Opening a new connection, currently in state init
+[0m12:48:45.204115 [debug] [ThreadPool]: SQL status: BEGIN in 0.013 seconds
+[0m12:48:45.204542 [debug] [ThreadPool]: Using postgres connection "list_nerd_facts_public"
+[0m12:48:45.204830 [debug] [ThreadPool]: On list_nerd_facts_public: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "connection_name": "list_nerd_facts_public"} */
+select
+      'nerd_facts' as database,
+      tablename as name,
+      schemaname as schema,
+      'table' as type
+    from pg_tables
+    where schemaname ilike 'public'
+    union all
+    select
+      'nerd_facts' as database,
+      viewname as name,
+      schemaname as schema,
+      'view' as type
+    from pg_views
+    where schemaname ilike 'public'
+    union all
+    select
+      'nerd_facts' as database,
+      matviewname as name,
+      schemaname as schema,
+      'materialized_view' as type
+    from pg_matviews
+    where schemaname ilike 'public'
+  
+[0m12:48:45.207312 [debug] [ThreadPool]: SQL status: SELECT 0 in 0.002 seconds
+[0m12:48:45.208280 [debug] [ThreadPool]: On list_nerd_facts_public: ROLLBACK
+[0m12:48:45.208692 [debug] [ThreadPool]: On list_nerd_facts_public: Close
+[0m12:48:45.212411 [debug] [MainThread]: Using postgres connection "master"
+[0m12:48:45.212800 [debug] [MainThread]: On master: BEGIN
+[0m12:48:45.213046 [debug] [MainThread]: Opening a new connection, currently in state init
+[0m12:48:45.225193 [debug] [MainThread]: SQL status: BEGIN in 0.012 seconds
+[0m12:48:45.225580 [debug] [MainThread]: Using postgres connection "master"
+[0m12:48:45.225887 [debug] [MainThread]: On master: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "connection_name": "master"} */
+with relation as (
+        select
+            pg_rewrite.ev_class as class,
+            pg_rewrite.oid as id
+        from pg_rewrite
+    ),
+    class as (
+        select
+            oid as id,
+            relname as name,
+            relnamespace as schema,
+            relkind as kind
+        from pg_class
+    ),
+    dependency as (
+        select distinct
+            pg_depend.objid as id,
+            pg_depend.refobjid as ref
+        from pg_depend
+    ),
+    schema as (
+        select
+            pg_namespace.oid as id,
+            pg_namespace.nspname as name
+        from pg_namespace
+        where nspname != 'information_schema' and nspname not like 'pg\_%'
+    ),
+    referenced as (
+        select
+            relation.id AS id,
+            referenced_class.name ,
+            referenced_class.schema ,
+            referenced_class.kind
+        from relation
+        join class as referenced_class on relation.class=referenced_class.id
+        where referenced_class.kind in ('r', 'v', 'm')
+    ),
+    relationships as (
+        select
+            referenced.name as referenced_name,
+            referenced.schema as referenced_schema_id,
+            dependent_class.name as dependent_name,
+            dependent_class.schema as dependent_schema_id,
+            referenced.kind as kind
+        from referenced
+        join dependency on referenced.id=dependency.id
+        join class as dependent_class on dependency.ref=dependent_class.id
+        where
+            (referenced.name != dependent_class.name or
+             referenced.schema != dependent_class.schema)
+    )
+
+    select
+        referenced_schema.name as referenced_schema,
+        relationships.referenced_name as referenced_name,
+        dependent_schema.name as dependent_schema,
+        relationships.dependent_name as dependent_name
+    from relationships
+    join schema as dependent_schema on relationships.dependent_schema_id=dependent_schema.id
+    join schema as referenced_schema on relationships.referenced_schema_id=referenced_schema.id
+    group by referenced_schema, referenced_name, dependent_schema, dependent_name
+    order by referenced_schema, referenced_name, dependent_schema, dependent_name;
+[0m12:48:45.234227 [debug] [MainThread]: SQL status: SELECT 1 in 0.008 seconds
+[0m12:48:45.235241 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': '65757145-758a-49a2-8d78-60db90f70258', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bbb0fe2c0>]}
+[0m12:48:45.235659 [debug] [MainThread]: On master: ROLLBACK
+[0m12:48:45.236048 [debug] [MainThread]: Using postgres connection "master"
+[0m12:48:45.236295 [debug] [MainThread]: On master: BEGIN
+[0m12:48:45.236754 [debug] [MainThread]: SQL status: BEGIN in 0.000 seconds
+[0m12:48:45.237006 [debug] [MainThread]: On master: COMMIT
+[0m12:48:45.237247 [debug] [MainThread]: Using postgres connection "master"
+[0m12:48:45.237487 [debug] [MainThread]: On master: COMMIT
+[0m12:48:45.237799 [debug] [MainThread]: SQL status: COMMIT in 0.000 seconds
+[0m12:48:45.238031 [debug] [MainThread]: On master: Close
+[0m12:48:45.241566 [debug] [Thread-1 (]: Began running node model.nerd_facts_dbt.pokemon
+[0m12:48:45.242106 [info ] [Thread-1 (]: 1 of 1 START sql view model public.pokemon ..................................... [RUN]
+[0m12:48:45.242542 [debug] [Thread-1 (]: Re-using an available connection from the pool (formerly list_nerd_facts_public, now model.nerd_facts_dbt.pokemon)
+[0m12:48:45.242829 [debug] [Thread-1 (]: Began compiling node model.nerd_facts_dbt.pokemon
+[0m12:48:45.248288 [debug] [Thread-1 (]: Writing injected SQL for node "model.nerd_facts_dbt.pokemon"
+[0m12:48:45.248857 [debug] [Thread-1 (]: Began executing node model.nerd_facts_dbt.pokemon
+[0m12:48:45.278798 [debug] [Thread-1 (]: Writing runtime sql for node "model.nerd_facts_dbt.pokemon"
+[0m12:48:45.279450 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m12:48:45.279794 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: BEGIN
+[0m12:48:45.280053 [debug] [Thread-1 (]: Opening a new connection, currently in state closed
+[0m12:48:45.292380 [debug] [Thread-1 (]: SQL status: BEGIN in 0.012 seconds
+[0m12:48:45.292860 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m12:48:45.293170 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "node_id": "model.nerd_facts_dbt.pokemon"} */
+
+  create view "nerd_facts"."public"."pokemon__dbt_tmp"
+    
+    
+  as (
+    WITH source AS (
+    SELECT * FROM raw.pokeapi_pokemon
+)
+
+SELECT 
+    id,
+    name,
+    CAST(height AS NUMERIC) AS height,  -- ✅ Convert to numeric
+    CAST(weight AS NUMERIC) AS weight,  -- ✅ Convert to numeric
+    ROUND(CAST(weight AS NUMERIC) / (CAST(height AS NUMERIC) * CAST(height AS NUMERIC)), 2) AS bmi
+FROM source
+  );
+[0m12:48:45.295801 [debug] [Thread-1 (]: SQL status: CREATE VIEW in 0.002 seconds
+[0m12:48:45.301772 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m12:48:45.302136 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "node_id": "model.nerd_facts_dbt.pokemon"} */
+alter table "nerd_facts"."public"."pokemon__dbt_tmp" rename to "pokemon"
+[0m12:48:45.303044 [debug] [Thread-1 (]: SQL status: ALTER TABLE in 0.001 seconds
+[0m12:48:45.314497 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: COMMIT
+[0m12:48:45.314887 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m12:48:45.315174 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: COMMIT
+[0m12:48:45.322049 [debug] [Thread-1 (]: SQL status: COMMIT in 0.006 seconds
+[0m12:48:45.327346 [debug] [Thread-1 (]: Applying DROP to: "nerd_facts"."public"."pokemon__dbt_backup"
+[0m12:48:45.330715 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m12:48:45.331059 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "node_id": "model.nerd_facts_dbt.pokemon"} */
+drop view if exists "nerd_facts"."public"."pokemon__dbt_backup" cascade
+[0m12:48:45.331637 [debug] [Thread-1 (]: SQL status: DROP VIEW in 0.000 seconds
+[0m12:48:45.333813 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: Close
+[0m12:48:45.335600 [debug] [Thread-1 (]: Sending event: {'category': 'dbt', 'action': 'run_model', 'label': '65757145-758a-49a2-8d78-60db90f70258', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bba579c00>]}
+[0m12:48:45.336360 [info ] [Thread-1 (]: 1 of 1 OK created sql view model public.pokemon ................................ [[32mCREATE VIEW[0m in 0.09s]
+[0m12:48:45.336892 [debug] [Thread-1 (]: Finished running node model.nerd_facts_dbt.pokemon
+[0m12:48:45.337890 [debug] [MainThread]: Using postgres connection "master"
+[0m12:48:45.338178 [debug] [MainThread]: On master: BEGIN
+[0m12:48:45.338404 [debug] [MainThread]: Opening a new connection, currently in state closed
+[0m12:48:45.350664 [debug] [MainThread]: SQL status: BEGIN in 0.012 seconds
+[0m12:48:45.351060 [debug] [MainThread]: On master: COMMIT
+[0m12:48:45.351323 [debug] [MainThread]: Using postgres connection "master"
+[0m12:48:45.351547 [debug] [MainThread]: On master: COMMIT
+[0m12:48:45.351851 [debug] [MainThread]: SQL status: COMMIT in 0.000 seconds
+[0m12:48:45.352096 [debug] [MainThread]: On master: Close
+[0m12:48:45.352578 [debug] [MainThread]: Connection 'master' was properly closed.
+[0m12:48:45.352878 [debug] [MainThread]: Connection 'list_nerd_facts' was properly closed.
+[0m12:48:45.353138 [debug] [MainThread]: Connection 'model.nerd_facts_dbt.pokemon' was properly closed.
+[0m12:48:45.353467 [info ] [MainThread]: 
+[0m12:48:45.353898 [info ] [MainThread]: Finished running 1 view model in 0 hours 0 minutes and 0.22 seconds (0.22s).
+[0m12:48:45.354526 [debug] [MainThread]: Command end result
+[0m12:48:45.370546 [debug] [MainThread]: Wrote artifact WritableManifest to /home/janne/nerd-facts-dbt/dbt_project/target/manifest.json
+[0m12:48:45.371869 [debug] [MainThread]: Wrote artifact SemanticManifest to /home/janne/nerd-facts-dbt/dbt_project/target/semantic_manifest.json
+[0m12:48:45.376959 [debug] [MainThread]: Wrote artifact RunExecutionResult to /home/janne/nerd-facts-dbt/dbt_project/target/run_results.json
+[0m12:48:45.377310 [info ] [MainThread]: 
+[0m12:48:45.377673 [info ] [MainThread]: [32mCompleted successfully[0m
+[0m12:48:45.377935 [info ] [MainThread]: 
+[0m12:48:45.378203 [info ] [MainThread]: Done. PASS=1 WARN=0 ERROR=0 SKIP=0 TOTAL=1
+[0m12:48:45.378881 [debug] [MainThread]: Resource report: {"command_name": "run", "command_success": true, "command_wall_clock_time": 1.4310274, "process_in_blocks": "3536", "process_kernel_time": 0.100062, "process_mem_max_rss": "110580", "process_out_blocks": "2536", "process_user_time": 2.176167}
+[0m12:48:45.379234 [debug] [MainThread]: Command `dbt run` succeeded at 12:48:45.379153 after 1.43 seconds
+[0m12:48:45.379523 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bbd3a4910>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bbb683610>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f0bbe1c22f0>]}
+[0m12:48:45.379818 [debug] [MainThread]: Flushing usage events
+[0m12:48:45.766728 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m12:57:57.955438 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbc06d64970>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbc07c07760>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbc07c077c0>]}
+
+
+============================== 12:57:57.958533 | 7199ce64-8df0-4a0c-b47f-2ea8170c05d0 ==============================
+[0m12:57:57.958533 [info ] [MainThread]: Running with dbt=1.9.3
+[0m12:57:57.958977 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'write_json': 'True', 'log_cache_events': 'False', 'partial_parse': 'True', 'cache_selected_only': 'False', 'profiles_dir': '/home/janne/nerd-facts-dbt/dbt_project', 'fail_fast': 'False', 'version_check': 'True', 'log_path': '/home/janne/nerd-facts-dbt/dbt_project/logs', 'warn_error': 'None', 'debug': 'False', 'use_colors': 'True', 'use_experimental_parser': 'False', 'empty': 'False', 'quiet': 'False', 'no_print': 'None', 'log_format': 'default', 'introspect': 'True', 'invocation_command': 'dbt run', 'static_parser': 'True', 'target_path': 'None', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'send_anonymous_usage_stats': 'True'}
+[0m12:57:58.096068 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': '7199ce64-8df0-4a0c-b47f-2ea8170c05d0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbc05e0f340>]}
+[0m12:57:58.142484 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'adapter_info', 'label': '7199ce64-8df0-4a0c-b47f-2ea8170c05d0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbc07b67ac0>]}
+[0m12:57:58.143467 [info ] [MainThread]: Registered adapter: postgres=1.9.0
+[0m12:57:58.217070 [debug] [MainThread]: checksum: 5671c00892cdbcef29c3b00cc5ba7510c3d18a35c883caeb9ab9ee266dc29c8f, vars: {}, profile: , target: , version: 1.9.3
+[0m12:57:58.305350 [debug] [MainThread]: Partial parsing enabled: 0 files deleted, 0 files added, 1 files changed.
+[0m12:57:58.305887 [debug] [MainThread]: Partial parsing: updated file: nerd_facts_dbt://models/pokemon.sql
+[0m12:57:58.491290 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'load_project', 'label': '7199ce64-8df0-4a0c-b47f-2ea8170c05d0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbc04f86860>]}
+[0m12:57:58.538635 [debug] [MainThread]: Wrote artifact WritableManifest to /home/janne/nerd-facts-dbt/dbt_project/target/manifest.json
+[0m12:57:58.540866 [debug] [MainThread]: Wrote artifact SemanticManifest to /home/janne/nerd-facts-dbt/dbt_project/target/semantic_manifest.json
+[0m12:57:58.554423 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'resource_counts', 'label': '7199ce64-8df0-4a0c-b47f-2ea8170c05d0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbc04fc0970>]}
+[0m12:57:58.554910 [info ] [MainThread]: Found 1 model, 433 macros
+[0m12:57:58.555217 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': '7199ce64-8df0-4a0c-b47f-2ea8170c05d0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbc04fc0910>]}
+[0m12:57:58.556503 [info ] [MainThread]: 
+[0m12:57:58.556822 [info ] [MainThread]: Concurrency: 4 threads (target='dev')
+[0m12:57:58.557051 [info ] [MainThread]: 
+[0m12:57:58.557443 [debug] [MainThread]: Acquiring new postgres connection 'master'
+[0m12:57:58.558205 [debug] [ThreadPool]: Acquiring new postgres connection 'list_nerd_facts'
+[0m12:57:58.594584 [debug] [ThreadPool]: Using postgres connection "list_nerd_facts"
+[0m12:57:58.594973 [debug] [ThreadPool]: On list_nerd_facts: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "connection_name": "list_nerd_facts"} */
+
+    select distinct nspname from pg_namespace
+  
+[0m12:57:58.595227 [debug] [ThreadPool]: Opening a new connection, currently in state init
+[0m12:57:58.610359 [debug] [ThreadPool]: SQL status: SELECT 5 in 0.015 seconds
+[0m12:57:58.611563 [debug] [ThreadPool]: On list_nerd_facts: Close
+[0m12:57:58.613028 [debug] [ThreadPool]: Acquiring new postgres connection 'list_nerd_facts_public'
+[0m12:57:58.619307 [debug] [ThreadPool]: Using postgres connection "list_nerd_facts_public"
+[0m12:57:58.619692 [debug] [ThreadPool]: On list_nerd_facts_public: BEGIN
+[0m12:57:58.619992 [debug] [ThreadPool]: Opening a new connection, currently in state init
+[0m12:57:58.632599 [debug] [ThreadPool]: SQL status: BEGIN in 0.013 seconds
+[0m12:57:58.633026 [debug] [ThreadPool]: Using postgres connection "list_nerd_facts_public"
+[0m12:57:58.633372 [debug] [ThreadPool]: On list_nerd_facts_public: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "connection_name": "list_nerd_facts_public"} */
+select
+      'nerd_facts' as database,
+      tablename as name,
+      schemaname as schema,
+      'table' as type
+    from pg_tables
+    where schemaname ilike 'public'
+    union all
+    select
+      'nerd_facts' as database,
+      viewname as name,
+      schemaname as schema,
+      'view' as type
+    from pg_views
+    where schemaname ilike 'public'
+    union all
+    select
+      'nerd_facts' as database,
+      matviewname as name,
+      schemaname as schema,
+      'materialized_view' as type
+    from pg_matviews
+    where schemaname ilike 'public'
+  
+[0m12:57:58.636211 [debug] [ThreadPool]: SQL status: SELECT 0 in 0.002 seconds
+[0m12:57:58.637339 [debug] [ThreadPool]: On list_nerd_facts_public: ROLLBACK
+[0m12:57:58.637801 [debug] [ThreadPool]: On list_nerd_facts_public: Close
+[0m12:57:58.642737 [debug] [MainThread]: Using postgres connection "master"
+[0m12:57:58.643130 [debug] [MainThread]: On master: BEGIN
+[0m12:57:58.643426 [debug] [MainThread]: Opening a new connection, currently in state init
+[0m12:57:58.655854 [debug] [MainThread]: SQL status: BEGIN in 0.012 seconds
+[0m12:57:58.656268 [debug] [MainThread]: Using postgres connection "master"
+[0m12:57:58.656662 [debug] [MainThread]: On master: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "connection_name": "master"} */
+with relation as (
+        select
+            pg_rewrite.ev_class as class,
+            pg_rewrite.oid as id
+        from pg_rewrite
+    ),
+    class as (
+        select
+            oid as id,
+            relname as name,
+            relnamespace as schema,
+            relkind as kind
+        from pg_class
+    ),
+    dependency as (
+        select distinct
+            pg_depend.objid as id,
+            pg_depend.refobjid as ref
+        from pg_depend
+    ),
+    schema as (
+        select
+            pg_namespace.oid as id,
+            pg_namespace.nspname as name
+        from pg_namespace
+        where nspname != 'information_schema' and nspname not like 'pg\_%'
+    ),
+    referenced as (
+        select
+            relation.id AS id,
+            referenced_class.name ,
+            referenced_class.schema ,
+            referenced_class.kind
+        from relation
+        join class as referenced_class on relation.class=referenced_class.id
+        where referenced_class.kind in ('r', 'v', 'm')
+    ),
+    relationships as (
+        select
+            referenced.name as referenced_name,
+            referenced.schema as referenced_schema_id,
+            dependent_class.name as dependent_name,
+            dependent_class.schema as dependent_schema_id,
+            referenced.kind as kind
+        from referenced
+        join dependency on referenced.id=dependency.id
+        join class as dependent_class on dependency.ref=dependent_class.id
+        where
+            (referenced.name != dependent_class.name or
+             referenced.schema != dependent_class.schema)
+    )
+
+    select
+        referenced_schema.name as referenced_schema,
+        relationships.referenced_name as referenced_name,
+        dependent_schema.name as dependent_schema,
+        relationships.dependent_name as dependent_name
+    from relationships
+    join schema as dependent_schema on relationships.dependent_schema_id=dependent_schema.id
+    join schema as referenced_schema on relationships.referenced_schema_id=referenced_schema.id
+    group by referenced_schema, referenced_name, dependent_schema, dependent_name
+    order by referenced_schema, referenced_name, dependent_schema, dependent_name;
+[0m12:57:58.665014 [debug] [MainThread]: SQL status: SELECT 1 in 0.008 seconds
+[0m12:57:58.666214 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': '7199ce64-8df0-4a0c-b47f-2ea8170c05d0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbc04f5e170>]}
+[0m12:57:58.666692 [debug] [MainThread]: On master: ROLLBACK
+[0m12:57:58.667135 [debug] [MainThread]: Using postgres connection "master"
+[0m12:57:58.667448 [debug] [MainThread]: On master: BEGIN
+[0m12:57:58.667911 [debug] [MainThread]: SQL status: BEGIN in 0.000 seconds
+[0m12:57:58.668200 [debug] [MainThread]: On master: COMMIT
+[0m12:57:58.668502 [debug] [MainThread]: Using postgres connection "master"
+[0m12:57:58.668778 [debug] [MainThread]: On master: COMMIT
+[0m12:57:58.669133 [debug] [MainThread]: SQL status: COMMIT in 0.000 seconds
+[0m12:57:58.669415 [debug] [MainThread]: On master: Close
+[0m12:57:58.673007 [debug] [Thread-1 (]: Began running node model.nerd_facts_dbt.pokemon
+[0m12:57:58.673645 [info ] [Thread-1 (]: 1 of 1 START sql table model public.pokemon .................................... [RUN]
+[0m12:57:58.674175 [debug] [Thread-1 (]: Re-using an available connection from the pool (formerly list_nerd_facts_public, now model.nerd_facts_dbt.pokemon)
+[0m12:57:58.674530 [debug] [Thread-1 (]: Began compiling node model.nerd_facts_dbt.pokemon
+[0m12:57:58.682086 [debug] [Thread-1 (]: Writing injected SQL for node "model.nerd_facts_dbt.pokemon"
+[0m12:57:58.682657 [debug] [Thread-1 (]: Began executing node model.nerd_facts_dbt.pokemon
+[0m12:57:58.720937 [debug] [Thread-1 (]: Writing runtime sql for node "model.nerd_facts_dbt.pokemon"
+[0m12:57:58.721697 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m12:57:58.722122 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: BEGIN
+[0m12:57:58.722459 [debug] [Thread-1 (]: Opening a new connection, currently in state closed
+[0m12:57:58.735103 [debug] [Thread-1 (]: SQL status: BEGIN in 0.013 seconds
+[0m12:57:58.735571 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m12:57:58.735954 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "node_id": "model.nerd_facts_dbt.pokemon"} */
+
+  
+    
+
+  create  table "nerd_facts"."public"."pokemon__dbt_tmp"
+  
+  
+    as
+  
+  (
+    
+
+WITH source AS (
+    SELECT * FROM raw.pokeapi_pokemon
+)
+
+SELECT 
+    id,
+    name,
+    CAST(height AS NUMERIC) AS height,  -- ✅ Convert to numeric
+    CAST(weight AS NUMERIC) AS weight,  -- ✅ Convert to numeric
+    ROUND(CAST(weight AS NUMERIC) / (CAST(height AS NUMERIC) * CAST(height AS NUMERIC)), 2) AS bmi
+FROM source
+  );
+  
+[0m12:57:58.747749 [debug] [Thread-1 (]: SQL status: SELECT 10 in 0.011 seconds
+[0m12:57:58.789578 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m12:57:58.789980 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "node_id": "model.nerd_facts_dbt.pokemon"} */
+alter table "nerd_facts"."public"."pokemon__dbt_tmp" rename to "pokemon"
+[0m12:57:58.790673 [debug] [Thread-1 (]: SQL status: ALTER TABLE in 0.000 seconds
+[0m12:57:58.805287 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: COMMIT
+[0m12:57:58.805717 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m12:57:58.806002 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: COMMIT
+[0m12:57:58.812039 [debug] [Thread-1 (]: SQL status: COMMIT in 0.006 seconds
+[0m12:57:58.817389 [debug] [Thread-1 (]: Applying DROP to: "nerd_facts"."public"."pokemon__dbt_backup"
+[0m12:57:58.820751 [debug] [Thread-1 (]: Using postgres connection "model.nerd_facts_dbt.pokemon"
+[0m12:57:58.821105 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: /* {"app": "dbt", "dbt_version": "1.9.3", "profile_name": "nerd_facts_dbt", "target_name": "dev", "node_id": "model.nerd_facts_dbt.pokemon"} */
+drop table if exists "nerd_facts"."public"."pokemon__dbt_backup" cascade
+[0m12:57:58.821637 [debug] [Thread-1 (]: SQL status: DROP TABLE in 0.000 seconds
+[0m12:57:58.823612 [debug] [Thread-1 (]: On model.nerd_facts_dbt.pokemon: Close
+[0m12:57:58.825740 [debug] [Thread-1 (]: Sending event: {'category': 'dbt', 'action': 'run_model', 'label': '7199ce64-8df0-4a0c-b47f-2ea8170c05d0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbc07fb6d10>]}
+[0m12:57:58.826493 [info ] [Thread-1 (]: 1 of 1 OK created sql table model public.pokemon ............................... [[32mSELECT 10[0m in 0.15s]
+[0m12:57:58.827062 [debug] [Thread-1 (]: Finished running node model.nerd_facts_dbt.pokemon
+[0m12:57:58.828123 [debug] [MainThread]: Using postgres connection "master"
+[0m12:57:58.828435 [debug] [MainThread]: On master: BEGIN
+[0m12:57:58.828669 [debug] [MainThread]: Opening a new connection, currently in state closed
+[0m12:57:58.840921 [debug] [MainThread]: SQL status: BEGIN in 0.012 seconds
+[0m12:57:58.841315 [debug] [MainThread]: On master: COMMIT
+[0m12:57:58.841607 [debug] [MainThread]: Using postgres connection "master"
+[0m12:57:58.841845 [debug] [MainThread]: On master: COMMIT
+[0m12:57:58.842179 [debug] [MainThread]: SQL status: COMMIT in 0.000 seconds
+[0m12:57:58.842426 [debug] [MainThread]: On master: Close
+[0m12:57:58.842870 [debug] [MainThread]: Connection 'master' was properly closed.
+[0m12:57:58.843094 [debug] [MainThread]: Connection 'list_nerd_facts' was properly closed.
+[0m12:57:58.843283 [debug] [MainThread]: Connection 'model.nerd_facts_dbt.pokemon' was properly closed.
+[0m12:57:58.843511 [info ] [MainThread]: 
+[0m12:57:58.843764 [info ] [MainThread]: Finished running 1 table model in 0 hours 0 minutes and 0.29 seconds (0.29s).
+[0m12:57:58.844351 [debug] [MainThread]: Command end result
+[0m12:57:58.860081 [debug] [MainThread]: Wrote artifact WritableManifest to /home/janne/nerd-facts-dbt/dbt_project/target/manifest.json
+[0m12:57:58.861485 [debug] [MainThread]: Wrote artifact SemanticManifest to /home/janne/nerd-facts-dbt/dbt_project/target/semantic_manifest.json
+[0m12:57:58.866759 [debug] [MainThread]: Wrote artifact RunExecutionResult to /home/janne/nerd-facts-dbt/dbt_project/target/run_results.json
+[0m12:57:58.867130 [info ] [MainThread]: 
+[0m12:57:58.867477 [info ] [MainThread]: [32mCompleted successfully[0m
+[0m12:57:58.867750 [info ] [MainThread]: 
+[0m12:57:58.868019 [info ] [MainThread]: Done. PASS=1 WARN=0 ERROR=0 SKIP=0 TOTAL=1
+[0m12:57:58.869113 [debug] [MainThread]: Resource report: {"command_name": "run", "command_success": true, "command_wall_clock_time": 0.9574552, "process_in_blocks": "68480", "process_kernel_time": 0.111841, "process_mem_max_rss": "110876", "process_out_blocks": "2536", "process_user_time": 1.768886}
+[0m12:57:58.869502 [debug] [MainThread]: Command `dbt run` succeeded at 12:57:58.869406 after 0.96 seconds
+[0m12:57:58.869788 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbc06d64970>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbc06be6b90>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fbc052e55d0>]}
+[0m12:57:58.870082 [debug] [MainThread]: Flushing usage events
+[0m12:57:59.259740 [debug] [MainThread]: An error was encountered while trying to flush usage events

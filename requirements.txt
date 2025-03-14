@@ -1,1 +1,5 @@
-
+dbt-core
+dbt-postgres
+pandas
+requests
+psycopg2
