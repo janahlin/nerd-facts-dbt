@@ -1,0 +1,133 @@
+version: 2
+
+models:
+  # DEPRECATED: Update references to use stg_swapi_starships instead
+  - name: stg_swapi
+    description: >
+      DEPRECATED - Please use stg_swapi_starships instead.
+      This model will be removed in a future release.
+  
+  - name: stg_swapi_starships
+    description: "Standardized Star Wars starship data with cleaned values and derived classifications"
+    columns:
+      - name: id
+        description: "Primary key for starships"
+        tests:
+          - unique
+          - not_null
+      
+      - name: starship_name
+        description: "Name of the starship"
+        tests:
+          - not_null
+      
+      - name: model
+        description: "Starship model specification"
+      
+      - name: manufacturer
+        description: "Company that manufactured the starship"
+        tests:
+          - accepted_values:
+              values: [
+                'Kuat Drive Yards', 
+                'Corellian Engineering Corporation', 
+                'Sienar Fleet Systems',
+                'Cygnus Spaceworks',
+                'Incom Corporation',
+                'Koensayr Manufacturing'
+              ]
+              severity: warn
+      
+      - name: max_speed
+        description: "Maximum atmospheric speed in km/h"
+        tests:
+          - not_null:
+              severity: warn
+          - dbt_utils.expression_is_true:
+              expression: ">= 0 OR IS NULL"
+              severity: error
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 2000
+              severity: warn
+      
+      - name: length_m
+        description: "Length of starship in meters"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> 0 OR IS NULL" 
+              severity: error
+      
+      - name: hyperdrive_rating
+        description: "Hyperdrive class rating (lower is better)"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0.5
+              max_value: 10
+              severity: warn
+      
+      - name: crew_count
+        description: "Number of crew members required"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 1 OR IS NULL"
+              severity: warn
+      
+      - name: passenger_capacity
+        description: "Maximum passenger capacity"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0 OR IS NULL" 
+              severity: error
+              
+      - name: cargo_capacity
+        description: "Cargo capacity in metric tons"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0 OR IS NULL"
+              severity: error
+              
+      - name: ship_purpose
+        description: "Derived classification of ship purpose (Military, Commercial, Starfighter, Other)"
+        tests:
+          - accepted_values:
+              values: ['Military', 'Commercial', 'Starfighter', 'Other']
+
+      - name: ship_size
+        description: "Size classification based on length"
+        tests:
+          - accepted_values:
+              values: ['Small', 'Medium', 'Large', 'Very Large', 'Capital', 'Unknown']
+              
+      - name: is_notable_ship
+        description: "Flag for well-known ships from the Star Wars universe"
+        tests:
+          - not_null
+
+    # Model-level tests
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "crew_count <= passenger_capacity + 50 OR passenger_capacity IS NULL OR crew_count IS NULL"
+          severity: warn
+          # Most ships have more passengers than crew, but military vessels may have more crew
+
+  # Add schema definitions for other SWAPI models
+  - name: stg_swapi_films
+    description: "Standardized Star Wars film data with chronological ordering and entity counts"
+    # Add columns and tests...
+    
+  - name: stg_swapi_people
+    description: "Standardized Star Wars character data with derived attributes and force sensitivity"
+    # Add columns and tests...
+    
+  - name: stg_swapi_planets
+    description: "Standardized Star Wars planet data with habitability scores and climate classifications"
+    # Add columns and tests...
+    
+  - name: stg_swapi_species
+    description: "Standardized Star Wars species data with intelligence levels and classifications"
+    # Add columns and tests...
+    
+  - name: stg_swapi_vehicles
+    description: "Standardized Star Wars vehicle data with terrain capabilities and classifications"
+    # Add columns and tests...

@@ -7,6 +7,6 @@ nerd_facts_dbt:
       user: dbt_user
       password: "610femt!"
       port: 5432
-      dbname: nerd_facts
-      schema: public  # ✅ Ensure this is set to "public"
+      dbname: nerd_facts     
+      schema: public  # ✅ Add this line (IMPORTANT) 
       threads: 4

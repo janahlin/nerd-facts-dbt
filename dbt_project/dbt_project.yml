@@ -18,4 +18,9 @@ clean-targets:
 
 models:
   nerd_facts_dbt:    
-    +materialized: view
+
+    staging:
+      +materialized: view  # ✅ Lightweight views for raw data
+
+    marts:
+      +materialized: table  # ✅ Fact & Dimension tables stored as physical tables

@@ -55,6 +55,15 @@ def load_to_postgres(df, table_name, schema="raw"):
     if df.empty:
         print(f"⚠️ No data for {table_name}, skipping.")
         return
+    
+    # ✅ Ensure 'id' column exists and is unique
+    if "id" not in df.columns:
+        print(f"⚠️ No 'id' column found in {table_name}, generating one from index.")
+        df.insert(0, "id", df.index.astype(int))  # Use index as ID (convert to BIGINT)
+
+    df = df.dropna(subset=["id"])  # Remove rows where id is NULL
+    df = df.drop_duplicates(subset=["id"])  # Ensure uniqueness
+
 
     conn = psycopg2.connect(**DB_CONFIG)
     cur = conn.cursor()
@@ -111,17 +120,10 @@ def load_to_postgres(df, table_name, schema="raw"):
 if __name__ == "__main__":
     # ✅ Extract all data from fetch scripts
     for source, extractor in {
-        "pokeapi": extract_data()
+        "pokeapi": extract_data(),
+        "swapi": extract_swapi_data(),
+        "netrunner": extract_netrunner_data()
     }.items():
         for dataset, df in extractor.items():
             table_name = PREFIXES[source] + dataset
             load_to_postgres(df, table_name, SCHEMA)
-
-    # for source, extractor in {
-    #     "pokeapi": extract_data(details=True),
-    #     "swapi": extract_swapi_data(),
-    #     "netrunner": extract_netrunner_data()
-    # }.items():
-    #     for dataset, df in extractor.items():
-    #         table_name = PREFIXES[source] + dataset
-    #         load_to_postgres(df, table_name, SCHEMA)
