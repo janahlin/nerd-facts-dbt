@@ -38,7 +38,7 @@ WITH raw_data AS (
         trash_cost,
         advancement_cost,
         agenda_points
-    FROM raw.netrunner_cards
+    FROM {{ source('netrunner', 'cards') }}
     WHERE code IS NOT NULL -- Ensure we don't include invalid entries
 )
 
@@ -121,5 +121,5 @@ SELECT
     CURRENT_TIMESTAMP AS dbt_loaded_at
     
 FROM raw_data r
-LEFT JOIN raw.netrunner_factions f ON r.faction_code = f.code
-LEFT JOIN raw.netrunner_types t ON r.type_code = t.code
+LEFT JOIN {{ source('netrunner', 'factions') }} f ON r.faction_code = f.code
+LEFT JOIN {{ source('netrunner', 'types') }} t ON r.type_code = t.code

@@ -1,0 +1,357 @@
+version: 2
+
+models:
+  - name: stg_netrunner_cards
+    description: "Standardized Android: Netrunner card data with cleaned values and derived classifications"
+    columns:
+      - name: card_id
+        description: "Primary key for cards"
+        tests:
+          - unique
+          - not_null
+      
+      - name: title
+        description: "Card title"
+        tests:
+          - not_null
+      
+      - name: type_code
+        description: "Code reference to card type"
+        tests:
+          - not_null
+      
+      - name: type_name
+        description: "Full type name (e.g., 'Identity', 'ICE')"
+      
+      - name: faction_code
+        description: "Code reference to card faction"
+        tests:
+          - not_null
+      
+      - name: faction_name
+        description: "Full faction name (e.g., 'Shaper', 'NBN')"
+      
+      - name: side_code
+        description: "Corp/Runner side indicator"
+        tests:
+          - accepted_values:
+              values: ['corp', 'runner']
+              severity: error
+      
+      - name: pack_code
+        description: "Code reference to the data pack containing the card"
+      
+      - name: cycle_code
+        description: "Code reference to the cycle the card belongs to"
+      
+      - name: cost
+        description: "Card play/rez cost (in credits)"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0 OR IS NULL"
+              severity: warn
+      
+      - name: strength
+        description: "ICE/breaker strength value"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0 OR IS NULL"
+              severity: warn
+      
+      - name: advancement_cost
+        description: "Advancement requirement for agendas"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0 OR IS NULL"
+              severity: error
+      
+      - name: agenda_points
+        description: "Points given for scoring agendas"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 3
+              severity: warn
+      
+      - name: card_text
+        description: "Card ability text"
+      
+      - name: flavor_text
+        description: "Flavor text on the card"
+      
+      - name: illustrator
+        description: "Card illustrator name"
+      
+      - name: keywords_array
+        description: "Array of card keywords/subtypes"
+      
+      - name: is_agenda
+        description: "Whether the card is an agenda"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "is_agenda = false OR agenda_points IS NOT NULL"
+              severity: error
+              # All agendas must have agenda points
+      
+      - name: is_ice
+        description: "Whether the card is ICE"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "is_ice = false OR strength IS NOT NULL"
+              severity: warn
+              # ICE should generally have strength
+      
+      - name: is_identity
+        description: "Whether the card is an identity card"
+      
+      - name: dbt_loaded_at
+        description: "Timestamp when record was loaded by dbt"
+    
+    # Card model-level tests
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "NOT (is_agenda = true AND side_code = 'runner')"
+          severity: error
+          # Runners don't have agendas
+      
+      - dbt_utils.expression_is_true:
+          expression: "(advancement_cost IS NULL AND agenda_points IS NULL) OR (advancement_cost IS NOT NULL AND agenda_points IS NOT NULL)"
+          severity: warn
+          # Agenda points and advancement cost usually go together
+
+  - name: stg_netrunner_factions
+    description: "Standardized Android: Netrunner faction data with derived classifications"
+    columns:
+      - name: faction_id
+        description: "Primary key for factions"
+        tests:
+          - unique
+          - not_null
+      
+      - name: faction_code
+        description: "Unique faction code"
+        tests:
+          - unique
+          - not_null
+      
+      - name: faction_name
+        description: "Full faction name"
+        tests:
+          - not_null
+      
+      - name: side_code
+        description: "Corp/Runner side indicator"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['corp', 'runner']
+              severity: error
+      
+      - name: is_mini_faction
+        description: "Whether this is a mini-faction"
+      
+      - name: card_count
+        description: "Number of cards in this faction"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+              severity: error
+      
+      - name: dbt_loaded_at
+        description: "Timestamp when record was loaded by dbt"
+
+  - name: stg_netrunner_types
+    description: "Standardized Android: Netrunner card type data"
+    columns:
+      - name: type_id
+        description: "Primary key for card types"
+        tests:
+          - unique
+          - not_null
+      
+      - name: type_code
+        description: "Unique type code"
+        tests:
+          - unique
+          - not_null
+      
+      - name: type_name
+        description: "Full type name"
+        tests:
+          - not_null
+      
+      - name: side_code
+        description: "Corp/Runner side indicator or null if both sides"
+        tests:
+          - accepted_values:
+              values: ['corp', 'runner', null]
+              severity: warn
+      
+      - name: card_count
+        description: "Number of cards of this type"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+              severity: error
+      
+      - name: dbt_loaded_at
+        description: "Timestamp when record was loaded by dbt"
+
+  - name: stg_netrunner_packs
+    description: "Standardized Android: Netrunner data pack data with release information"
+    columns:
+      - name: pack_id
+        description: "Primary key for data packs"
+        tests:
+          - unique
+          - not_null
+      
+      - name: pack_code
+        description: "Unique pack code"
+        tests:
+          - unique
+          - not_null
+      
+      - name: pack_name
+        description: "Full pack name"
+        tests:
+          - not_null
+      
+      - name: cycle_code
+        description: "Code reference to the cycle this pack belongs to"
+        tests:
+          - not_null
+      
+      - name: cycle_name
+        description: "Full name of the cycle"
+      
+      - name: release_date
+        description: "Pack release date"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "<= current_date OR IS NULL"
+              severity: warn
+      
+      - name: card_count
+        description: "Number of cards in this pack"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+              severity: warn
+      
+      - name: is_core
+        description: "Whether this is a core set"
+      
+      - name: is_deluxe
+        description: "Whether this is a deluxe expansion"
+      
+      - name: is_rotation_proof
+        description: "Whether cards in this pack are rotation-proof"
+      
+      - name: dbt_loaded_at
+        description: "Timestamp when record was loaded by dbt"
+
+  - name: stg_netrunner_cycles
+    description: "Standardized Android: Netrunner cycle data with release sequence"
+    columns:
+      - name: cycle_id
+        description: "Primary key for cycles"
+        tests:
+          - unique
+          - not_null
+      
+      - name: cycle_code
+        description: "Unique cycle code"
+        tests:
+          - unique
+          - not_null
+      
+      - name: cycle_name
+        description: "Full cycle name"
+        tests:
+          - not_null
+      
+      - name: position
+        description: "Cycle release order position"
+        tests:
+          - unique:
+              severity: warn
+          - not_null
+      
+      - name: pack_count
+        description: "Number of data packs in this cycle"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+              severity: warn
+      
+      - name: card_count
+        description: "Total number of cards in this cycle"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+              severity: warn
+      
+      - name: first_release_date
+        description: "Date of the first pack in cycle"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "<= current_date OR IS NULL"
+              severity: warn
+      
+      - name: is_rotation_proof
+        description: "Whether cards in this cycle are rotation-proof"
+      
+      - name: dbt_loaded_at
+        description: "Timestamp when record was loaded by dbt"
+
+  - name: stg_netrunner_subtypes
+    description: "Standardized Android: Netrunner subtype data derived from keywords"
+    columns:
+      - name: subtype_id
+        description: "Primary key for subtypes"
+        tests:
+          - unique
+          - not_null
+      
+      - name: subtype_code
+        description: "Unique subtype code"
+        tests:
+          - unique
+          - not_null
+      
+      - name: subtype_name
+        description: "Full subtype name"
+        tests:
+          - not_null
+      
+      - name: card_count
+        description: "Number of cards with this subtype"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+              severity: warn
+      
+      - name: corp_count
+        description: "Number of Corporation cards with this subtype"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+              severity: error
+      
+      - name: runner_count
+        description: "Number of Runner cards with this subtype"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+              severity: error
+      
+      - name: dbt_loaded_at
+        description: "Timestamp when record was loaded by dbt"
+    
+    # Subtype model-level test
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "card_count = corp_count + runner_count"
+          severity: warn
+          # Total count should equal sum of corp and runner counts

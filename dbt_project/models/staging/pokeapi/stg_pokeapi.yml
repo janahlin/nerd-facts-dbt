@@ -1,0 +1,208 @@
+version: 2
+
+models:
+  - name: stg_pokeapi_abilities
+    description: "Standardized Pokémon ability data with parsed effects and classifications"
+    columns:
+      - name: id
+        description: "Primary key for abilities"
+        tests:
+          - unique
+          - not_null
+      
+      - name: ability_name
+        description: "Name of the ability"
+        tests:
+          - not_null
+      
+      - name: generation_name
+        description: "Generation name when ability was introduced"
+        
+      - name: generation_number
+        description: "Generation number when ability was introduced (Roman numeral converted to string)"
+        
+      - name: effect_description
+        description: "Full description of ability effect"
+        tests:
+          - not_null:
+              severity: warn
+              
+      - name: short_description
+        description: "Condensed description of ability effect"
+        
+      - name: pokemon_count
+        description: "Number of Pokémon that can have this ability"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+              severity: error
+      
+      - name: is_main_series
+        description: "Whether ability appears in main series games"
+        
+      - name: is_stat_boosting
+        description: "Whether ability can boost stats"
+        
+      - name: is_weather_related
+        description: "Whether ability interacts with weather effects"
+        
+      - name: affects_status_conditions
+        description: "Whether ability affects status conditions"
+        
+      - name: dbt_loaded_at
+        description: "Timestamp when record was loaded by dbt"
+  
+  - name: stg_pokeapi_pokemon
+    description: "Standardized Pokémon data with typed stats and type effectiveness"
+    columns:
+      - name: id
+        description: "Primary key for Pokémon"
+        tests:
+          - unique
+          - not_null
+      
+      - name: pokemon_name
+        description: "Name of the Pokémon"
+        tests:
+          - not_null
+      
+      - name: primary_type
+        description: "Primary elemental type"
+        tests:
+          - not_null:
+              severity: warn
+          - accepted_values:
+              values: [
+                'normal', 'fire', 'water', 'electric', 'grass', 'ice',
+                'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug',
+                'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'
+              ]
+              severity: warn
+      
+      - name: secondary_type
+        description: "Secondary elemental type (if any)"
+        tests:
+          - accepted_values:
+              values: [
+                'normal', 'fire', 'water', 'electric', 'grass', 'ice',
+                'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug',
+                'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'
+              ]
+              severity: warn
+      
+      - name: height
+        description: "Height in meters"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> 0 OR IS NULL"
+              severity: warn
+      
+      - name: weight
+        description: "Weight in kilograms"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> 0 OR IS NULL" 
+              severity: warn
+      
+      - name: hp
+        description: "Base HP stat"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 255
+              severity: error
+      
+      - name: attack
+        description: "Base Attack stat"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 5
+              max_value: 255
+              severity: error
+      
+      - name: defense
+        description: "Base Defense stat"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 5
+              max_value: 255
+              severity: error
+      
+      - name: special_attack
+        description: "Base Special Attack stat"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 10
+              max_value: 255
+              severity: error
+      
+      - name: special_defense
+        description: "Base Special Defense stat"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 20
+              max_value: 255
+              severity: error
+      
+      - name: speed
+        description: "Base Speed stat"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 5
+              max_value: 255
+              severity: error
+      
+      - name: total_base_stats
+        description: "Sum of all base stats"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 175
+              max_value: 1125
+              severity: warn
+      
+      - name: is_legendary
+        description: "Whether Pokémon is classified as legendary"
+      
+      - name: is_mythical
+        description: "Whether Pokémon is classified as mythical"
+      
+      - name: generation
+        description: "Generation the Pokémon was introduced"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 9
+              severity: warn
+      
+      - name: abilities
+        description: "JSONB array of abilities"
+      
+      - name: moves
+        description: "JSONB array of learnable moves"
+      
+      - name: dbt_loaded_at
+        description: "Timestamp when record was loaded by dbt"
+  
+  - name: stg_pokeapi_moves
+    description: "Standardized Pokémon move data with effect categories and power classifications"
+    columns:
+      - name: id
+        description: "Primary key for moves"
+        tests:
+          - unique
+          - not_null
+      
+      - name: name
+        description: "Name of the move"
+        tests:
+          - not_null
+      
+      - name: type
+        description: "Elemental type of the move"
+        tests:
+          - not_null:
+              severity: warn
+          - accepted_values:
+              values: [
+                'normal', 'fire', 'water', 'electric', 'grass', 'ice',
+                'fighting',

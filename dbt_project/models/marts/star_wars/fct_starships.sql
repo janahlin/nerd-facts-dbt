@@ -16,49 +16,56 @@
   - Includes hyperdrive performance and crew efficiency calculations
   - Connects to related dimension tables for pilots, manufacturers, and classes
   - Provides context for starship roles within the Star Wars universe
+  - Enhanced with additional fields from updated staging models
 */
 
 WITH starships AS (
     SELECT
         id AS starship_id,
-        name AS starship_name,
+        starship_name, -- Use the standardized field name from staging
         model,
         manufacturer,
-        NULLIF(cost_in_credits, 'unknown')::NUMERIC AS cost_in_credits,
-        NULLIF(length, 'unknown')::NUMERIC AS length_m,
-        NULLIF(max_atmosphering_speed, 'unknown')::NUMERIC AS max_atmosphering_speed,
-        NULLIF(crew, 'unknown')::NUMERIC AS crew_count,
-        NULLIF(passengers, 'unknown')::NUMERIC AS passenger_count,
-        NULLIF(cargo_capacity, 'unknown')::NUMERIC AS cargo_capacity,
+        cost_in_credits, -- Already numeric in staging
+        length_m, -- Already converted to numeric with _m suffix
+        max_atmosphering_speed, -- Already numeric in staging
+        crew_count, -- Renamed from crew to crew_count in staging
+        passenger_capacity, -- Renamed from passengers in staging
+        cargo_capacity, -- Already numeric in staging
         consumables,
-        NULLIF(hyperdrive_rating, 'unknown')::NUMERIC AS hyperdrive_rating,
-        NULLIF(MGLT, 'unknown')::NUMERIC AS MGLT,
+        hyperdrive_rating, -- Already numeric in staging
+        MGLT, -- Already numeric in staging
         starship_class,
-        pilots,
-        films
+        
+        -- Add new fields from enhanced staging model
+        film_appearances,
+        film_names,
+        pilot_count, -- Use directly instead of calculating
+        pilot_names,
+        
+        -- Add new classification fields
+        starship_role, -- Use pre-defined role
+        starship_size, -- Use pre-defined size classification
+        
+        -- Add new effectiveness metrics
+        is_notable_starship,
+        total_capacity,
+        
+        -- Add source tracking
+        url,
+        fetch_timestamp,
+        processed_timestamp
     FROM {{ ref('stg_swapi_starships') }}
     WHERE id IS NOT NULL
-),
-
--- Calculate the number of pilots and films for each starship
-starship_relationships AS (
-    SELECT
-        starship_id,
-        COALESCE(JSONB_ARRAY_LENGTH(pilots), 0) AS pilot_count,
-        COALESCE(JSONB_ARRAY_LENGTH(films), 0) AS film_appearance_count
-    FROM starships
 ),
 
 -- Calculate derived metrics for each starship
 starship_metrics AS (
     SELECT
         s.*,
-        sr.pilot_count,
-        sr.film_appearance_count,
         
         -- Calculate crew efficiency (passengers per crew member)
         CASE
-            WHEN s.crew_count > 0 THEN ROUND(s.passenger_count::NUMERIC / s.crew_count, 2)
+            WHEN s.crew_count > 0 THEN ROUND(s.passenger_capacity::NUMERIC / s.crew_count, 2)
             ELSE 0
         END AS passengers_per_crew,
         
@@ -109,19 +116,15 @@ starship_metrics AS (
                         WHEN s.cargo_capacity > 1000000 THEN 10
                         ELSE 0
                     END +
-                    -- Famous starship bonus
+                    -- Famous starship bonus - use the is_notable_starship field
                     CASE
-                        WHEN LOWER(s.starship_name) IN (
-                            'millennium falcon', 'death star', 'executor', 'slave 1', 
-                            'star destroyer', 'tantive iv', 'x-wing', 'tie fighter'
-                        ) THEN 15
+                        WHEN s.is_notable_starship = TRUE THEN 15
                         ELSE 0
                     END
                 ))
             ELSE 50
         END AS effectiveness_score
     FROM starships s
-    JOIN starship_relationships sr ON s.starship_id = sr.starship_id
 )
 
 SELECT
@@ -216,8 +219,8 @@ SELECT
     
     -- Capacity information
     COALESCE(sm.crew_count, 0) AS crew_count,
-    COALESCE(sm.passenger_count, 0) AS passenger_count,
-    COALESCE(sm.crew_count, 0) + COALESCE(sm.passenger_count, 0) AS total_capacity,
+    COALESCE(sm.passenger_capacity, 0) AS passenger_count,
+    COALESCE(sm.total_capacity, 0) AS total_capacity, -- Use pre-calculated field
     COALESCE(sm.cargo_capacity, 0) AS cargo_capacity,
     
     -- Format cargo in a readable way
@@ -238,53 +241,43 @@ SELECT
     sm.hyperdrive_performance_score,
     sm.effectiveness_score,
     
-    -- Iconic starship flag with comprehensive list
-    CASE
-        WHEN LOWER(sm.starship_name) IN (
-            'millennium falcon', 'death star', 'executor', 'slave 1', 
-            'star destroyer', 'tantive iv', 'tie fighter', 'x-wing',
-            'y-wing', 'a-wing', 'b-wing', 'tie interceptor', 'tie bomber',
-            'super star destroyer', 'invisible hand', 'trade federation cruiser',
-            'jedi starfighter', 'naboo royal starship', 'radiant vii',
-            'arc-170', 'venator-class star destroyer', 'v-wing',
-            'nebulon-b frigate', 'cr90 corvette', 'mon calamari cruiser',
-            'republic attack cruiser', 'theta-class t-2c shuttle',
-            'republic cruiser', 'sith infiltrator', 'solar sailer',
-            'droid control ship', 'h-type nubian yacht'
-        ) THEN TRUE
-        ELSE FALSE
-    END AS is_iconic,
+    -- Use the is_notable_starship flag directly from staging
+    sm.is_notable_starship AS is_iconic,
     
-    -- Role classification
-    CASE
-        WHEN sm.starship_class LIKE '%fighter%' OR 
-             sm.starship_class LIKE '%interceptor%' THEN 'Combat - Fighter'
-        WHEN sm.starship_class LIKE '%destroyer%' OR 
-             sm.starship_class LIKE '%cruiser%' OR
-             sm.starship_class LIKE '%battleship%' OR
-             sm.starship_class LIKE '%dreadnought%' THEN 'Combat - Capital Ship'
-        WHEN sm.starship_class LIKE '%bomber%' THEN 'Combat - Bomber'
-        WHEN sm.starship_class LIKE '%transport%' THEN 'Transport'
-        WHEN sm.starship_class LIKE '%shuttle%' OR 
-             sm.starship_class LIKE '%yacht%' OR
-             sm.starship_class LIKE '%pleasure craft%' THEN 'Personal/Diplomatic'
-        WHEN sm.starship_class LIKE '%freighter%' THEN 'Cargo'
-        WHEN sm.starship_class LIKE '%station%' OR 
-             sm.starship_name LIKE '%death star%' THEN 'Battle Station'
-        ELSE 'Multi-purpose'
-    END AS starship_role,
+    -- Use the starship_role field directly from staging, or keep local logic for better control
+    COALESCE(sm.starship_role, 
+        CASE
+            WHEN sm.starship_class LIKE '%fighter%' OR 
+                 sm.starship_class LIKE '%interceptor%' THEN 'Combat - Fighter'
+            WHEN sm.starship_class LIKE '%destroyer%' OR 
+                 sm.starship_class LIKE '%cruiser%' OR
+                 sm.starship_class LIKE '%battleship%' OR
+                 sm.starship_class LIKE '%dreadnought%' THEN 'Combat - Capital Ship'
+            WHEN sm.starship_class LIKE '%bomber%' THEN 'Combat - Bomber'
+            WHEN sm.starship_class LIKE '%transport%' THEN 'Transport'
+            WHEN sm.starship_class LIKE '%shuttle%' OR 
+                 sm.starship_class LIKE '%yacht%' OR
+                 sm.starship_class LIKE '%pleasure craft%' THEN 'Personal/Diplomatic'
+            WHEN sm.starship_class LIKE '%freighter%' THEN 'Cargo'
+            WHEN sm.starship_class LIKE '%station%' OR 
+                 sm.starship_name LIKE '%death star%' THEN 'Battle Station'
+            ELSE 'Multi-purpose'
+        END
+    ) AS starship_role,
     
-    -- Size classification
-    CASE
-        WHEN sm.length_m IS NULL THEN 'Unknown'
-        WHEN sm.length_m > 10000 THEN 'Massive (Station)'
-        WHEN sm.length_m > 1000 THEN 'Huge (Capital Ship)'
-        WHEN sm.length_m > 500 THEN 'Very Large'
-        WHEN sm.length_m > 100 THEN 'Large'
-        WHEN sm.length_m > 50 THEN 'Medium'
-        WHEN sm.length_m > 20 THEN 'Small'
-        ELSE 'Tiny'
-    END AS size_class,
+    -- Use the starship_size field or keep local logic for better granularity
+    COALESCE(sm.starship_size,
+        CASE
+            WHEN sm.length_m IS NULL THEN 'Unknown'
+            WHEN sm.length_m > 10000 THEN 'Massive (Station)'
+            WHEN sm.length_m > 1000 THEN 'Huge (Capital Ship)'
+            WHEN sm.length_m > 500 THEN 'Very Large'
+            WHEN sm.length_m > 100 THEN 'Large'
+            WHEN sm.length_m > 50 THEN 'Medium'
+            WHEN sm.length_m > 20 THEN 'Small'
+            ELSE 'Tiny'
+        END
+    ) AS size_class,
     
     -- Era classification
     CASE
@@ -311,9 +304,16 @@ SELECT
         ELSE 'Multiple Eras/Unspecified'
     END AS starship_era,
     
-    -- Relationship counts
+    -- Relationship counts from staging
     sm.pilot_count,
-    sm.film_appearance_count,
+    sm.pilot_names AS notable_pilots,
+    sm.film_appearances AS film_appearance_count,
+    sm.film_names AS film_names_list,
+    
+    -- Source data metadata
+    sm.url AS source_url,
+    sm.fetch_timestamp,
+    sm.processed_timestamp,
     
     -- Data tracking field
     CURRENT_TIMESTAMP AS dbt_loaded_at

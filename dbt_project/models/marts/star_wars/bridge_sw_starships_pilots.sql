@@ -12,30 +12,41 @@
   
   Notes:
   - Handles the many-to-many relationship between starships and pilots
-  - Extracts pilot references from the nested arrays in starship data
+  - Uses name arrays directly for easier access to pilot and film data
   - Calculates pilot skill classifications and experience metrics
   - Identifies iconic starship-pilot combinations from the series
-  - Provides context for starship functionality and operational roles
+  - Provides film appearance overlap metrics between pilots and their ships
+  - Enhanced with additional fields from updated staging models
 */
 
-WITH starship_pilots AS (
-    -- Extract pilot references from the starships data with better error handling
+WITH direct_connections AS (
+    -- Use the new pilot_names array directly from starships table
     SELECT
         s.id AS starship_id,
-        s.name AS starship_name,
+        s.starship_name,
         s.model,
         s.manufacturer,
         s.starship_class,
-        s.cost_in_credits::NUMERIC AS cost,
-        pilot_ref->>'url' AS pilot_url,
-        -- Extract pilot ID from URL with error handling
-        NULLIF(SPLIT_PART(COALESCE(pilot_ref->>'url', ''), '/', 6), '')::INTEGER AS pilot_id
-    FROM {{ ref('stg_swapi_starships') }} s,  -- Corrected reference
-    LATERAL jsonb_array_elements(
-        CASE WHEN s.pilots IS NULL OR s.pilots = 'null' OR jsonb_array_length(s.pilots) = 0 
-        THEN '[]'::jsonb ELSE s.pilots END
-    ) AS pilot_ref
+        s.cost_in_credits AS cost,
+        -- Use unnest on the pilot_names array
+        UNNEST(CASE WHEN s.pilot_names IS NULL THEN ARRAY[]::text[] ELSE s.pilot_names END) AS pilot_name
+    FROM {{ ref('stg_swapi_starships') }} s
     WHERE s.id IS NOT NULL
+),
+
+-- Join to get the pilot_id from the name
+starship_pilots AS (
+    SELECT
+        dc.starship_id,
+        dc.starship_name,
+        dc.model,
+        dc.manufacturer,
+        dc.starship_class,
+        dc.cost,
+        p.id AS pilot_id,
+        dc.pilot_name
+    FROM direct_connections dc
+    LEFT JOIN {{ ref('stg_swapi_people') }} p ON dc.pilot_name = p.name
 ),
 
 -- Join with character information for context
@@ -48,16 +59,19 @@ pilot_details AS (
         sp.starship_class,
         sp.cost,
         sp.pilot_id,
-        p.name AS pilot_name,
+        sp.pilot_name,
         p.species_id,
         p.gender,
         p.birth_year,
+        p.film_appearances, -- Add film appearance count
+        p.film_names,       -- Add film names array
         -- Determine if force sensitive based on known Jedi/Sith
-        CASE WHEN p.name IN (
-            'Luke Skywalker', 'Darth Vader', 'Obi-Wan Kenobi', 'Anakin Skywalker', 
-            'Yoda', 'Palpatine', 'Rey', 'Kylo Ren', 'Mace Windu', 'Qui-Gon Jinn',
-            'Kit Fisto', 'Plo Koon', 'Luminara Unduli', 'Count Dooku', 'Darth Maul'
-        ) THEN TRUE ELSE FALSE END AS force_sensitive,
+        CASE WHEN p.force_sensitive IS NOT NULL THEN p.force_sensitive
+             WHEN p.name IN (
+                'Luke Skywalker', 'Darth Vader', 'Obi-Wan Kenobi', 'Anakin Skywalker', 
+                'Yoda', 'Palpatine', 'Rey', 'Kylo Ren', 'Mace Windu', 'Qui-Gon Jinn',
+                'Kit Fisto', 'Plo Koon', 'Luminara Unduli', 'Count Dooku', 'Darth Maul'
+             ) THEN TRUE ELSE FALSE END AS force_sensitive,
         -- Calculate pilot's approximate age (if birth_year is available)
         CASE 
             WHEN p.birth_year ~ '^[0-9]+(\.[0-9]+)?$' THEN 
@@ -66,7 +80,9 @@ pilot_details AS (
                     ELSE COALESCE(p.birth_year::NUMERIC, 0)
                 END
             ELSE 0
-        END AS pilot_age
+        END AS pilot_age,
+        -- Use the character_era field from staging if available
+        p.character_era
     FROM starship_pilots sp
     LEFT JOIN {{ ref('stg_swapi_people') }} p ON sp.pilot_id = p.id
 ),
@@ -77,7 +93,13 @@ pilot_species AS (
         pd.*,
         s.name AS species_name,
         s.classification AS species_classification,
-        s.average_lifespan
+        s.average_lifespan,
+        -- Get starship's film appearances
+        (SELECT sh.film_appearances FROM {{ ref('stg_swapi_starships') }} sh 
+         WHERE sh.id = pd.starship_id) AS starship_film_count,
+        -- Get starship's film names
+        (SELECT sh.film_names FROM {{ ref('stg_swapi_starships') }} sh 
+         WHERE sh.id = pd.starship_id) AS starship_film_names
     FROM pilot_details pd
     LEFT JOIN {{ ref('stg_swapi_species') }} s ON pd.species_id = s.id
 )
@@ -108,6 +130,20 @@ SELECT
     ps.birth_year,
     ps.force_sensitive,
     ps.pilot_age,
+    
+    -- Film appearances
+    ps.film_appearances AS pilot_film_count,
+    ps.starship_film_count,
+    
+    -- Calculate film overlap between pilot and starship
+    CASE
+        WHEN ps.film_names IS NULL OR ps.starship_film_names IS NULL THEN 0
+        ELSE (
+            SELECT COUNT(*) 
+            FROM UNNEST(ps.film_names) AS pf 
+            WHERE pf = ANY(ps.starship_film_names)
+        )
+    END AS film_appearance_overlap,
     
     -- Enhanced pilot skill classification with more nuance
     CASE
@@ -159,6 +195,13 @@ SELECT
         ELSE FALSE
     END AS is_iconic_pairing,
     
+    -- Calculate if this is the pilot's "signature ship" based on film overlap
+    CASE
+        WHEN ps.is_iconic_pairing = TRUE THEN TRUE
+        WHEN film_appearance_overlap >= 2 THEN TRUE
+        ELSE FALSE
+    END AS is_signature_ship,
+    
     -- Affiliation based on pilot
     CASE
         WHEN ps.pilot_name IN ('Luke Skywalker', 'Leia Organa', 'Han Solo', 'Chewbacca', 
@@ -181,8 +224,9 @@ SELECT
         ELSE 'Utility'
     END AS starship_role,
     
-    -- Era classification
+    -- Era classification - use character_era field when available
     CASE
+        WHEN ps.character_era IS NOT NULL THEN ps.character_era
         WHEN ps.pilot_name IN ('Anakin Skywalker', 'Obi-Wan Kenobi', 'Padmé Amidala', 
                              'Qui-Gon Jinn', 'Mace Windu', 'Count Dooku', 'General Grievous') THEN 'Prequel Era'
         WHEN ps.pilot_name IN ('Luke Skywalker', 'Han Solo', 'Leia Organa', 'Darth Vader', 
@@ -191,6 +235,14 @@ SELECT
         WHEN ps.pilot_name IN ('Din Djarin') THEN 'Mandalorian Era'
         ELSE 'Unknown Era'
     END AS story_era,
+    
+    -- Add source URL tracking
+    (SELECT s.url FROM {{ ref('stg_swapi_starships') }} s WHERE s.id = ps.starship_id) AS starship_url,
+    (SELECT p.url FROM {{ ref('stg_swapi_people') }} p WHERE p.id = ps.pilot_id) AS pilot_url,
+    
+    -- ETL tracking fields
+    (SELECT s.fetch_timestamp FROM {{ ref('stg_swapi_starships') }} s WHERE s.id = ps.starship_id) AS starship_fetch_timestamp,
+    (SELECT p.fetch_timestamp FROM {{ ref('stg_swapi_people') }} p WHERE p.id = ps.pilot_id) AS pilot_fetch_timestamp,
     
     -- Data tracking field
     CURRENT_TIMESTAMP AS dbt_loaded_at

@@ -1,0 +1,47 @@
+version: 2
+
+sources:
+  - name: pokeapi
+    description: "Pokemon data from the PokeAPI"
+    database: nerd_facts    # Changed to match your other sources
+    schema: raw             # Changed to match your other sources
+    
+    tables:
+      - name: moves
+        identifier: pokeapi_moves    # Added identifier for consistent structure
+        description: "Raw data about Pokemon moves including power, accuracy, and effect text"
+        columns:
+          - name: id
+            description: "Primary key for the move"
+            tests:
+              - unique
+              - not_null
+          
+          - name: name
+            description: "Name of the move"
+            tests:
+              - not_null
+      
+      - name: pokemon
+        identifier: pokeapi_pokemon    # Added for consistent naming convention
+        description: "Raw data about Pokemon species, types, and stats"
+        
+      - name: types
+        identifier: pokeapi_types
+        description: "Raw data about Pokemon elemental types and effectiveness"
+        
+      - name: abilities
+        identifier: pokeapi_abilities
+        description: "Raw data about Pokemon abilities and effects"
+        
+      - name: items
+        identifier: pokeapi_items
+        description: "Raw data about items in the Pokemon games"
+        
+      - name: generations
+        identifier: pokeapi_generations
+        description: "Raw data about different generations of Pokemon games"
+        
+      - name: locations
+        identifier: pokeapi_locations
+        description: "Raw data about locations in the Pokemon world"

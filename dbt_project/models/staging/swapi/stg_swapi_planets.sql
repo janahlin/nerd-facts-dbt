@@ -1,3 +1,9 @@
+{{
+  config(
+    materialized = 'view'
+  )
+}}
+
 /*
   Model: stg_swapi_planets
   Description: Standardizes Star Wars planet data from SWAPI
@@ -10,7 +16,16 @@
   - Climate and terrain are standardized for consistency
 */
 
-WITH raw_data AS (
+-- First check what columns actually exist
+WITH column_check AS (
+    SELECT 
+        column_name 
+    FROM information_schema.columns 
+    WHERE table_schema = 'raw' 
+    AND table_name = 'swapi_planets'
+),
+
+raw_data AS (
     -- Explicitly list columns to prevent issues if source schema changes
     SELECT
         id,
@@ -23,19 +38,63 @@ WITH raw_data AS (
         terrain,
         surface_water,
         population,
-        residents,
-        films,
+        
+        -- Handle various possible column names for resident data
+        CASE
+            -- Check for standard "residents" column
+            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'residents')
+            THEN CASE WHEN residents IS NULL OR residents = '' THEN NULL::jsonb ELSE residents::jsonb END
+            
+            -- Check for alternative "people" column
+            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'people')
+            THEN CASE WHEN people IS NULL OR people = '' THEN NULL::jsonb ELSE people::jsonb END
+            
+            -- Check for alternative "characters" column
+            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'characters')
+            THEN CASE WHEN characters IS NULL OR characters = '' THEN NULL::jsonb ELSE characters::jsonb END
+            
+            -- Default to empty array if no matching column found
+            ELSE '[]'::jsonb
+        END AS residents,
+        
+        -- Handle films data with similar approach
+        CASE
+            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'films')
+            THEN CASE WHEN films IS NULL OR films = '' THEN NULL::jsonb ELSE films::jsonb END
+            
+            -- Default to empty array if no matching column found
+            ELSE '[]'::jsonb
+        END AS films,
+        
+        -- Check for name arrays
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'resident_names') 
+             THEN resident_names ELSE NULL END AS resident_names,
+
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'film_names') 
+             THEN film_names ELSE NULL END AS film_names,
+
+        -- Source URL
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'url') 
+             THEN url ELSE NULL END AS url,
+
+        -- ETL tracking fields
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'fetch_timestamp') 
+             THEN fetch_timestamp ELSE NULL END AS fetch_timestamp,
+
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'processed_timestamp') 
+             THEN processed_timestamp ELSE NULL END AS processed_timestamp,
+
         created,
         edited,
-        url
-    FROM raw.swapi_planets
+        CURRENT_TIMESTAMP AS _loaded_at
+    FROM {{ source('swapi', 'planets') }}
     WHERE id IS NOT NULL
 )
 
 SELECT
     -- Primary identifiers
     id,
-    name AS planet_name,  -- Fixed typo from "panet_name"
+    name AS planet_name,
     
     -- Physical characteristics with proper typing
     CASE 
@@ -76,6 +135,8 @@ SELECT
     -- Keep raw arrays for downstream usage
     residents,
     films,
+    resident_names,
+    film_names,
     
     -- Derived classifications
     CASE
@@ -93,14 +154,22 @@ SELECT
     CASE
         WHEN lower(terrain) LIKE '%ocean%' OR 
              lower(terrain) LIKE '%water%' OR
-             (surface_water IS NOT NULL AND surface_water::NUMERIC > 50) THEN TRUE
+             (surface_water IS NOT NULL AND 
+              CASE WHEN surface_water ~ '^[0-9\.]+$' 
+                   THEN surface_water::NUMERIC > 50 
+                   ELSE FALSE 
+              END) THEN TRUE
         ELSE FALSE
     END AS is_water_world,
     
     CASE
         WHEN lower(terrain) LIKE '%desert%' OR 
              lower(climate) LIKE '%arid%' OR
-             (surface_water IS NOT NULL AND surface_water::NUMERIC < 5) THEN TRUE
+             (surface_water IS NOT NULL AND 
+              CASE WHEN surface_water ~ '^[0-9\.]+$' 
+                   THEN surface_water::NUMERIC < 5 
+                   ELSE FALSE 
+              END) THEN TRUE
         ELSE FALSE
     END AS is_desert_world,
     
@@ -131,6 +200,29 @@ SELECT
     edited::TIMESTAMP AS updated_at,
     
     -- Add data tracking fields
-    CURRENT_TIMESTAMP AS dbt_loaded_at
+    CURRENT_TIMESTAMP AS dbt_loaded_at,
+    
+    -- ETL tracking fields
+    CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'fetch_timestamp') 
+         THEN fetch_timestamp ELSE NULL END AS fetch_timestamp,
+
+    CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'processed_timestamp') 
+         THEN processed_timestamp ELSE NULL END AS processed_timestamp,
+
+    -- Source URL
+    CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'url') 
+         THEN url ELSE NULL END AS url,
+    
+    -- Final SELECT should include:
+    -- Source URL
+    url,
+    
+    -- Name arrays for easier reporting
+    resident_names,
+    film_names,
+    
+    -- ETL tracking fields
+    fetch_timestamp::TIMESTAMP AS fetch_timestamp,
+    processed_timestamp::TIMESTAMP AS processed_timestamp
     
 FROM raw_data

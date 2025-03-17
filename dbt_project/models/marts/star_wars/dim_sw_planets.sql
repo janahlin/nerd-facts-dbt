@@ -16,20 +16,38 @@
   - Calculates habitability metrics and significance rankings
   - Adds contextual information about each planet's role in the saga
   - Includes galactic region mapping and political affiliations
+  - Enhanced with additional fields from updated staging models
 */
 
 WITH planets AS (
     SELECT
         id AS planet_id,
-        name AS planet_name,
-        NULLIF(rotation_period, 'unknown')::NUMERIC AS rotation_period,
-        NULLIF(orbital_period, 'unknown')::NUMERIC AS orbital_period,
-        NULLIF(diameter, 'unknown')::NUMERIC AS diameter,
+        planet_name,
+        rotation_period,
+        orbital_period,
+        diameter,
         climate,
         gravity,
         terrain,
-        NULLIF(surface_water, 'unknown')::NUMERIC AS surface_water,
-        NULLIF(REPLACE(population, ',', ''), 'unknown')::NUMERIC AS population
+        surface_water,
+        population,
+        
+        -- Add new fields from enhanced staging model
+        resident_count,
+        film_appearances,
+        film_names,
+        resident_names,
+        
+        -- Add terrain classifications from staging
+        is_temperate,
+        has_vegetation,
+        is_water_world,
+        is_desert_world,
+        
+        -- Add source tracking
+        url,
+        fetch_timestamp,
+        processed_timestamp
     FROM {{ ref('stg_swapi_planets') }}
 ),
 
@@ -51,13 +69,16 @@ planet_attributes AS (
         CASE
             WHEN climate IS NULL THEN 'Unknown'
             WHEN climate LIKE '%temperate%' AND climate LIKE '%tropical%' THEN 'Temperate/Tropical Mix'
-            WHEN climate LIKE '%temperate%' THEN 'Temperate'
+            WHEN climate LIKE '%temperate%' OR is_temperate = TRUE THEN 'Temperate'
             WHEN climate LIKE '%tropical%' THEN 'Tropical'
-            WHEN climate LIKE '%arid%' OR climate LIKE '%hot%' OR climate LIKE '%desert%' THEN 'Hot/Arid'
-            WHEN climate LIKE '%frozen%' OR climate LIKE '%frigid%' OR climate LIKE '%cold%' OR climate LIKE '%ice%' THEN 'Cold/Frozen'
+            WHEN climate LIKE '%arid%' OR climate LIKE '%hot%' OR climate LIKE '%desert%' 
+                 OR is_desert_world = TRUE THEN 'Hot/Arid'
+            WHEN climate LIKE '%frozen%' OR climate LIKE '%frigid%' OR climate LIKE '%cold%' 
+                 OR climate LIKE '%ice%' THEN 'Cold/Frozen'
             WHEN climate LIKE '%polluted%' OR climate LIKE '%toxic%' THEN 'Polluted/Toxic'
             WHEN climate LIKE '%artificial%' OR climate LIKE '%controlled%' THEN 'Artificial/Controlled'
-            WHEN climate LIKE '%moist%' OR climate LIKE '%humid%' OR climate LIKE '%wet%' THEN 'Humid/Moist'
+            WHEN climate LIKE '%moist%' OR climate LIKE '%humid%' OR climate LIKE '%wet%' 
+                 OR is_water_world = TRUE THEN 'Humid/Moist'
             WHEN climate LIKE '%superheated%' OR climate LIKE '%fiery%' OR climate LIKE '%volcanic%' THEN 'Extreme Heat'
             ELSE 'Mixed/Other'
         END AS climate_class,
@@ -65,12 +86,13 @@ planet_attributes AS (
         -- Terrain type classification (primary terrain type)
         CASE
             WHEN terrain IS NULL THEN 'Unknown'
-            WHEN terrain LIKE '%desert%' THEN 'Desert'
+            WHEN terrain LIKE '%desert%' OR is_desert_world = TRUE THEN 'Desert'
             WHEN terrain LIKE '%forest%' AND terrain LIKE '%jungle%' THEN 'Forest/Jungle'
-            WHEN terrain LIKE '%forest%' THEN 'Forest'
+            WHEN terrain LIKE '%forest%' OR has_vegetation = TRUE THEN 'Forest'
             WHEN terrain LIKE '%jungle%' THEN 'Jungle'
             WHEN terrain LIKE '%mountain%' THEN 'Mountainous'
-            WHEN terrain LIKE '%ocean%' OR terrain LIKE '%water%' OR terrain LIKE '%lake%' THEN 'Oceanic'
+            WHEN terrain LIKE '%ocean%' OR terrain LIKE '%water%' OR terrain LIKE '%lake%' 
+                 OR is_water_world = TRUE THEN 'Oceanic'
             WHEN terrain LIKE '%swamp%' OR terrain LIKE '%bog%' THEN 'Swamp/Bog'
             WHEN terrain LIKE '%urban%' OR terrain LIKE '%cityscape%' OR terrain LIKE '%city%' THEN 'Urban'
             WHEN terrain LIKE '%grass%' OR terrain LIKE '%plain%' OR terrain LIKE '%prairie%' THEN 'Grassland'
@@ -89,21 +111,28 @@ planet_attributes AS (
                     40 + 
                     -- Climate factors
                     CASE 
+                        WHEN is_temperate = TRUE THEN 20
                         WHEN climate LIKE '%temperate%' THEN 20 
                         WHEN climate LIKE '%tropical%' THEN 15
                         WHEN climate LIKE '%polluted%' OR climate LIKE '%toxic%' THEN -30
                         WHEN climate LIKE '%frigid%' OR climate LIKE '%frozen%' THEN -20
-                        WHEN climate LIKE '%arid%' OR climate LIKE '%desert%' THEN -15
+                        WHEN climate LIKE '%arid%' OR climate LIKE '%desert%' OR is_desert_world = TRUE THEN -15
                         ELSE 0 
                     END +
                     -- Water factors (crucial for life)
                     CASE 
+                        WHEN is_water_world = TRUE THEN 15
                         WHEN surface_water > 50 THEN 15
                         WHEN surface_water > 30 THEN 10
                         WHEN surface_water > 10 THEN 5
                         WHEN surface_water = 0 THEN -10
                         WHEN surface_water IS NULL THEN 0
                         ELSE 0 
+                    END +
+                    -- Vegetation factors
+                    CASE
+                        WHEN has_vegetation = TRUE THEN 10
+                        ELSE 0
                     END +
                     -- Population factors (evidence of habitability)
                     CASE 
@@ -206,9 +235,9 @@ SELECT
     ps.planet_name,
     
     -- Physical attributes with better error handling
-    CASE WHEN ps.diameter IS NOT NULL THEN ps.diameter ELSE NULL END AS diameter_km,
-    CASE WHEN ps.rotation_period IS NOT NULL THEN ps.rotation_period ELSE NULL END AS rotation_period_hours,
-    CASE WHEN ps.orbital_period IS NOT NULL THEN ps.orbital_period ELSE NULL END AS orbital_period_days,
+    ps.diameter AS diameter_km,
+    ps.rotation_period AS rotation_period_hours,
+    ps.orbital_period AS orbital_period_days,
     
     -- Environmental attributes
     ps.climate,
@@ -216,7 +245,7 @@ SELECT
     ps.gravity,
     ps.terrain,
     ps.terrain_class,
-    CASE WHEN ps.surface_water IS NOT NULL THEN ps.surface_water ELSE NULL END AS surface_water_percentage,
+    ps.surface_water AS surface_water_percentage,
     
     -- Size and habitability
     ps.size_class,
@@ -231,6 +260,10 @@ SELECT
         ELSE 'unknown'
     END AS population_formatted,
     ps.population AS population_count,
+    
+    -- Add resident metrics from staging
+    COALESCE(ps.resident_count, 0) AS known_resident_count,
+    ps.resident_names AS notable_residents,
     
     -- Population density if both values are available
     CASE 
@@ -247,6 +280,12 @@ SELECT
         WHEN ps.habitability_score >= 20 THEN 'Marginally Habitable'
         ELSE 'Barely Habitable/Hostile'
     END AS habitability_class,
+    
+    -- Terrain classifications from staging
+    ps.is_temperate,
+    ps.has_vegetation,
+    ps.is_water_world,
+    ps.is_desert_world,
     
     -- Galactic location and significance
     ps.galactic_region,
@@ -269,70 +308,14 @@ SELECT
         ELSE 'Standard Location'
     END AS location_importance,
     
-    -- Films appearance mapping (manually added)
-    CASE
-        WHEN ps.planet_name = 'Tatooine' THEN ARRAY[1, 2, 3, 4, 6]
-        WHEN ps.planet_name = 'Naboo' THEN ARRAY[1, 2, 3]
-        WHEN ps.planet_name = 'Coruscant' THEN ARRAY[1, 2, 3, 6]
-        WHEN ps.planet_name = 'Geonosis' THEN ARRAY[2]
-        WHEN ps.planet_name = 'Kamino' THEN ARRAY[2]
-        WHEN ps.planet_name = 'Mustafar' THEN ARRAY[3]
-        WHEN ps.planet_name = 'Utapau' THEN ARRAY[3]
-        WHEN ps.planet_name = 'Kashyyyk' THEN ARRAY[3]
-        WHEN ps.planet_name = 'Alderaan' THEN ARRAY[4]
-        WHEN ps.planet_name = 'Yavin IV' THEN ARRAY[4]
-        WHEN ps.planet_name = 'Hoth' THEN ARRAY[5]
-        WHEN ps.planet_name = 'Dagobah' THEN ARRAY[5, 6]
-        WHEN ps.planet_name = 'Bespin' THEN ARRAY[5]
-        WHEN ps.planet_name = 'Endor' THEN ARRAY[6]
-        WHEN ps.planet_name = 'Jakku' THEN ARRAY[7]
-        WHEN ps.planet_name = 'Takodana' THEN ARRAY[7]
-        WHEN ps.planet_name = 'D''Qar' THEN ARRAY[7, 8]
-        WHEN ps.planet_name = 'Ahch-To' THEN ARRAY[7, 8]
-        WHEN ps.planet_name = 'Cantonica' THEN ARRAY[8]
-        WHEN ps.planet_name = 'Crait' THEN ARRAY[8]
-        WHEN ps.planet_name = 'Pasaana' THEN ARRAY[9]
-        WHEN ps.planet_name = 'Kijimi' THEN ARRAY[9]
-        WHEN ps.planet_name = 'Exegol' THEN ARRAY[9]
-        ELSE NULL
-    END AS film_appearances,
+    -- Films appearance data from staging model
+    ps.film_names AS film_names_array,
+    COALESCE(ps.film_appearances, 0) AS film_appearance_count,
     
-    -- Count of film appearances
-    CASE
-        WHEN ps.planet_name IN ('Tatooine', 'Naboo', 'Coruscant', 'Geonosis', 'Kamino', 'Mustafar',
-                             'Utapau', 'Kashyyyk', 'Alderaan', 'Yavin IV', 'Hoth', 'Dagobah', 
-                             'Bespin', 'Endor', 'Jakku', 'Takodana', 'D''Qar', 'Ahch-To', 
-                             'Cantonica', 'Crait', 'Pasaana', 'Kijimi', 'Exegol') 
-            THEN ARRAY_LENGTH(
-                CASE
-                    WHEN ps.planet_name = 'Tatooine' THEN ARRAY[1, 2, 3, 4, 6]
-                    WHEN ps.planet_name = 'Naboo' THEN ARRAY[1, 2, 3]
-                    WHEN ps.planet_name = 'Coruscant' THEN ARRAY[1, 2, 3, 6]
-                    WHEN ps.planet_name = 'Geonosis' THEN ARRAY[2]
-                    WHEN ps.planet_name = 'Kamino' THEN ARRAY[2]
-                    WHEN ps.planet_name = 'Mustafar' THEN ARRAY[3]
-                    WHEN ps.planet_name = 'Utapau' THEN ARRAY[3]
-                    WHEN ps.planet_name = 'Kashyyyk' THEN ARRAY[3]
-                    WHEN ps.planet_name = 'Alderaan' THEN ARRAY[4]
-                    WHEN ps.planet_name = 'Yavin IV' THEN ARRAY[4]
-                    WHEN ps.planet_name = 'Hoth' THEN ARRAY[5]
-                    WHEN ps.planet_name = 'Dagobah' THEN ARRAY[5, 6]
-                    WHEN ps.planet_name = 'Bespin' THEN ARRAY[5]
-                    WHEN ps.planet_name = 'Endor' THEN ARRAY[6]
-                    WHEN ps.planet_name = 'Jakku' THEN ARRAY[7]
-                    WHEN ps.planet_name = 'Takodana' THEN ARRAY[7]
-                    WHEN ps.planet_name = 'D''Qar' THEN ARRAY[7, 8]
-                    WHEN ps.planet_name = 'Ahch-To' THEN ARRAY[7, 8]
-                    WHEN ps.planet_name = 'Cantonica' THEN ARRAY[8]
-                    WHEN ps.planet_name = 'Crait' THEN ARRAY[8]
-                    WHEN ps.planet_name = 'Pasaana' THEN ARRAY[9]
-                    WHEN ps.planet_name = 'Kijimi' THEN ARRAY[9]
-                    WHEN ps.planet_name = 'Exegol' THEN ARRAY[9]
-                    ELSE NULL
-                END, 1
-            )
-        ELSE 0
-    END AS film_appearance_count,
+    -- Source data metadata
+    ps.url AS source_url,
+    ps.fetch_timestamp,
+    ps.processed_timestamp,
     
     -- Data tracking field
     CURRENT_TIMESTAMP AS dbt_loaded_at

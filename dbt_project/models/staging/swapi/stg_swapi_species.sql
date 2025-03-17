@@ -1,3 +1,9 @@
+{{
+  config(
+    materialized = 'view'
+  )
+}}
+
 /*
   Model: stg_swapi_species
   Description: Standardizes Star Wars species data from SWAPI
@@ -8,9 +14,19 @@
   - Color fields are parsed for analysis
   - Homeworld references are extracted
   - Additional derived fields help with species classification
+  - Enhanced to handle name arrays and ETL tracking fields
 */
 
-WITH raw_data AS (
+-- First, check what columns actually exist in the source table
+WITH column_check AS (
+    SELECT 
+        column_name 
+    FROM information_schema.columns 
+    WHERE table_schema = 'raw' 
+    AND table_name = 'swapi_species'
+),
+
+raw_data AS (
     -- Explicitly list columns to prevent issues if source schema changes
     SELECT
         id,
@@ -24,12 +40,31 @@ WITH raw_data AS (
         skin_colors,
         homeworld,
         language,
-        people,
-        films,
+        CASE WHEN people IS NULL OR people = '' THEN NULL::jsonb ELSE people::jsonb END AS people,
+        CASE WHEN films IS NULL OR films = '' THEN NULL::jsonb ELSE films::jsonb END AS films,
+        
+        -- Include name arrays if they exist
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'people_names') 
+             THEN people_names ELSE NULL END AS people_names,
+             
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'film_names') 
+             THEN film_names ELSE NULL END AS film_names,
+        
+        -- Source URL
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'url') 
+             THEN url ELSE NULL END AS url,
+             
+        -- ETL tracking fields
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'fetch_timestamp') 
+             THEN fetch_timestamp ELSE NULL END AS fetch_timestamp,
+             
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'processed_timestamp') 
+             THEN processed_timestamp ELSE NULL END AS processed_timestamp,
+        
         created,
         edited,
-        url
-    FROM raw.swapi_species
+        CURRENT_TIMESTAMP AS _loaded_at
+    FROM {{ source('swapi', 'species') }}
     WHERE id IS NOT NULL
 )
 
@@ -83,7 +118,7 @@ SELECT
     CASE
         WHEN homeworld IS NULL THEN NULL
         WHEN homeworld = 'null' THEN NULL
-        ELSE NULLIF(SPLIT_PART(homeworld->>'url', '/', 6), '')
+        ELSE NULLIF(homeworld, '')
     END AS homeworld_id,
     
     -- Entity counts
@@ -115,17 +150,17 @@ SELECT
     -- Longevity classification
     CASE
         WHEN LOWER(average_lifespan) = 'indefinite' THEN 'Immortal'
-        WHEN average_lifespan::NUMERIC > 500 THEN 'Very Long-Lived'
-        WHEN average_lifespan::NUMERIC > 100 THEN 'Long-Lived'
-        WHEN average_lifespan::NUMERIC > 70 THEN 'Standard'
-        WHEN average_lifespan::NUMERIC > 0 THEN 'Short-Lived'
+        WHEN average_lifespan_years > 500 THEN 'Very Long-Lived'
+        WHEN average_lifespan_years > 100 THEN 'Long-Lived'
+        WHEN average_lifespan_years > 70 THEN 'Standard'
+        WHEN average_lifespan_years > 0 THEN 'Short-Lived'
         ELSE 'Unknown'
     END AS longevity_class,
     
     -- Notable species flag
     CASE
         WHEN name IN ('Human', 'Wookiee', 'Droid', 'Hutt', 'Ewok', 'Gungan', 
-                     'Jawa', 'Mon Calamari', 'Twi\'lek', 'Yoda\'s species') 
+                     'Jawa', 'Mon Calamari', 'Twi''lek', 'Yoda''s species') 
         THEN TRUE
         ELSE FALSE
     END AS is_notable_species,
@@ -133,6 +168,17 @@ SELECT
     -- API metadata
     created::TIMESTAMP AS created_at,
     edited::TIMESTAMP AS updated_at,
+    
+    -- Source URL
+    url,
+    
+    -- Name arrays for easier reporting
+    people_names,
+    film_names,
+    
+    -- ETL tracking fields
+    fetch_timestamp::TIMESTAMP AS fetch_timestamp,
+    processed_timestamp::TIMESTAMP AS processed_timestamp,
     
     -- Add data tracking fields
     CURRENT_TIMESTAMP AS dbt_loaded_at

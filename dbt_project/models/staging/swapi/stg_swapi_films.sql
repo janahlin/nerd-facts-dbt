@@ -1,3 +1,9 @@
+{{
+  config(
+    materialized = 'view'
+  )
+}}
+
 /*
   Model: stg_swapi_films
   Description: Standardizes Star Wars film data from SWAPI
@@ -7,9 +13,19 @@
   - Adds derived fields for easier analysis (release_year, trilogy)
   - Extracts counts from related entities (characters, planets, species)
   - Converts dates to proper DATE types and adds chronological ordering
+  - Enhanced with additional relationship metadata from fetch_swapi.py
 */
 
-WITH raw_data AS (
+-- First, check what columns actually exist in the source table
+WITH column_check AS (
+    SELECT 
+        column_name 
+    FROM information_schema.columns 
+    WHERE table_schema = 'raw' 
+    AND table_name = 'swapi_films'
+),
+
+raw_data AS (
     -- Explicitly list columns to prevent issues if source schema changes
     SELECT
         id,
@@ -19,15 +35,56 @@ WITH raw_data AS (
         producer,
         release_date,
         opening_crawl,
-        characters,
-        planets,
-        starships,
-        vehicles,
-        species,
+        
+        -- Dynamically handle character data - could be "characters" or "people"
+        CASE 
+            -- Handle case where column is named "characters"
+            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'characters') 
+            THEN 
+                CASE WHEN characters IS NULL OR characters = '' THEN NULL::jsonb 
+                ELSE characters::jsonb END
+            -- Handle case where column is named "people" 
+            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'people')
+            THEN
+                CASE WHEN people IS NULL OR people = '' THEN NULL::jsonb 
+                ELSE people::jsonb END
+            -- Fallback to empty array
+            ELSE '[]'::jsonb
+        END AS characters,
+        
+        -- Additional fields with safer access
+        CASE WHEN planets IS NULL OR planets = '' THEN NULL::jsonb 
+             ELSE planets::jsonb END AS planets,
+        CASE WHEN starships IS NULL OR starships = '' THEN NULL::jsonb 
+             ELSE starships::jsonb END AS starships,
+        CASE WHEN vehicles IS NULL OR vehicles = '' THEN NULL::jsonb 
+             ELSE vehicles::jsonb END AS vehicles,
+        CASE WHEN species IS NULL OR species = '' THEN NULL::jsonb 
+             ELSE species::jsonb END AS species,
+             
+        -- Additional optional fields from fetch_swapi.py
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'character_names') 
+             THEN character_names ELSE NULL END AS character_names,
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'planet_names') 
+             THEN planet_names ELSE NULL END AS planet_names,
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'species_names') 
+             THEN species_names ELSE NULL END AS species_names,
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'starship_names') 
+             THEN starship_names ELSE NULL END AS starship_names,
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'vehicle_names') 
+             THEN vehicle_names ELSE NULL END AS vehicle_names,
+        
+        -- Extended metadata fields
         created,
         edited,
-        url
-    FROM raw.swapi_films
+        url,
+        
+        -- Additional timestamp fields
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'fetch_timestamp') 
+             THEN fetch_timestamp ELSE NULL END AS fetch_timestamp,
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'processed_timestamp') 
+             THEN processed_timestamp ELSE NULL END AS processed_timestamp
+    FROM {{ source('swapi', 'films') }}
     WHERE id IS NOT NULL
 )
 
@@ -74,19 +131,38 @@ SELECT
         ELSE 'Anthology'
     END AS trilogy,
     
-    -- Entity counts
+    -- Entity counts with safer access
     COALESCE(jsonb_array_length(characters), 0) AS character_count,
     COALESCE(jsonb_array_length(planets), 0) AS planet_count,
     COALESCE(jsonb_array_length(starships), 0) AS starship_count,
     COALESCE(jsonb_array_length(vehicles), 0) AS vehicle_count,
     COALESCE(jsonb_array_length(species), 0) AS species_count,
     
+    -- Pass through relationship arrays for joining
+    characters,
+    planets,
+    starships,
+    vehicles,
+    species,
+    
+    -- Include extracted relationship names if available
+    character_names,
+    planet_names,
+    species_names,
+    starship_names,
+    vehicle_names,
+    
     -- Word count of opening crawl (approximate)
-    ARRAY_LENGTH(STRING_TO_ARRAY(REGEXP_REPLACE(opening_crawl, '\r|\n', ' ', 'g'), ' '), 1) AS opening_crawl_word_count,
+    ARRAY_LENGTH(STRING_TO_ARRAY(REGEXP_REPLACE(COALESCE(opening_crawl, ''), '\r|\n', ' ', 'g'), ' '), 1) AS opening_crawl_word_count,
+    
+    -- Source URL
+    url,
     
     -- API metadata with proper handling
     created::TIMESTAMP AS created_at,
     edited::TIMESTAMP AS updated_at,
+    fetch_timestamp::TIMESTAMP AS fetch_timestamp,
+    processed_timestamp::TIMESTAMP AS processed_timestamp,
     
     -- Data tracking
     CURRENT_TIMESTAMP AS dbt_loaded_at

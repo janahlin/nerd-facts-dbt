@@ -16,6 +16,7 @@
   - Calculates Force sensitivity and combat effectiveness ratings
   - Enriches character context with Star Wars universe specifics
   - Serves as the primary analytical table for character analysis
+  - Enhanced with additional fields from updated staging models
 */
 
 WITH base_characters AS (
@@ -31,11 +32,21 @@ WITH base_characters AS (
         gender,
         homeworld AS homeworld_id,
         species_id,
-        -- Count vehicles and starships
-        COALESCE(JSONB_ARRAY_LENGTH(vehicles), 0) AS vehicles_count,
-        COALESCE(JSONB_ARRAY_LENGTH(starships), 0) AS starships_count,
-        -- Count total films
-        COALESCE(JSONB_ARRAY_LENGTH(films), 0) AS film_count
+        
+        -- Use enhanced fields from staging
+        film_appearances,
+        film_names,
+        vehicle_count, -- Use pre-calculated count
+        vehicle_names,
+        starship_count, -- Use pre-calculated count
+        starship_names,
+        force_sensitive, -- Use this flag directly
+        character_era,   -- Use this field for era classification
+        
+        -- Add source tracking
+        url,
+        fetch_timestamp,
+        processed_timestamp
     FROM {{ ref('stg_swapi_people') }}
     WHERE id IS NOT NULL
 ),
@@ -56,7 +67,7 @@ character_species AS (
 character_homeworld AS (
     SELECT
         cs.*,
-        p.name AS homeworld_name,
+        p.planet_name AS homeworld_name,
         p.terrain AS homeworld_terrain,
         p.climate AS homeworld_climate
     FROM character_species cs
@@ -67,18 +78,20 @@ character_homeworld AS (
 force_ratings AS (
     SELECT
         character_id,
-        -- Determine force sensitivity with more comprehensive list
-        CASE
-            WHEN LOWER(name) IN (
-                'luke skywalker', 'darth vader', 'leia organa', 'yoda', 'emperor palpatine', 
-                'obi-wan kenobi', 'qui-gon jinn', 'mace windu', 'count dooku', 'darth maul',
-                'rey', 'kylo ren', 'anakin skywalker', 'ahsoka tano', 'plo koon',
-                'kit fisto', 'aayla secura', 'luminara unduli', 'barriss offee',
-                'asajj ventress', 'shaak ti', 'ki-adi-mundi', 'yaddle', 'ezra bridger',
-                'kanan jarrus', 'grogu', 'ben solo', 'sheev palpatine', 'snoke'
-            ) THEN TRUE
-            ELSE FALSE
-        END AS force_sensitive,
+        -- Use force_sensitive from staging when available
+        COALESCE(force_sensitive, 
+            CASE
+                WHEN LOWER(name) IN (
+                    'luke skywalker', 'darth vader', 'leia organa', 'yoda', 'emperor palpatine', 
+                    'obi-wan kenobi', 'qui-gon jinn', 'mace windu', 'count dooku', 'darth maul',
+                    'rey', 'kylo ren', 'anakin skywalker', 'ahsoka tano', 'plo koon',
+                    'kit fisto', 'aayla secura', 'luminara unduli', 'barriss offee',
+                    'asajj ventress', 'shaak ti', 'ki-adi-mundi', 'yaddle', 'ezra bridger',
+                    'kanan jarrus', 'grogu', 'ben solo', 'sheev palpatine', 'snoke'
+                ) THEN TRUE
+                ELSE FALSE
+            END
+        ) AS force_sensitive,
         
         -- Force rating on 1-10 scale with more comprehensive categorization
         CASE
@@ -144,22 +157,29 @@ battle_experience AS (
     SELECT
         ch.character_id,
         ch.name,
-        ch.film_count,
-        ch.vehicles_count,
-        ch.starships_count,
-        fr.force_sensitive,
+        ch.film_appearances AS film_count, -- Use the field from staging
+        ch.vehicle_count AS vehicles_count, -- Use the field from staging
+        ch.starship_count AS starships_count, -- Use the field from staging 
+        ch.film_names, -- Add film names array
+        ch.vehicle_names, -- Add vehicle names array
+        ch.starship_names, -- Add starship names array
+        ch.force_sensitive, -- Use the field from staging
+        ch.character_era, -- Use the field from staging
         fr.force_rating,
+        ch.url, -- Add source URL
+        ch.fetch_timestamp, -- Add fetch timestamp
+        ch.processed_timestamp, -- Add processed timestamp
         
         -- Enhanced battles won with more character context
         CASE
             -- Major heroes with known victories (higher counts)
             WHEN LOWER(ch.name) IN ('luke skywalker', 'leia organa', 'han solo', 'darth vader') THEN 
-                10 + ch.film_count + ch.starships_count
+                10 + ch.film_appearances + ch.starship_count
                 
             -- Important fighters and warriors
             WHEN LOWER(ch.name) IN ('boba fett', 'jango fett', 'chewbacca', 'lando calrissian',
                                'finn', 'poe dameron', 'rey', 'kylo ren', 'cassian andor') THEN 
-                8 + ch.film_count
+                8 + ch.film_appearances
                 
             -- Established Jedi and Sith
             WHEN LOWER(ch.name) IN ('obi-wan kenobi', 'qui-gon jinn', 'mace windu', 
@@ -172,12 +192,12 @@ battle_experience AS (
                  LOWER(ch.name) LIKE '%general%' THEN 6
                  
             -- Characters who likely have combat experience
-            WHEN ch.starships_count > 0 THEN 3 + ch.starships_count -- Pilots typically see combat
-            WHEN ch.vehicles_count > 0 THEN 2 + ch.vehicles_count -- Vehicle operators likely have some combat
-            WHEN fr.force_sensitive THEN 3 + fr.force_rating -- Force users typically engage in combat
+            WHEN ch.starship_count > 0 THEN 3 + ch.starship_count -- Pilots typically see combat
+            WHEN ch.vehicle_count > 0 THEN 2 + ch.vehicle_count -- Vehicle operators likely have some combat
+            WHEN ch.force_sensitive THEN 3 + fr.force_rating -- Force users typically engage in combat
             
             -- Everyone else gets minimal combat experience based on films
-            ELSE GREATEST(1, ch.film_count)
+            ELSE GREATEST(1, ch.film_appearances)
         END AS battles_won,
         
         -- Derive more detailed combat role
@@ -200,9 +220,9 @@ battle_experience AS (
             WHEN LOWER(ch.name) LIKE '%captain%' OR LOWER(ch.name) LIKE '%commander%' THEN 'Military Officer'
             
             -- Role based on vehicles/starships
-            WHEN ch.starships_count > 1 THEN 'Pilot'
-            WHEN ch.vehicles_count > 1 THEN 'Vehicle Operator'
-            WHEN fr.force_sensitive THEN 'Force Sensitive'
+            WHEN ch.starship_count > 1 THEN 'Pilot'
+            WHEN ch.vehicle_count > 1 THEN 'Vehicle Operator'
+            WHEN ch.force_sensitive THEN 'Force Sensitive'
             ELSE 'Support/Other'
         END AS combat_role,
         
@@ -224,13 +244,13 @@ battle_experience AS (
                                'jyn erso', 'din djarin', 'cara dune', 'ahsoka tano') THEN 7
                                
             -- Force users get a base effectiveness plus their force rating
-            WHEN fr.force_sensitive THEN LEAST(9, 4 + (fr.force_rating / 2))
+            WHEN ch.force_sensitive THEN LEAST(9, 4 + (fr.force_rating / 2))
             
             -- Pilots get decent effectiveness
-            WHEN ch.starships_count > 0 THEN LEAST(7, 4 + ch.starships_count)
+            WHEN ch.starship_count > 0 THEN LEAST(7, 4 + ch.starship_count)
             
             -- Everyone else scaled by films and vehicles
-            ELSE GREATEST(2, LEAST(6, 2 + ch.film_count + ch.vehicles_count))
+            ELSE GREATEST(2, LEAST(6, 2 + ch.film_appearances + ch.vehicle_count))
         END AS battle_effectiveness
     FROM character_homeworld ch
     JOIN force_ratings fr ON ch.character_id = fr.character_id
@@ -303,10 +323,15 @@ SELECT
     be.battles_won,
     be.battle_effectiveness,
     
-    -- Vehicle and film stats
+    -- Vehicle, starship, and film stats
     be.starships_count,
     be.vehicles_count,
     be.film_count,
+    
+    -- Vehicle, starship, and film name arrays for detailed reporting
+    be.film_names AS film_appearances_list,
+    be.vehicle_names AS vehicle_list,
+    be.starship_names AS starship_list,
     
     -- Character importance and affiliation
     -- Character affiliation with extensive mapping
@@ -377,33 +402,34 @@ SELECT
         ELSE 'D'
     END AS character_tier,
     
-    -- Era appearance classification
-    CASE
-        WHEN LOWER(be.name) IN ('qui-gon jinn', 'darth maul', 'watto', 'jar jar binks',
-                            'young anakin', 'shmi skywalker', 'padmé amidala',
-                            'nute gunray', 'captain panaka', 'sebulba', 'kitster',
-                            'ric olié', 'boss nass', 'rune haako') THEN 'Prequel Era Only'
-                            
-        WHEN LOWER(be.name) IN ('count dooku', 'jango fett', 'zam wesell', 'dexter jettster',
-                            'bail organa', 'cliegg lars', 'san hill', 'taun we', 'wat tambor',
-                            'shaak ti', 'barriss offee', 'clone troopers') THEN 'Prequel Era Only'
-                            
-        WHEN LOWER(be.name) IN ('grand moff tarkin', 'jabba the hutt', 'greedo', 'biggs darklighter',
-                            'wedge antilles', 'admiral ackbar', 'mon mothma', 'wicket w. warrick',
-                            'admiral piett', 'general veers', 'boba fett', 'bossk',
-                            'lobot') THEN 'Original Trilogy Only'
-                            
-        -- Correctly implemented:
-        WHEN LOWER(be.name) IN ('rey', 'finn', 'poe dameron', 'bb-8', 'kylo ren',
-                            'general hux', 'supreme leader snoke', 'captain phasma',
-                            'maz kanata', 'lor san tekka', 'unkar plutt') THEN 'Sequel Era Only'
-                            
-        WHEN LOWER(be.name) IN ('luke skywalker', 'leia organa', 'han solo', 'chewbacca',
-                            'r2-d2', 'c-3po', 'darth vader', 'emperor palpatine',
-                            'yoda', 'obi-wan kenobi', 'lando calrissian') THEN 'Multiple Eras'
-                            
-        ELSE 'Unknown Era'
-    END AS era_appearance,
+    -- Era appearance classification - use character_era from staging when available
+    COALESCE(be.character_era, 
+        CASE
+            WHEN LOWER(be.name) IN ('qui-gon jinn', 'darth maul', 'watto', 'jar jar binks',
+                                'young anakin', 'shmi skywalker', 'padmé amidala',
+                                'nute gunray', 'captain panaka', 'sebulba', 'kitster',
+                                'ric olié', 'boss nass', 'rune haako') THEN 'Prequel Era Only'
+                                
+            WHEN LOWER(be.name) IN ('count dooku', 'jango fett', 'zam wesell', 'dexter jettster',
+                                'bail organa', 'cliegg lars', 'san hill', 'taun we', 'wat tambor',
+                                'shaak ti', 'barriss offee', 'clone troopers') THEN 'Prequel Era Only'
+                                
+            WHEN LOWER(be.name) IN ('grand moff tarkin', 'jabba the hutt', 'greedo', 'biggs darklighter',
+                                'wedge antilles', 'admiral ackbar', 'mon mothma', 'wicket w. warrick',
+                                'admiral piett', 'general veers', 'boba fett', 'bossk',
+                                'lobot') THEN 'Original Trilogy Only'
+                                
+            WHEN LOWER(be.name) IN ('rey', 'finn', 'poe dameron', 'bb-8', 'kylo ren',
+                                'general hux', 'supreme leader snoke', 'captain phasma',
+                                'maz kanata', 'lor san tekka', 'unkar plutt') THEN 'Sequel Era Only'
+                                
+            WHEN LOWER(be.name) IN ('luke skywalker', 'leia organa', 'han solo', 'chewbacca',
+                                'r2-d2', 'c-3po', 'darth vader', 'emperor palpatine',
+                                'yoda', 'obi-wan kenobi', 'lando calrissian') THEN 'Multiple Eras'
+                                
+            ELSE 'Unknown Era'
+        END
+    ) AS era_appearance,
     
     -- Popularity score on 1-100 scale
     GREATEST(1, LEAST(100, 
@@ -434,6 +460,11 @@ SELECT
             )
         END
     )) AS popularity_score,
+    
+    -- Source data metadata
+    be.url AS source_url,
+    be.fetch_timestamp,
+    be.processed_timestamp,
     
     -- Data tracking field
     CURRENT_TIMESTAMP AS dbt_loaded_at

@@ -2,3 +2,4 @@
 metabase.jar
 dbt_project/debug.log
 metabase/.env
+dbt_project/logs/dbt.log

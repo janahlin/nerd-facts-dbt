@@ -16,6 +16,7 @@
   - Calculates character importance and appearance sequences
   - Provides context for character arcs across the film timeline
   - Adds derived attributes about character relationships to each film
+  - Enhanced with additional fields from updated staging models
 */
 
 WITH character_films AS (
@@ -26,9 +27,12 @@ WITH character_films AS (
         p.gender,
         p.birth_year,
         p.species_id,
+        p.homeworld_id,
         film_ref->>'url' AS film_url,
         -- Extract film ID from URL with better error handling
-        NULLIF(SPLIT_PART(COALESCE(film_ref->>'url', ''), '/', 6), '')::INTEGER AS film_id
+        NULLIF(SPLIT_PART(COALESCE(film_ref->>'url', ''), '/', 6), '')::INTEGER AS film_id,
+        -- Add direct film access fields
+        p.film_names
     FROM {{ ref('stg_swapi_people') }} p,
     LATERAL jsonb_array_elements(
         CASE WHEN p.films IS NULL OR p.films = 'null' THEN '[]'::jsonb
@@ -45,11 +49,26 @@ film_details AS (
         cf.gender,
         cf.birth_year,
         cf.species_id,
+        cf.homeworld_id,
         cf.film_id,
         f.title AS film_title,
         f.episode_id,
         f.release_date,
-        f.director
+        f.director,
+        -- Add new fields from enhanced film model
+        f.release_year,
+        f.trilogy,                  -- Use directly instead of manually calculating film_saga
+        f.chronological_order,
+        f.opening_crawl_word_count,
+        f.character_count,          -- Total character count for the film
+        f.planet_count,
+        f.starship_count,
+        f.vehicle_count,
+        f.species_count,
+        -- Include ETL tracking fields
+        f.url AS film_url,
+        f.fetch_timestamp,
+        f.processed_timestamp
     FROM character_films cf
     LEFT JOIN {{ ref('stg_swapi_films') }} f ON cf.film_id = f.id
 ),
@@ -86,18 +105,26 @@ character_importance AS (
     FROM film_details fd
 ),
 
--- Add film saga classification
+-- Add film saga classification - use trilogy field directly and enhance
 film_saga AS (
     SELECT
         ci.*,
+        -- Use the trilogy field directly from staging instead of recalculating
+        ci.trilogy AS film_saga,
+        -- Add enhanced fields for better analytics
         CASE
-            WHEN ci.episode_id BETWEEN 1 AND 3 THEN 'Prequel Trilogy'
-            WHEN ci.episode_id BETWEEN 4 AND 6 THEN 'Original Trilogy'
-            WHEN ci.episode_id BETWEEN 7 AND 9 THEN 'Sequel Trilogy'
-            WHEN ci.title = 'Rogue One' THEN 'Anthology'
-            WHEN ci.title = 'Solo' THEN 'Anthology'
-            ELSE 'Other'
-        END AS film_saga
+            WHEN ci.character_count <= 10 THEN 'Small Cast'
+            WHEN ci.character_count <= 25 THEN 'Medium Cast'
+            ELSE 'Large Cast'
+        END AS cast_size_category,
+        -- Calculate character's relative prominence in film
+        CASE
+            WHEN ci.character_importance_tier = 'Protagonist/Antagonist' THEN 1
+            WHEN ci.character_importance_tier = 'Major' THEN 2
+            WHEN ci.character_importance_tier = 'Supporting' THEN 3
+            WHEN ci.character_importance_tier = 'Notable' THEN 4
+            ELSE 5
+        END AS importance_rank
     FROM character_importance ci
 )
 
@@ -119,16 +146,23 @@ SELECT
     -- Enhanced character role classification with more nuance
     fs.character_importance_tier AS character_role,
     
-    -- Film saga categorization
-    fs.film_saga,
+    -- Film saga categorization - use trilogy field directly
+    fs.trilogy AS film_saga,
+    fs.release_year,
+    fs.character_count AS total_character_count,
+    fs.cast_size_category,
     
     -- Character's species relationship
     fs.species_id,
+    fs.homeworld_id,
+    
+    -- Character significance metrics
+    fs.importance_rank,
     
     -- Calculate appearance metrics
     ROW_NUMBER() OVER (
         PARTITION BY fs.character_id 
-        ORDER BY fs.episode_id
+        ORDER BY fs.chronological_order
     ) AS chronological_appearance_number,
     
     ROW_NUMBER() OVER (
@@ -136,10 +170,14 @@ SELECT
         ORDER BY fs.release_date
     ) AS release_order_appearance_number,
     
+    -- Character appearance percentage
+    (COUNT(fs.character_id) OVER (PARTITION BY fs.character_id))::FLOAT / 
+    (SELECT COUNT(DISTINCT id) FROM {{ ref('stg_swapi_films') }})::FLOAT * 100 AS saga_appearance_percentage,
+    
     -- Timeline attributes
     CASE WHEN ROW_NUMBER() OVER (
         PARTITION BY fs.character_id 
-        ORDER BY fs.episode_id
+        ORDER BY fs.chronological_order
     ) = 1 THEN TRUE ELSE FALSE END AS is_first_chronological_appearance,
     
     CASE WHEN ROW_NUMBER() OVER (
@@ -191,9 +229,24 @@ SELECT
         ELSE 'Background'
     END AS film_significance,
     
+    -- Film metrics (derived)
+    CASE
+        -- More granular logic with percentage of lines/screentime using character count
+        WHEN fs.character_count < 15 AND fs.character_importance_tier IN ('Protagonist/Antagonist', 'Major') 
+            THEN 'High Focus'
+        WHEN fs.character_count > 30 AND fs.character_importance_tier = 'Minor'
+            THEN 'Background Character'
+        ELSE 'Standard Focus'
+    END AS character_screen_focus,
+    
     -- Meta information
     fs.release_date,
     fs.director,
+    
+    -- Source tracking
+    fs.film_url,
+    fs.fetch_timestamp,
+    fs.processed_timestamp,
     
     -- Data tracking field
     CURRENT_TIMESTAMP AS dbt_loaded_at

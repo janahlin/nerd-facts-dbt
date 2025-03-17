@@ -1,3 +1,9 @@
+{{
+  config(
+    materialized = 'view'
+  )
+}}
+
 /*
   Model: stg_swapi_people
   Description: Standardizes Star Wars character data from SWAPI
@@ -10,27 +16,114 @@
   - Additional derived fields are added for character analysis
 */
 
-WITH raw_data AS (
-    -- Explicitly list columns to prevent issues if source schema changes
+-- First, check what columns actually exist in the source table
+WITH column_check AS (
+    SELECT 
+        column_name 
+    FROM information_schema.columns 
+    WHERE table_schema = 'raw' 
+    AND table_name = 'swapi_people'
+),
+
+raw_data AS (
+    -- Base selection with only columns we're sure exist
     SELECT
         id,
         name,
-        height,
-        mass,
-        hair_color,
-        skin_color,
-        eye_color,
-        birth_year,
-        gender,
-        homeworld,
-        films,
-        species,
-        vehicles,
-        starships,
-        created,
-        edited,
-        url
-    FROM raw.swapi_people
+        
+        -- Physical attributes - always check if they exist first
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'height') 
+             THEN height ELSE NULL END AS height,
+             
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'mass') 
+             THEN mass ELSE NULL END AS mass,
+             
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'hair_color') 
+             THEN hair_color ELSE NULL END AS hair_color,
+             
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'skin_color') 
+             THEN skin_color ELSE NULL END AS skin_color,
+             
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'eye_color') 
+             THEN eye_color ELSE NULL END AS eye_color,
+             
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'birth_year') 
+             THEN birth_year ELSE NULL END AS birth_year,
+             
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'gender') 
+             THEN gender ELSE NULL END AS gender,
+        
+        -- Handle homeworld reference
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'homeworld') 
+             THEN homeworld ELSE NULL END AS homeworld,
+        
+        -- Handle films with multiple possible column names
+        CASE 
+            -- Check for standard "films" column
+            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'films')
+            THEN CASE WHEN films IS NULL OR films = '' THEN NULL::jsonb ELSE films::jsonb END
+            
+            -- Check for alternative "appearances" column
+            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'appearances')
+            THEN CASE WHEN appearances IS NULL OR appearances = '' THEN NULL::jsonb ELSE appearances::jsonb END
+            
+            -- Check for alternative "movies" column
+            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'movies')
+            THEN CASE WHEN movies IS NULL OR movies = '' THEN NULL::jsonb ELSE movies::jsonb END
+            
+            -- Default to empty array if no matching column found
+            ELSE '[]'::jsonb
+        END AS films,
+        
+        -- Handle species reference with multiple possible column names
+        CASE 
+            -- Check for standard "species" column
+            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'species')
+            THEN CASE WHEN species IS NULL OR species = '' THEN NULL::jsonb ELSE species::jsonb END
+            
+            -- Check for alternative "species_id" column
+            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'species_id')
+            THEN CASE WHEN species_id IS NULL OR species_id = '' 
+                      THEN NULL::jsonb ELSE jsonb_build_array(species_id::text) END
+            
+            -- Default to empty array
+            ELSE '[]'::jsonb
+        END AS species,
+        
+        -- Handle vehicles with similar approach
+        CASE 
+            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'vehicles')
+            THEN CASE WHEN vehicles IS NULL OR vehicles = '' THEN NULL::jsonb ELSE vehicles::jsonb END
+            ELSE '[]'::jsonb
+        END AS vehicles,
+        
+        -- Handle starships with similar approach
+        CASE 
+            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'starships')
+            THEN CASE WHEN starships IS NULL OR starships = '' THEN NULL::jsonb ELSE starships::jsonb END
+            ELSE '[]'::jsonb
+        END AS starships,
+        
+        -- Metadata fields
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'created') 
+             THEN created ELSE NULL END AS created,
+             
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'edited') 
+             THEN edited ELSE NULL END AS edited,
+             
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'url') 
+             THEN url ELSE NULL END AS url,
+             
+        -- Handle film_names array if available
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'film_names') 
+             THEN film_names ELSE NULL END AS film_names,
+             
+        -- ETL tracking fields
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'fetch_timestamp') 
+             THEN fetch_timestamp ELSE NULL END AS fetch_timestamp,
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'processed_timestamp') 
+             THEN processed_timestamp ELSE NULL END AS processed_timestamp
+    FROM {{ source('swapi', 'people') }}
     WHERE id IS NOT NULL
 )
 
@@ -43,14 +136,13 @@ SELECT
     CASE 
         WHEN species IS NULL OR jsonb_array_length(species) = 0 THEN 'Human'  -- Default to Human if no species
         WHEN jsonb_typeof(species) != 'array' THEN 'Unknown'  -- Handle unexpected JSON type
-        ELSE COALESCE(SPLIT_PART(species->0->>'url', '/', 6), 'Unknown')  -- Extract ID from URL
-    END AS species,
+        ELSE COALESCE(jsonb_array_elements_text(species), 'Unknown')  -- Extract species ID
+    END AS species_id,
     
     -- Extract homeworld ID with error handling
     CASE
         WHEN homeworld IS NULL THEN NULL
-        WHEN jsonb_typeof(homeworld) != 'object' THEN NULL
-        ELSE NULLIF(SPLIT_PART(homeworld->>'url', '/', 6), '')
+        ELSE homeworld::text  -- Just store the raw reference for now
     END AS homeworld_id,
     
     -- Clean numeric values with comprehensive error handling
@@ -69,7 +161,7 @@ SELECT
         WHEN height IS NOT NULL AND mass IS NOT NULL 
              AND NULLIF(REGEXP_REPLACE(height, '[^0-9\.]', '', 'g'), '') != ''
              AND NULLIF(REGEXP_REPLACE(mass, '[^0-9\.]', '', 'g'), '') != ''
-             AND height::NUMERIC > 0
+             AND (NULLIF(REGEXP_REPLACE(height, '[^0-9\.]', '', 'g'), '')::NUMERIC) > 0
         THEN (NULLIF(REGEXP_REPLACE(mass, '[^0-9\.]', '', 'g'), '')::NUMERIC) / 
              POWER((NULLIF(REGEXP_REPLACE(height, '[^0-9\.]', '', 'g'), '')::NUMERIC / 100), 2)
         ELSE NULL
@@ -82,16 +174,12 @@ SELECT
     birth_year,
     LOWER(COALESCE(gender, 'unknown')) AS gender,
     
-    -- Force-user related fields with expanded detection
+    -- Force-user detection based on name since we can't check film appearances reliably
     CASE
-        -- Check film appearances
-        WHEN films @> '[{"title": "Return of the Jedi"}]' 
-             OR films @> '[{"title": "The Empire Strikes Back"}]'
-             OR films @> '[{"title": "Revenge of the Sith"}]'
-        -- Explicit Jedi/Sith list
-        OR LOWER(name) IN ('luke skywalker', 'darth vader', 'obi-wan kenobi', 'yoda', 
-                          'emperor palpatine', 'count dooku', 'qui-gon jinn', 'mace windu',
-                          'rey', 'kylo ren')
+        WHEN LOWER(name) IN ('luke skywalker', 'darth vader', 'obi-wan kenobi', 'yoda', 
+                           'emperor palpatine', 'count dooku', 'qui-gon jinn', 'mace windu',
+                           'rey', 'kylo ren', 'anakin skywalker', 'leia organa', 
+                           'ahsoka tano', 'darth maul')
         THEN TRUE
         ELSE FALSE
     END AS force_sensitive,
@@ -100,8 +188,9 @@ SELECT
     CASE
         WHEN LOWER(name) IN ('yoda', 'emperor palpatine', 'darth vader', 'luke skywalker') THEN 5
         WHEN LOWER(name) IN ('obi-wan kenobi', 'mace windu', 'kylo ren', 'rey') THEN 4
-        WHEN LOWER(name) IN ('qui-gon jinn', 'count dooku') THEN 3
-        WHEN force_sensitive THEN 2
+        WHEN LOWER(name) IN ('qui-gon jinn', 'count dooku', 'ahsoka tano') THEN 3
+        WHEN LOWER(name) IN ('leia organa', 'darth maul') THEN 2
+        WHEN force_sensitive THEN 1
         ELSE NULL
     END AS force_rating,
     
@@ -110,24 +199,34 @@ SELECT
     COALESCE(jsonb_array_length(vehicles), 0) AS vehicles_operated,
     COALESCE(jsonb_array_length(films), 0) AS film_appearances,
     
-    -- Keep raw arrays for downstream usage
+    -- Keep raw arrays for downstream usage (with safe access)
     films,
     starships,
     vehicles,
     
-    -- Era classification
+    -- Era classification based on character name instead of film appearances
     CASE
-        WHEN films @> '[{"title": "The Phantom Menace"}]' 
-             OR films @> '[{"title": "Attack of the Clones"}]'
-             OR films @> '[{"title": "Revenge of the Sith"}]'
-        THEN 'Prequel Era'
-        WHEN films @> '[{"title": "A New Hope"}]'
-             OR films @> '[{"title": "The Empire Strikes Back"}]'
-             OR films @> '[{"title": "Return of the Jedi"}]'
-        THEN 'Original Trilogy Era'
-        WHEN films @> '[{"title": "The Force Awakens"}]'
-             OR films @> '[{"title": "The Last Jedi"}]'
-        THEN 'Sequel Era'
+        WHEN EXISTS (
+            SELECT 1 
+            FROM jsonb_array_elements_text(films) AS film_id
+            JOIN {{ ref('stg_swapi_films') }} f ON f.id::text = film_id
+            WHERE f.trilogy = 'Prequel Trilogy'
+        ) THEN 'Prequel Era'
+        
+        WHEN EXISTS (
+            SELECT 1 
+            FROM jsonb_array_elements_text(films) AS film_id
+            JOIN {{ ref('stg_swapi_films') }} f ON f.id::text = film_id
+            WHERE f.trilogy = 'Original Trilogy'
+        ) THEN 'Original Trilogy Era'
+        
+        WHEN EXISTS (
+            SELECT 1 
+            FROM jsonb_array_elements_text(films) AS film_id
+            JOIN {{ ref('stg_swapi_films') }} f ON f.id::text = film_id
+            WHERE f.trilogy = 'Sequel Trilogy'
+        ) THEN 'Sequel Era'
+        
         ELSE 'Unknown Era'
     END AS character_era,
     
@@ -136,6 +235,11 @@ SELECT
     edited::TIMESTAMP AS updated_at,
     
     -- Add data tracking fields
-    CURRENT_TIMESTAMP AS dbt_loaded_at
+    CURRENT_TIMESTAMP AS dbt_loaded_at,
+    
+    -- Pass through to final SELECT
+    url,
+    fetch_timestamp::TIMESTAMP AS fetch_timestamp,
+    processed_timestamp::TIMESTAMP AS processed_timestamp
     
 FROM raw_data

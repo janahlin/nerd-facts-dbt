@@ -1,0 +1,458 @@
+version: 2
+
+sources:
+  - name: swapi
+    description: "Star Wars API data source"
+    database: nerd_facts
+    schema: raw
+    
+    tables:
+      - name: starships
+        identifier: swapi_starships
+        description: "Raw data about Star Wars starships"
+        columns:
+          - name: id
+            description: "Primary key for starship"
+            tests:
+              - unique
+              - not_null
+          
+          - name: name
+            description: "Name of the starship"
+            tests:
+              - not_null
+          
+          - name: model
+            description: "Starship model"
+          
+          - name: manufacturer
+            description: "Company that manufactured the starship"
+          
+          - name: cost_in_credits
+            description: "Purchase cost in galactic credits"
+          
+          - name: length
+            description: "Starship length in meters"
+          
+          - name: max_atmosphering_speed
+            description: "Maximum atmospheric speed in km/h"
+          
+          - name: crew
+            description: "Number of crew required"
+          
+          - name: passengers
+            description: "Maximum passenger capacity"
+          
+          - name: cargo_capacity
+            description: "Cargo capacity in kg"
+          
+          - name: consumables
+            description: "Length of time the starship can sustain crew without resupply"
+          
+          - name: hyperdrive_rating
+            description: "Hyperdrive class rating (lower is better)"
+          
+          - name: MGLT
+            description: "Maximum speed in megalights per hour"
+          
+          - name: starship_class
+            description: "Class of the starship"
+          
+          - name: pilots
+            description: "JSON array of pilot references"
+          
+          - name: films
+            description: "JSON array of film references"
+          
+          - name: pilot_names
+            description: "Array of pilot names for easier reporting"
+          
+          - name: film_names
+            description: "Array of film names this starship appears in"
+          
+          - name: created
+            description: "Timestamp when record was created in source system"
+          
+          - name: edited
+            description: "Timestamp when record was last updated in source system"
+          
+          - name: url
+            description: "Source URL for the starship data"
+          
+          - name: fetch_timestamp
+            description: "Timestamp when data was fetched from the API"
+          
+          - name: processed_timestamp
+            description: "Timestamp when data was processed by the ETL pipeline"
+        
+      - name: films
+        identifier: swapi_films
+        description: "Raw data about Star Wars films"
+        columns:
+          - name: id
+            description: "Primary key for film"
+            tests:
+              - unique
+              - not_null
+          
+          - name: title
+            description: "Film title"
+            tests:
+              - not_null
+          
+          - name: episode_id
+            description: "Episode number"
+            tests:
+              - not_null
+          
+          - name: opening_crawl
+            description: "Opening crawl text"
+          
+          - name: director
+            description: "Film director"
+          
+          - name: producer
+            description: "Film producer(s)"
+          
+          - name: release_date
+            description: "Film release date"
+          
+          # Relationship arrays
+          - name: characters
+            description: "JSON array of character references"
+          
+          - name: people
+            description: "Alternative name for characters array"
+          
+          - name: planets
+            description: "JSON array of planet references"
+          
+          - name: starships
+            description: "JSON array of starship references"
+          
+          - name: vehicles
+            description: "JSON array of vehicle references"
+          
+          - name: species
+            description: "JSON array of species references"
+          
+          # Name arrays added by fetch_swapi.py
+          - name: character_names
+            description: "Array of character names for easier reporting"
+          
+          - name: planet_names
+            description: "Array of planet names for easier reporting"
+          
+          - name: species_names
+            description: "Array of species names for easier reporting"
+          
+          - name: starship_names
+            description: "Array of starship names for easier reporting"
+          
+          - name: vehicle_names
+            description: "Array of vehicle names for easier reporting"
+          
+          # Metadata fields
+          - name: created
+            description: "Timestamp when record was created in source system"
+          
+          - name: edited
+            description: "Timestamp when record was last updated in source system"
+          
+          - name: url
+            description: "Source URL for the film data"
+          
+          # ETL tracking fields
+          - name: fetch_timestamp
+            description: "Timestamp when data was fetched from the API"
+          
+          - name: processed_timestamp
+            description: "Timestamp when data was processed by the ETL pipeline"
+        
+      - name: people
+        identifier: swapi_people
+        description: "Raw data about Star Wars characters"
+        columns:
+          - name: id
+            description: "Primary key for character"
+            tests:
+              - unique
+              - not_null
+          
+          - name: name
+            description: "Character name"
+            tests:
+              - not_null
+          
+          - name: height
+            description: "Height in centimeters"
+          
+          - name: mass
+            description: "Mass in kilograms"
+          
+          - name: hair_color
+            description: "Character hair color"
+          
+          - name: skin_color
+            description: "Character skin color"
+          
+          - name: eye_color
+            description: "Character eye color"
+          
+          - name: birth_year
+            description: "Birth year (BBY/ABY notation)"
+          
+          - name: gender
+            description: "Character gender"
+          
+          - name: homeworld
+            description: "Reference to character homeworld"
+          
+          - name: films
+            description: "JSON array of film appearances"
+          
+          - name: appearances
+            description: "Alternative name for films array"
+          
+          - name: species
+            description: "JSON array of species references"
+          
+          - name: vehicles
+            description: "JSON array of vehicle references"
+          
+          - name: starships
+            description: "JSON array of starship references"
+            
+          - name: film_names
+            description: "Array of film names this character appears in"
+          
+          - name: species_names
+            description: "Array of species names this character belongs to"
+          
+          - name: vehicle_names
+            description: "Array of vehicle names this character pilots"
+          
+          - name: starship_names
+            description: "Array of starship names this character pilots"
+          
+          - name: created
+            description: "Timestamp when record was created in source system"
+          
+          - name: edited
+            description: "Timestamp when record was last updated in source system"
+          
+          - name: url
+            description: "Source URL for the character data"
+          
+          - name: fetch_timestamp
+            description: "Timestamp when data was fetched from the API"
+          
+          - name: processed_timestamp
+            description: "Timestamp when data was processed by the ETL pipeline"
+        
+      - name: planets
+        identifier: swapi_planets
+        description: "Raw data about Star Wars planets"
+        columns:
+          - name: id
+            description: "Primary key for planet"
+            tests:
+              - unique
+              - not_null
+          
+          - name: name
+            description: "Planet name"
+            tests:
+              - not_null
+          
+          - name: rotation_period
+            description: "Time in hours for planet to complete one rotation"
+          
+          - name: orbital_period
+            description: "Time in days for planet to complete one orbit"
+          
+          - name: diameter
+            description: "Planet diameter in kilometers"
+          
+          - name: climate
+            description: "Climate types on the planet"
+          
+          - name: gravity
+            description: "Gravitational force relative to standard"
+          
+          - name: terrain
+            description: "Terrain types on the planet"
+          
+          - name: surface_water
+            description: "Percentage of planet covered by water"
+          
+          - name: population
+            description: "Planet population count"
+          
+          - name: residents
+            description: "JSON array of character references"
+          
+          - name: films
+            description: "JSON array of film references"
+          
+          - name: resident_names
+            description: "Array of resident names for easier reporting"
+          
+          - name: film_names
+            description: "Array of film names this planet appears in"
+          
+          - name: created
+            description: "Timestamp when record was created in source system"
+          
+          - name: edited
+            description: "Timestamp when record was last updated in source system"
+          
+          - name: url
+            description: "Source URL for the planet data"
+          
+          - name: fetch_timestamp
+            description: "Timestamp when data was fetched from the API"
+          
+          - name: processed_timestamp
+            description: "Timestamp when data was processed by the ETL pipeline"
+        
+      - name: species
+        identifier: swapi_species
+        description: "Raw data about Star Wars species"
+        columns:
+          - name: id
+            description: "Primary key for species"
+            tests:
+              - unique
+              - not_null
+          
+          - name: name
+            description: "Species name"
+            tests:
+              - not_null
+          
+          - name: classification
+            description: "Species biological classification"
+          
+          - name: designation
+            description: "Species cognitive designation"
+          
+          - name: average_height
+            description: "Average height in centimeters"
+          
+          - name: average_lifespan
+            description: "Average lifespan in years"
+          
+          - name: eye_colors
+            description: "Comma-separated list of common eye colors"
+          
+          - name: hair_colors
+            description: "Comma-separated list of common hair colors"
+          
+          - name: skin_colors
+            description: "Comma-separated list of common skin colors"
+          
+          - name: homeworld
+            description: "Reference to species homeworld"
+          
+          - name: language
+            description: "Primary language spoken"
+          
+          - name: people
+            description: "JSON array of character references"
+          
+          - name: films
+            description: "JSON array of film references"
+          
+          - name: people_names
+            description: "Array of character names of this species"
+          
+          - name: film_names
+            description: "Array of film names this species appears in"
+          
+          - name: created
+            description: "Timestamp when record was created in source system"
+          
+          - name: edited
+            description: "Timestamp when record was last updated in source system"
+          
+          - name: url
+            description: "Source URL for the species data"
+          
+          - name: fetch_timestamp
+            description: "Timestamp when data was fetched from the API"
+          
+          - name: processed_timestamp
+            description: "Timestamp when data was processed by the ETL pipeline"
+        
+      - name: vehicles
+        identifier: swapi_vehicles
+        description: "Raw data about Star Wars vehicles"
+        columns:
+          - name: id
+            description: "Primary key for vehicle"
+            tests:
+              - unique
+              - not_null
+          
+          - name: name
+            description: "Vehicle name"
+            tests:
+              - not_null
+          
+          - name: model
+            description: "Vehicle model"
+          
+          - name: manufacturer
+            description: "Company that manufactured the vehicle"
+          
+          - name: cost_in_credits
+            description: "Purchase cost in galactic credits"
+          
+          - name: length
+            description: "Vehicle length in meters"
+          
+          - name: max_atmosphering_speed
+            description: "Maximum atmospheric speed in km/h"
+          
+          - name: crew
+            description: "Number of crew required"
+          
+          - name: passengers
+            description: "Maximum passenger capacity"
+          
+          - name: cargo_capacity
+            description: "Cargo capacity in kg"
+          
+          - name: consumables
+            description: "Length of time the vehicle can sustain crew without resupply"
+          
+          - name: vehicle_class
+            description: "Class of the vehicle"
+          
+          - name: pilots
+            description: "JSON array of pilot references"
+          
+          - name: films
+            description: "JSON array of film references"
+          
+          - name: pilot_names
+            description: "Array of pilot names for easier reporting"
+          
+          - name: film_names
+            description: "Array of film names this vehicle appears in"
+          
+          - name: created
+            description: "Timestamp when record was created in source system"
+          
+          - name: edited
+            description: "Timestamp when record was last updated in source system"
+          
+          - name: url
+            description: "Source URL for the vehicle data"
+          
+          - name: fetch_timestamp
+            description: "Timestamp when data was fetched from the API"
+          
+          - name: processed_timestamp
+            description: "Timestamp when data was processed by the ETL pipeline"

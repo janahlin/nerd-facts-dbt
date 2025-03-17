@@ -19,7 +19,7 @@ WITH sw_characters AS (
         
         -- Physical attributes
         CASE 
-            WHEN height_cm IS NULL THEN NULL
+            WHEN height_cm IS NULL THEN NULL  -- This is redundant
             ELSE height_cm
         END AS height_cm,
         
@@ -44,9 +44,15 @@ WITH sw_characters AS (
         
         -- Grouping fields
         film_appearances AS appearance_count,
+        film_names AS film_appearances_list,
         character_era AS primary_era,
         
-        CURRENT_TIMESTAMP AS dbt_loaded_at
+        CURRENT_TIMESTAMP AS dbt_loaded_at,
+        
+        -- Add source tracking information
+        created_at AS source_created_at,
+        updated_at AS source_updated_at,
+        fetch_timestamp
     FROM {{ ref('stg_swapi_people') }}
 ),
 
@@ -87,7 +93,12 @@ pokemon AS (
         1 AS appearance_count, -- Default for now
         'Generation ' || generation_number AS primary_era,
         
-        CURRENT_TIMESTAMP AS dbt_loaded_at
+        CURRENT_TIMESTAMP AS dbt_loaded_at,
+        
+        -- Add source tracking information
+        created_at AS source_created_at,
+        updated_at AS source_updated_at,
+        fetch_timestamp
     FROM {{ ref('stg_pokeapi_pokemon') }}
 ),
 
@@ -128,7 +139,12 @@ netrunner_identities AS (
         1 AS appearance_count, -- Default for now
         NULL AS primary_era,
         
-        CURRENT_TIMESTAMP AS dbt_loaded_at
+        CURRENT_TIMESTAMP AS dbt_loaded_at,
+        
+        -- Add source tracking information
+        created_at AS source_created_at,
+        updated_at AS source_updated_at,
+        fetch_timestamp
     FROM {{ ref('stg_netrunner_cards') }}
     WHERE is_identity -- Only include identity cards as "characters"
 ),
@@ -162,6 +178,19 @@ SELECT
         WHEN height_cm < 180 THEN 'Medium'
         WHEN height_cm < 250 THEN 'Tall'
         ELSE 'Giant'
-    END AS height_class
+    END AS height_class,
+
+    -- Add cross-universe comparison field
+    CASE 
+        WHEN universe = 'star_wars' AND force_sensitive THEN 'Force User'
+        WHEN universe = 'star_wars' AND NOT force_sensitive THEN 'Normal Being'
+        WHEN universe = 'pokemon' AND is_legendary THEN 'Legendary Creature' 
+        WHEN universe = 'pokemon' THEN 'Creature'
+        WHEN universe = 'netrunner' AND side_name = 'Runner' THEN 'Digital Entity'
+        WHEN universe = 'netrunner' THEN 'Corporate Entity'
+        ELSE 'Unknown Entity'
+    END AS entity_classification
 
 FROM combined_characters
+LEFT JOIN {{ ref('stg_swapi_planets') }} planets
+    ON characters.homeworld_id = planets.id

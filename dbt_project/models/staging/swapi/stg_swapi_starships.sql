@@ -1,3 +1,9 @@
+{{
+  config(
+    materialized = 'view'
+  )
+}}
+
 /*
   Model: stg_swapi_starships
   Description: Standardizes Star Wars starship data from SWAPI
@@ -8,9 +14,19 @@
   - Speeds and capacities have proper error handling
   - Pilot and film references are extracted as counts
   - Additional derived fields help with starship classification
+  - Enhanced with name arrays and ETL tracking fields
 */
 
-WITH raw_data AS (
+-- First, check what columns actually exist in the source table
+WITH column_check AS (
+    SELECT 
+        column_name 
+    FROM information_schema.columns 
+    WHERE table_schema = 'raw' 
+    AND table_name = 'swapi_starships'
+),
+
+raw_data AS (
     -- Explicitly list columns to prevent issues if source schema changes
     SELECT
         id,
@@ -27,12 +43,31 @@ WITH raw_data AS (
         hyperdrive_rating,
         MGLT,
         starship_class,
-        pilots,
-        films,
+        
+        -- Handle relationship arrays with proper type casting
+        CASE WHEN pilots IS NULL OR pilots = '' THEN NULL::jsonb ELSE pilots::jsonb END AS pilots,
+        CASE WHEN films IS NULL OR films = '' THEN NULL::jsonb ELSE films::jsonb END AS films,
+        
+        -- Include name arrays if they exist
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'pilot_names') 
+             THEN pilot_names ELSE NULL END AS pilot_names,
+             
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'film_names') 
+             THEN film_names ELSE NULL END AS film_names,
+        
+        -- Source URL
+        url,
+             
+        -- ETL tracking fields
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'fetch_timestamp') 
+             THEN fetch_timestamp ELSE NULL END AS fetch_timestamp,
+             
+        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'processed_timestamp') 
+             THEN processed_timestamp ELSE NULL END AS processed_timestamp,
+        
         created,
-        edited,
-        url
-    FROM raw.swapi_starships
+        edited
+    FROM {{ source('swapi', 'starships') }}
     WHERE id IS NOT NULL
 )
 
@@ -105,11 +140,11 @@ SELECT
     
     -- Size classification
     CASE
-        WHEN length::NUMERIC < 30 THEN 'Small'
-        WHEN length::NUMERIC < 100 THEN 'Medium'
-        WHEN length::NUMERIC < 500 THEN 'Large'
-        WHEN length::NUMERIC < 1000 THEN 'Very Large'
-        WHEN length::NUMERIC >= 1000 THEN 'Capital'
+        WHEN length_m < 30 THEN 'Small'
+        WHEN length_m < 100 THEN 'Medium'
+        WHEN length_m < 500 THEN 'Large'
+        WHEN length_m < 1000 THEN 'Very Large'
+        WHEN length_m >= 1000 THEN 'Capital'
         ELSE 'Unknown'
     END AS ship_size,
     
@@ -122,16 +157,22 @@ SELECT
     END AS is_notable_ship,
     
     -- Total capacity (crew + passengers)
-    COALESCE(
-        NULLIF(REGEXP_REPLACE(crew, '[^0-9]', '', 'g'), '')::INTEGER, 0
-    ) + 
-    COALESCE(
-        NULLIF(REGEXP_REPLACE(passengers, '[^0-9]', '', 'g'), '')::INTEGER, 0
-    ) AS total_capacity,
+    COALESCE(crew_count, 0) + COALESCE(passenger_capacity, 0) AS total_capacity,
     
     -- API metadata
     created::TIMESTAMP AS created_at,
     edited::TIMESTAMP AS updated_at,
+    
+    -- Source URL
+    url,
+    
+    -- Name arrays for easier reporting
+    pilot_names,
+    film_names,
+    
+    -- ETL tracking fields
+    fetch_timestamp::TIMESTAMP AS fetch_timestamp,
+    processed_timestamp::TIMESTAMP AS processed_timestamp,
     
     -- Add data tracking field
     CURRENT_TIMESTAMP AS dbt_loaded_at

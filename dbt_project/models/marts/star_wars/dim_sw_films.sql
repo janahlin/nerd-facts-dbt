@@ -16,6 +16,7 @@
   - Includes film classifications and metrics
   - Enriches SWAPI data with additional attributes and metadata
   - Serves as a core dimension for Star Wars universe analysis
+  - Enhanced with additional fields from updated staging models
 */
 
 WITH films AS (
@@ -27,6 +28,19 @@ WITH films AS (
         director,
         producer,
         release_date,
+        -- Add new fields from enhanced staging model
+        trilogy,
+        chronological_order,
+        character_count,
+        planet_count,
+        starship_count,
+        vehicle_count,
+        species_count,
+        opening_crawl_word_count,
+        -- Include ETL tracking fields
+        url,
+        fetch_timestamp,
+        processed_timestamp,
         created,
         edited
     FROM {{ ref('stg_swapi_films') }}
@@ -82,9 +96,10 @@ SELECT
     f.director,
     f.producer,
     
-    -- Opening crawl (shortened to first 100 chars for preview)
+    -- Opening crawl with metrics
     f.opening_crawl,
     SUBSTRING(f.opening_crawl FROM 1 FOR 100) || '...' AS opening_crawl_preview,
+    f.opening_crawl_word_count,
     
     -- Runtime with improved coverage and validation
     CASE
@@ -100,13 +115,11 @@ SELECT
         ELSE 135  -- Default
     END AS runtime_minutes,
     
-    -- Film saga classification
-    CASE
-        WHEN f.episode_id BETWEEN 1 AND 3 THEN 'Prequel Trilogy'
-        WHEN f.episode_id BETWEEN 4 AND 6 THEN 'Original Trilogy'
-        WHEN f.episode_id BETWEEN 7 AND 9 THEN 'Sequel Trilogy'
-        ELSE 'Anthology'
-    END AS trilogy,
+    -- Film saga classification - use field from staging
+    f.trilogy,
+    
+    -- Timeline ordering
+    f.chronological_order AS timeline_order,
     
     -- Film era in timeline with expanded detail
     CASE
@@ -136,6 +149,17 @@ SELECT
         WHEN f.episode_id BETWEEN 7 AND 9 THEN 'Lucasfilm/Disney'
         ELSE 'Other'
     END AS production_studio,
+    
+    -- Entity counts
+    f.character_count,
+    f.planet_count,
+    f.starship_count,
+    f.vehicle_count,
+    f.species_count,
+    
+    -- Entity density metrics (derived)
+    ROUND(f.character_count::NUMERIC / NULLIF(f.runtime_minutes, 0), 2) AS characters_per_minute,
+    ROUND(f.planet_count::NUMERIC / NULLIF(f.runtime_minutes, 0), 2) AS planets_per_minute,
     
     -- Primary antagonist
     CASE
@@ -202,6 +226,13 @@ SELECT
         ELSE 'Unknown'
     END AS commercial_success,
     
+    -- Film complexity metrics - derived from entity counts and crawl
+    CASE
+        WHEN f.character_count > 30 AND f.planet_count > 5 AND f.opening_crawl_word_count > 100 THEN 'High Complexity'
+        WHEN f.character_count > 20 AND f.planet_count > 3 THEN 'Moderate Complexity'
+        ELSE 'Standard Complexity'
+    END AS narrative_complexity,
+    
     -- Major themes
     CASE
         WHEN f.episode_id = 1 THEN 'Trade disputes, Chosen one prophecy'
@@ -217,12 +248,15 @@ SELECT
     END AS major_themes,
     
     -- Source data metadata
+    f.url AS source_url,
     f.created AS source_created_at,
     f.edited AS source_edited_at,
+    f.fetch_timestamp,
+    f.processed_timestamp,
     
     -- Data tracking field
     CURRENT_TIMESTAMP AS dbt_loaded_at
     
 FROM films f
 LEFT JOIN film_performance fp ON f.film_id = fp.film_id
-ORDER BY f.episode_id
+ORDER BY f.chronological_order

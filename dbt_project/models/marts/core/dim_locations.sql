@@ -22,7 +22,28 @@ WITH sw_planets AS (
         population,
         climate,
         terrain,
-        surface_water
+        surface_water,
+        
+        -- Add new fields from enhanced staging model
+        resident_count,
+        film_appearances,
+        
+        -- Add classification flags for better filtering
+        is_temperate,
+        has_vegetation,
+        is_water_world,
+        is_desert_world,
+        
+        -- Add source reference information
+        url AS source_url,
+        
+        -- Add name arrays for easier reporting
+        resident_names,
+        film_names AS featured_in_films,
+        
+        -- Add ETL tracking fields for lineage
+        fetch_timestamp,
+        processed_timestamp
     FROM {{ ref('stg_swapi_planets') }}
 ),
 
@@ -163,6 +184,10 @@ SELECT
     CASE
         WHEN universe = 'star_wars' THEN
             CASE
+                WHEN is_temperate = TRUE THEN 85  -- Temperate planets are highly habitable
+                WHEN has_vegetation = TRUE THEN 75  -- Vegetation indicates habitability
+                WHEN is_water_world = TRUE THEN 65  -- Water worlds moderately habitable
+                WHEN is_desert_world = TRUE THEN 40  -- Desert worlds less habitable
                 WHEN climate IS NULL THEN 50  -- Default for unknown
                 WHEN population = 0 OR LOWER(climate) LIKE '%frozen%' THEN 10
                 WHEN LOWER(climate) LIKE '%temperate%' AND COALESCE(surface_water, 0) > 0 THEN 
@@ -189,8 +214,10 @@ SELECT
     
     -- Notable lore locations flag
     CASE
-        WHEN universe = 'star_wars' AND 
-             location_name IN ('Tatooine', 'Coruscant', 'Hoth', 'Endor', 'Naboo', 'Alderaan', 'Dagobah', 'Mustafar', 'Kashyyyk') THEN TRUE
+        WHEN universe = 'star_wars' AND (
+             location_name IN ('Tatooine', 'Coruscant', 'Hoth', 'Endor', 'Naboo', 'Alderaan', 'Dagobah', 'Mustafar', 'Kashyyyk')
+             OR COALESCE(film_appearances, 0) >= 3  -- Appears in 3+ films
+        ) THEN TRUE
         WHEN universe = 'pokemon' AND 
              location_name IN ('Kanto', 'Johto', 'Hoenn', 'Sinnoh', 'Unova', 'Kalos', 'Alola') THEN TRUE
         WHEN universe = 'netrunner' AND 
@@ -211,6 +238,39 @@ SELECT
         WHEN LOWER(terrain) LIKE '%uninhabited%' OR population = 0 THEN 'Uninhabited'
         ELSE 'Mixed/Wilderness'
     END AS urbanization_level,
+    
+    -- Add new cross-universe metrics
+    CASE
+        WHEN universe = 'star_wars' THEN COALESCE(resident_count, 0)
+        WHEN universe = 'pokemon' THEN NULL -- Could add if you have Pokémon character count per region
+        WHEN universe = 'netrunner' THEN NULL -- Could add if you have character count per location
+        ELSE 0
+    END AS character_count,
+    
+    CASE
+        WHEN universe = 'star_wars' THEN COALESCE(film_appearances, 0)
+        WHEN universe = 'pokemon' THEN NULL -- Could map games to regions
+        WHEN universe = 'netrunner' THEN NULL -- Could map card cycles to locations
+        ELSE 0
+    END AS media_appearances,
+    
+    -- Add featured in list (for Star Wars)
+    CASE
+        WHEN universe = 'star_wars' THEN featured_in_films
+        ELSE NULL
+    END AS featured_in,
+    
+    -- Add source tracking
+    CASE
+        WHEN universe = 'star_wars' THEN source_url
+        ELSE NULL
+    END AS source_url,
+    
+    -- Add ETL tracking fields for lineage
+    CASE
+        WHEN universe = 'star_wars' THEN fetch_timestamp
+        ELSE NULL
+    END AS data_fetch_timestamp,
     
     -- Add data tracking fields
     CURRENT_TIMESTAMP AS dbt_loaded_at

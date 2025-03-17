@@ -90,15 +90,30 @@ def extract_data():
             if data and "result" in data:
                 for entry in data["result"]:
                     properties = entry["properties"]
-                    records.append({
-                        "id": int(entry["uid"]),  # Use UID as ID
+                    # Create a base record with all available fields
+                    film_record = {
+                        "id": int(entry["uid"]),
                         "title": properties.get("title"),
                         "episode_id": properties.get("episode_id"),
                         "director": properties.get("director"),
                         "producer": properties.get("producer"),
                         "release_date": properties.get("release_date"),
-                        "opening_crawl": properties.get("opening_crawl")
-                    })
+                        "opening_crawl": properties.get("opening_crawl"),
+                        # Add relationship fields
+                        "characters": properties.get("characters", []),
+                        "planets": properties.get("planets", []),
+                        "starships": properties.get("starships", []),
+                        "vehicles": properties.get("vehicles", []),
+                        "species": properties.get("species", []),
+                        # Add metadata fields
+                        "created": properties.get("created"),
+                        "edited": properties.get("edited"),
+                        "url": properties.get("url", entry.get("url"))
+                    }
+                    
+                    # Clean URL references to extract UIDs
+                    cleaned_record = clean_links(film_record)
+                    records.append(cleaned_record)
         else:
             # ✅ Handle paginated SWAPI endpoints correctly
             all_entries = fetch_all_pages(path)            
