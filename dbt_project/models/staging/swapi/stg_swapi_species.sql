@@ -8,62 +8,24 @@
   Model: stg_swapi_species
   Description: Standardizes Star Wars species data from SWAPI
   Source: raw.swapi_species
-  
-  Notes:
-  - Numeric fields are cleaned and converted to proper types
-  - Color fields are parsed for analysis
-  - Homeworld references are extracted
-  - Additional derived fields help with species classification
-  - Enhanced to handle name arrays and ETL tracking fields
 */
 
--- First, check what columns actually exist in the source table
-WITH column_check AS (
-    SELECT 
-        column_name 
-    FROM information_schema.columns 
-    WHERE table_schema = 'raw' 
-    AND table_name = 'swapi_species'
-),
-
-raw_data AS (
-    -- Explicitly list columns to prevent issues if source schema changes
+WITH raw_data AS (
     SELECT
         id,
         name,
         classification,
         designation,
         average_height,
-        average_lifespan,
-        eye_colors,
-        hair_colors,
         skin_colors,
+        hair_colors,
+        eye_colors,
+        average_lifespan,
         homeworld,
         language,
-        CASE WHEN people IS NULL OR people = '' THEN NULL::jsonb ELSE people::jsonb END AS people,
-        CASE WHEN films IS NULL OR films = '' THEN NULL::jsonb ELSE films::jsonb END AS films,
-        
-        -- Include name arrays if they exist
-        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'people_names') 
-             THEN people_names ELSE NULL END AS people_names,
-             
-        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'film_names') 
-             THEN film_names ELSE NULL END AS film_names,
-        
-        -- Source URL
-        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'url') 
-             THEN url ELSE NULL END AS url,
-             
-        -- ETL tracking fields
-        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'fetch_timestamp') 
-             THEN fetch_timestamp ELSE NULL END AS fetch_timestamp,
-             
-        CASE WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'processed_timestamp') 
-             THEN processed_timestamp ELSE NULL END AS processed_timestamp,
-        
+        url,
         created,
-        edited,
-        CURRENT_TIMESTAMP AS _loaded_at
+        edited
     FROM {{ source('swapi', 'species') }}
     WHERE id IS NOT NULL
 )
@@ -73,114 +35,41 @@ SELECT
     id,
     name AS species_name,
     
-    -- Species classification
-    LOWER(COALESCE(classification, 'unknown')) AS classification,
-    LOWER(COALESCE(designation, 'unknown')) AS designation,
+    -- Species attributes with proper handling
+    classification,
+    designation,
+    CAST(NULLIF(average_height, 'unknown') AS NUMERIC) AS average_height,
+    average_lifespan,
+    skin_colors,
+    hair_colors,
+    eye_colors,
+    language,
+    CAST(NULLIF(homeworld, 'null') AS INTEGER) AS homeworld_id,
     
-    -- Physical characteristics with proper typing
-    CASE 
-        WHEN average_height IS NULL OR LOWER(average_height) = 'unknown' THEN NULL
-        ELSE NULLIF(REGEXP_REPLACE(average_height, '[^0-9\.]', '', 'g'), '')::NUMERIC
-    END AS average_height_cm,
+    -- Entity relationships with placeholder counts
+    0 AS people_count,
+    0 AS film_appearances,
     
-    CASE 
-        WHEN average_lifespan IS NULL OR LOWER(average_lifespan) = 'unknown' 
-            OR LOWER(average_lifespan) = 'indefinite' THEN NULL
-        ELSE NULLIF(REGEXP_REPLACE(average_lifespan, '[^0-9\.]', '', 'g'), '')::NUMERIC
-    END AS average_lifespan_years,
+    -- Placeholders for arrays
+    NULL::jsonb AS people,
+    NULL::jsonb AS films,
     
-    -- Special case for indefinite lifespan
-    CASE 
-        WHEN LOWER(average_lifespan) = 'indefinite' THEN TRUE
-        ELSE FALSE
-    END AS has_indefinite_lifespan,
+    -- Placeholders for name arrays
+    NULL AS character_names,
+    NULL AS film_names,
     
-    -- Language
-    LOWER(COALESCE(language, 'unknown')) AS language,
+    -- Source URL
+    url,
     
-    -- Color attributes - standardized to arrays
-    CASE 
-        WHEN eye_colors IS NULL OR eye_colors = '' THEN NULL
-        ELSE STRING_TO_ARRAY(LOWER(eye_colors), ', ') 
-    END AS eye_colors_array,
-    
-    CASE 
-        WHEN hair_colors IS NULL OR hair_colors = '' THEN NULL
-        ELSE STRING_TO_ARRAY(LOWER(hair_colors), ', ') 
-    END AS hair_colors_array,
-    
-    CASE 
-        WHEN skin_colors IS NULL OR skin_colors = '' THEN NULL
-        ELSE STRING_TO_ARRAY(LOWER(skin_colors), ', ') 
-    END AS skin_colors_array,
-    
-    -- Extract homeworld with error handling
-    CASE
-        WHEN homeworld IS NULL THEN NULL
-        WHEN homeworld = 'null' THEN NULL
-        ELSE NULLIF(homeworld, '')
-    END AS homeworld_id,
-    
-    -- Entity counts
-    COALESCE(jsonb_array_length(people), 0) AS character_count,
-    COALESCE(jsonb_array_length(films), 0) AS film_appearances,
-    
-    -- Keep raw arrays for downstream usage
-    people,
-    films,
-    
-    -- Derived species classifications
-    CASE
-        WHEN LOWER(classification) IN ('mammal', 'amphibian', 'reptile', 'bird') THEN TRUE
-        ELSE FALSE
-    END AS is_organic,
-    
-    CASE
-        WHEN LOWER(classification) = 'artificial' OR LOWER(name) = 'droid' THEN TRUE
-        ELSE FALSE
-    END AS is_artificial,
-    
-    -- Intelligence estimation (approximate)
-    CASE
-        WHEN LOWER(designation) = 'sentient' THEN 'High'
-        WHEN LOWER(designation) = 'semi-sentient' THEN 'Moderate'
-        ELSE 'Unknown'
-    END AS intelligence_level,
-    
-    -- Longevity classification
-    CASE
-        WHEN LOWER(average_lifespan) = 'indefinite' THEN 'Immortal'
-        WHEN average_lifespan_years > 500 THEN 'Very Long-Lived'
-        WHEN average_lifespan_years > 100 THEN 'Long-Lived'
-        WHEN average_lifespan_years > 70 THEN 'Standard'
-        WHEN average_lifespan_years > 0 THEN 'Short-Lived'
-        ELSE 'Unknown'
-    END AS longevity_class,
-    
-    -- Notable species flag
-    CASE
-        WHEN name IN ('Human', 'Wookiee', 'Droid', 'Hutt', 'Ewok', 'Gungan', 
-                     'Jawa', 'Mon Calamari', 'Twi''lek', 'Yoda''s species') 
-        THEN TRUE
-        ELSE FALSE
-    END AS is_notable_species,
+    -- ETL tracking fields
+    NULL::TIMESTAMP AS fetch_timestamp,
+    NULL::TIMESTAMP AS processed_timestamp,
     
     -- API metadata
     created::TIMESTAMP AS created_at,
     edited::TIMESTAMP AS updated_at,
     
-    -- Source URL
-    url,
-    
-    -- Name arrays for easier reporting
-    people_names,
-    film_names,
-    
-    -- ETL tracking fields
-    fetch_timestamp::TIMESTAMP AS fetch_timestamp,
-    processed_timestamp::TIMESTAMP AS processed_timestamp,
-    
-    -- Add data tracking fields
+    -- Data tracking field
     CURRENT_TIMESTAMP AS dbt_loaded_at
     
 FROM raw_data

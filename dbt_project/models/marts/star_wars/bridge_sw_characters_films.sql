@@ -14,9 +14,7 @@
   - Handles the many-to-many relationship between characters and films
   - Extracts film references from the nested arrays in character data
   - Calculates character importance and appearance sequences
-  - Provides context for character arcs across the film timeline
-  - Adds derived attributes about character relationships to each film
-  - Enhanced with additional fields from updated staging models
+  - Adapted to work with our current staging model structure
 */
 
 WITH character_films AS (
@@ -26,13 +24,12 @@ WITH character_films AS (
         p.name AS character_name,
         p.gender,
         p.birth_year,
-        p.species_id,
+        -- Using NULL for species_id since we don't have it in staging yet
+        NULL AS species_id,
         p.homeworld_id,
         film_ref->>'url' AS film_url,
         -- Extract film ID from URL with better error handling
-        NULLIF(SPLIT_PART(COALESCE(film_ref->>'url', ''), '/', 6), '')::INTEGER AS film_id,
-        -- Add direct film access fields
-        p.film_names
+        NULLIF(SPLIT_PART(COALESCE(film_ref->>'url', ''), '/', 6), '')::INTEGER AS film_id
     FROM {{ ref('stg_swapi_people') }} p,
     LATERAL jsonb_array_elements(
         CASE WHEN p.films IS NULL OR p.films = 'null' THEN '[]'::jsonb
@@ -51,24 +48,25 @@ film_details AS (
         cf.species_id,
         cf.homeworld_id,
         cf.film_id,
-        f.title AS film_title,
+        f.film_title,
         f.episode_id,
         f.release_date,
         f.director,
-        -- Add new fields from enhanced film model
-        f.release_year,
-        f.trilogy,                  -- Use directly instead of manually calculating film_saga
-        f.chronological_order,
-        f.opening_crawl_word_count,
-        f.character_count,          -- Total character count for the film
+        -- Calculate or derive fields not present in staging
+        EXTRACT(YEAR FROM f.release_date) AS release_year,
+        f.trilogy,                  
+        COALESCE(f.episode_id, 999) AS chronological_order,  -- Default high value for non-episode films
+        -- Count words in opening_crawl
+        COALESCE(ARRAY_LENGTH(STRING_TO_ARRAY(f.opening_crawl, ' '), 1), 0) AS opening_crawl_word_count,
+        f.character_count,
         f.planet_count,
         f.starship_count,
         f.vehicle_count,
         f.species_count,
         -- Include ETL tracking fields
         f.url AS film_url,
-        f.fetch_timestamp,
-        f.processed_timestamp
+        NULL AS fetch_timestamp,
+        NULL AS processed_timestamp
     FROM character_films cf
     LEFT JOIN {{ ref('stg_swapi_films') }} f ON cf.film_id = f.id
 ),
@@ -149,7 +147,7 @@ SELECT
     -- Film saga categorization - use trilogy field directly
     fs.trilogy AS film_saga,
     fs.release_year,
-    fs.character_count AS total_character_count,
+    COALESCE(fs.character_count, 0) AS total_character_count,
     fs.cast_size_category,
     
     -- Character's species relationship
@@ -232,9 +230,9 @@ SELECT
     -- Film metrics (derived)
     CASE
         -- More granular logic with percentage of lines/screentime using character count
-        WHEN fs.character_count < 15 AND fs.character_importance_tier IN ('Protagonist/Antagonist', 'Major') 
+        WHEN COALESCE(fs.character_count, 0) < 15 AND fs.character_importance_tier IN ('Protagonist/Antagonist', 'Major') 
             THEN 'High Focus'
-        WHEN fs.character_count > 30 AND fs.character_importance_tier = 'Minor'
+        WHEN COALESCE(fs.character_count, 0) > 30 AND fs.character_importance_tier = 'Minor'
             THEN 'Background Character'
         ELSE 'Standard Focus'
     END AS character_screen_focus,
@@ -252,4 +250,4 @@ SELECT
     CURRENT_TIMESTAMP AS dbt_loaded_at
     
 FROM film_saga fs
-ORDER BY fs.episode_id, character_role, fs.character_name
+ORDER BY COALESCE(fs.episode_id, 999), character_role, fs.character_name

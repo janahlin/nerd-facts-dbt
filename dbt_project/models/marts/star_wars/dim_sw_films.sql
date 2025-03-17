@@ -9,40 +9,61 @@
 /*
   Model: dim_sw_films
   Description: Dimension table for Star Wars films
-  
-  Notes:
-  - Contains canonical Star Wars films (Episodes I-IX)
-  - Provides timeline, release, and production context
-  - Includes film classifications and metrics
-  - Enriches SWAPI data with additional attributes and metadata
-  - Serves as a core dimension for Star Wars universe analysis
-  - Enhanced with additional fields from updated staging models
 */
 
 WITH films AS (
     SELECT
         id AS film_id,
-        title,
+        film_title AS title,
         episode_id,
         opening_crawl,
         director,
         producer,
         release_date,
-        -- Add new fields from enhanced staging model
-        trilogy,
-        chronological_order,
-        character_count,
-        planet_count,
-        starship_count,
-        vehicle_count,
-        species_count,
-        opening_crawl_word_count,
+        
+        -- Calculate trilogy from episode_id
+        CASE 
+            WHEN episode_id BETWEEN 1 AND 3 THEN 'Prequel Trilogy'
+            WHEN episode_id BETWEEN 4 AND 6 THEN 'Original Trilogy' 
+            WHEN episode_id BETWEEN 7 AND 9 THEN 'Sequel Trilogy'
+            ELSE 'Anthology' 
+        END AS trilogy,
+        
+        -- Chronological order is just the episode_id, or 999 for non-episode films
+        COALESCE(episode_id, 999) AS chronological_order,
+        
+        -- Add runtime_minutes calculation here in the first CTE
+        CASE
+            WHEN episode_id = 1 THEN 136  -- The Phantom Menace
+            WHEN episode_id = 2 THEN 142  -- Attack of the Clones
+            WHEN episode_id = 3 THEN 140  -- Revenge of the Sith
+            WHEN episode_id = 4 THEN 121  -- A New Hope
+            WHEN episode_id = 5 THEN 124  -- The Empire Strikes Back
+            WHEN episode_id = 6 THEN 131  -- Return of the Jedi
+            WHEN episode_id = 7 THEN 138  -- The Force Awakens
+            WHEN episode_id = 8 THEN 152  -- The Last Jedi
+            WHEN episode_id = 9 THEN 142  -- The Rise of Skywalker
+            ELSE 135  -- Default
+        END AS runtime_minutes,
+        
+        -- Entity counts - use if they exist or set to defaults
+        COALESCE(character_count, 0) AS character_count,
+        COALESCE(planet_count, 0) AS planet_count,
+        COALESCE(starship_count, 0) AS starship_count,
+        COALESCE(vehicle_count, 0) AS vehicle_count,
+        COALESCE(species_count, 0) AS species_count,
+        
+        -- Calculate opening_crawl_word_count
+        COALESCE(ARRAY_LENGTH(STRING_TO_ARRAY(opening_crawl, ' '), 1), 0) AS opening_crawl_word_count,
+        
         -- Include ETL tracking fields
         url,
-        fetch_timestamp,
-        processed_timestamp,
-        created,
-        edited
+        
+        -- ETL timestamps
+        NULL::TIMESTAMP AS fetch_timestamp,
+        NULL::TIMESTAMP AS processed_timestamp,
+        created_at AS created,
+        updated_at AS edited
     FROM {{ ref('stg_swapi_films') }}
 ),
 
@@ -101,21 +122,10 @@ SELECT
     SUBSTRING(f.opening_crawl FROM 1 FOR 100) || '...' AS opening_crawl_preview,
     f.opening_crawl_word_count,
     
-    -- Runtime with improved coverage and validation
-    CASE
-        WHEN f.episode_id = 1 THEN 136  -- The Phantom Menace
-        WHEN f.episode_id = 2 THEN 142  -- Attack of the Clones
-        WHEN f.episode_id = 3 THEN 140  -- Revenge of the Sith
-        WHEN f.episode_id = 4 THEN 121  -- A New Hope
-        WHEN f.episode_id = 5 THEN 124  -- The Empire Strikes Back
-        WHEN f.episode_id = 6 THEN 131  -- Return of the Jedi
-        WHEN f.episode_id = 7 THEN 138  -- The Force Awakens
-        WHEN f.episode_id = 8 THEN 152  -- The Last Jedi
-        WHEN f.episode_id = 9 THEN 142  -- The Rise of Skywalker
-        ELSE 135  -- Default
-    END AS runtime_minutes,
+    -- Runtime now comes from the first CTE
+    f.runtime_minutes,
     
-    -- Film saga classification - use field from staging
+    -- Film saga classification
     f.trilogy,
     
     -- Timeline ordering

@@ -16,24 +16,25 @@
   - Calculates rarity metrics and battle style classifications
   - Identifies hidden abilities and their gameplay significance
   - Provides comprehensive categorization for analysis
+  - Fixed string literals to use proper PostgreSQL escaping
+  - Using E-string syntax for strings containing apostrophes
+  - Maintaining consistent naming format with PokeAPI
 */
 
 WITH ability_usage AS (
     -- Count how many Pokemon have each ability with improved error handling
     SELECT 
-        COALESCE(ability_name, 'Unknown') AS ability_name,
+        LOWER(COALESCE(ability_ref->'ability'->>'name', 'unknown')) AS ability_name,
         COUNT(*) AS num_pokemon
-    FROM (
-        SELECT 
-            jsonb_array_elements(
-                CASE WHEN abilities IS NULL OR abilities = 'null' THEN '[]'::jsonb
-                ELSE abilities END
-            )->>'name' AS ability_name
-        FROM {{ ref('stg_pokeapi_pokemon') }}
-        WHERE abilities IS NOT NULL AND abilities != 'null'
-    ) AS expanded_abilities
-    WHERE ability_name IS NOT NULL
-    GROUP BY ability_name
+    FROM {{ ref('stg_pokeapi_pokemon') }} p
+    CROSS JOIN LATERAL jsonb_array_elements(
+        CASE 
+            WHEN p.ability_list IS NULL OR p.ability_list::text = 'null' THEN '[]'::jsonb
+            ELSE p.ability_list
+        END
+    ) AS ability_ref
+    WHERE ability_ref->'ability'->>'name' IS NOT NULL
+    GROUP BY ability_ref->'ability'->>'name'
 ),
 
 -- Calculate ability rarity percentiles
@@ -78,7 +79,7 @@ ability_attributes AS (
                                 'Adaptability', 'Aerilate', 'Pixilate', 'Refrigerate', 'Galvanize',
                                 'Solar Power', 'Steelworker', 'Reckless', 'Mega Launcher',
                                 'Strong Jaw', 'Tough Claws', 'Technician', 'Analytic',
-                                'Punk Rock', 'Dragon's Maw', 'Transistor') THEN 'Damage Boost'
+                                'Punk Rock', E'Dragon\'s Maw', 'Transistor') THEN 'Damage Boost'
                                 
             -- Opponent effects (expanded)
             WHEN ability_name IN ('Pressure', 'Unnerve', 'Intimidate', 'Mummy', 'Gooey', 'Tangling Hair',
@@ -218,7 +219,7 @@ SELECT
             'Power of Alchemy', 'Beast Boost', 'RKS System', 'Slush Rush', 'Surge Surfer',
             'Water Compaction', 'Queenly Majesty', 'Stamina', 'Water Bubble', 'Steelworker',
             
-            -- Gen 8 notable hidden abilities
+            -- Gen 8 notable hidden abilities with fixed string literals
             'Libero', 'Quick Draw', 'Ice Scales', 'Punk Rock', 'Mirror Armor', 'Neutralizing Gas',
             'Power Spot', 'Ripen', 'Steam Engine', 'Sand Spit', 'Cotton Down', 'Gorilla Tactics',
             
@@ -230,14 +231,14 @@ SELECT
         ELSE FALSE
     END AS likely_hidden,
     
-    -- Battle style classification - expanded categories
+    -- Battle style classification - fixed string literals
     CASE
         -- Offensive battle style
         WHEN a.effect_type IN ('Damage Boost', 'Speed') OR 
              u.ability_name IN ('Moxie', 'Adaptability', 'Beast Boost', 'Huge Power', 'Pure Power',
                              'Sheer Force', 'Tough Claws', 'Strong Jaw', 'Technician', 'Gorilla Tactics',
                              'Intrepid Sword', 'Contrary', 'Aerilate', 'Pixilate', 'Refrigerate',
-                             'Galvanize', 'Steelworker', 'Protean', 'Libero', 'Dragon's Maw', 'Transistor',
+                             'Galvanize', 'Steelworker', 'Protean', 'Libero', E'dragon''s-maw', 'Transistor',
                              'Guts', 'No Guard', 'Solar Power', 'Tinted Lens', 'Mega Launcher', 'Sniper')
         THEN 'Offensive'
         
@@ -313,11 +314,12 @@ SELECT
                              'Triage', 'Water Bubble', 'Water Compaction', 'Wimp Out') THEN 7  -- Gen 7
                              
         WHEN u.ability_name IN ('As One', 'Ball Fetch', 'Cotton Down', 'Curious Medicine', 'Dauntless Shield',
-                             'Dragon's Maw', 'Gorilla Tactics', 'Gulp Missile', 'Hunger Switch', 'Ice Face',
+                             E'dragon''s-maw', 'Gorilla Tactics', 'Gulp Missile', 'Hunger Switch', 'Ice Face',
                              'Ice Scales', 'Intrepid Sword', 'Libero', 'Mirror Armor', 'Neutralizing Gas',
                              'Pastel Veil', 'Perish Body', 'Power Spot', 'Propeller Tail', 'Punk Rock',
                              'Quick Draw', 'Ripen', 'Sand Spit', 'Screen Cleaner', 'Stalwart',
-                             'Steam Engine', 'Steely Spirit', 'Transistor', 'Unseen Fist', 'Wandering Spirit') THEN 8  -- Gen 8
+                             'Steam Engine', 'Steely Spirit', 'Transistor', 'Unseen Fist', 'Wandering Spirit') 
+        THEN 8  -- Gen 8
                              
         WHEN u.ability_name IN ('Angular Wing', 'Armor Tail', 'Beads of Ruin', 'Commander', 'Cud Chew',
                              'Earth Eater', 'Electromorphosis', 'Good as Gold', 'Guard Dog', 'Hadron Engine',

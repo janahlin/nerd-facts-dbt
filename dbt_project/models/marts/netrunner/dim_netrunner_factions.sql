@@ -23,15 +23,15 @@ WITH faction_base AS (
 card_counts AS (
     SELECT
         faction_code,
-        COUNT(DISTINCT id) AS num_cards,
-        COUNT(DISTINCT CASE WHEN type_name = 'Identity' THEN id END) AS num_identities,
-        COUNT(DISTINCT CASE WHEN type_name = 'ICE' THEN id END) AS num_ice,
-        COUNT(DISTINCT CASE WHEN type_name = 'Program' AND card_text ILIKE '%Icebreaker%' THEN id END) AS num_icebreakers,
-        COUNT(DISTINCT CASE WHEN type_name = 'Agenda' THEN id END) AS num_agendas,
-        COUNT(DISTINCT CASE WHEN type_name IN ('Event', 'Operation') THEN id END) AS num_events_operations,
+        COUNT(DISTINCT c.id) AS num_cards,  -- Added c. prefix to resolve ambiguity
+        COUNT(DISTINCT CASE WHEN type_name = 'Identity' THEN c.id END) AS num_identities,
+        COUNT(DISTINCT CASE WHEN type_name = 'ICE' THEN c.id END) AS num_ice,
+        COUNT(DISTINCT CASE WHEN type_name = 'Program' AND card_text ILIKE '%Icebreaker%' THEN c.id END) AS num_icebreakers,
+        COUNT(DISTINCT CASE WHEN type_name = 'Agenda' THEN c.id END) AS num_agendas,
+        COUNT(DISTINCT CASE WHEN type_name IN ('Event', 'Operation') THEN c.id END) AS num_events_operations,
         COUNT(DISTINCT CASE WHEN card_text ILIKE '%gain%credit%' OR 
                               card_text ILIKE '%take%credit%' OR
-                              card_text ILIKE '%credit for each%' THEN id END) AS num_economy_cards,
+                              card_text ILIKE '%credit for each%' THEN c.id END) AS num_economy_cards,
         -- Add first release date
         MIN(p.release_date) AS first_release_date,
         -- Add most recent card release date

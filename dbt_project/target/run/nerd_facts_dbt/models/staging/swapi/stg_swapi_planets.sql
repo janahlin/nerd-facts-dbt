@@ -9,25 +9,9 @@
   Model: stg_swapi_planets
   Description: Standardizes Star Wars planet data from SWAPI
   Source: raw.swapi_planets
-  
-  Notes:
-  - Numeric fields are cleaned and converted to proper types
-  - Population is handled with appropriate NULL values
-  - Derived planet classifications are added for analysis
-  - Climate and terrain are standardized for consistency
 */
 
--- First check what columns actually exist
-WITH column_check AS (
-    SELECT 
-        column_name 
-    FROM information_schema.columns 
-    WHERE table_schema = 'raw' 
-    AND table_name = 'swapi_planets'
-),
-
-raw_data AS (
-    -- Explicitly list columns to prevent issues if source schema changes
+WITH raw_data AS (
     SELECT
         id,
         name,
@@ -39,37 +23,9 @@ raw_data AS (
         terrain,
         surface_water,
         population,
-        
-        -- Handle various possible column names for resident data
-        CASE
-            -- Check for standard "residents" column
-            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'residents')
-            THEN CASE WHEN residents IS NULL OR residents = '' THEN NULL::jsonb ELSE residents::jsonb END
-            
-            -- Check for alternative "people" column
-            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'people')
-            THEN CASE WHEN people IS NULL OR people = '' THEN NULL::jsonb ELSE people::jsonb END
-            
-            -- Check for alternative "characters" column
-            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'characters')
-            THEN CASE WHEN characters IS NULL OR characters = '' THEN NULL::jsonb ELSE characters::jsonb END
-            
-            -- Default to empty array if no matching column found
-            ELSE '[]'::jsonb
-        END AS residents,
-        
-        -- Handle films data with similar approach
-        CASE
-            WHEN EXISTS (SELECT 1 FROM column_check WHERE column_name = 'films')
-            THEN CASE WHEN films IS NULL OR films = '' THEN NULL::jsonb ELSE films::jsonb END
-            
-            -- Default to empty array if no matching column found
-            ELSE '[]'::jsonb
-        END AS films,
-        
+        url,
         created,
-        edited,
-        CURRENT_TIMESTAMP AS _loaded_at
+        edited
     FROM "nerd_facts"."raw"."swapi_planets"
     WHERE id IS NOT NULL
 )
@@ -79,104 +35,42 @@ SELECT
     id,
     name AS planet_name,
     
-    -- Physical characteristics with proper typing
-    CASE 
-        WHEN rotation_period IS NULL OR lower(rotation_period) = 'unknown' THEN NULL
-        ELSE NULLIF(REGEXP_REPLACE(rotation_period, '[^0-9\.]', '', 'g'), '')::NUMERIC
-    END AS rotation_period,
+    -- Physical characteristics with proper numeric handling
+    CAST(NULLIF(rotation_period, 'unknown') AS NUMERIC) AS rotation_period,
+    CAST(NULLIF(orbital_period, 'unknown') AS NUMERIC) AS orbital_period,
+    CAST(NULLIF(diameter, 'unknown') AS NUMERIC) AS diameter,
+    climate,
+    gravity,
+    terrain,
+    CAST(NULLIF(surface_water, 'unknown') AS NUMERIC) AS surface_water,
+    CAST(NULLIF(REPLACE(population, ',', ''), 'unknown') AS NUMERIC) AS population,
     
-    CASE 
-        WHEN orbital_period IS NULL OR lower(orbital_period) = 'unknown' THEN NULL
-        ELSE NULLIF(REGEXP_REPLACE(orbital_period, '[^0-9\.]', '', 'g'), '')::NUMERIC
-    END AS orbital_period,
+    -- Entity relationships - we'll populate these later
+    0 AS resident_count,
+    0 AS film_appearances,
     
-    CASE 
-        WHEN diameter IS NULL OR lower(diameter) = 'unknown' THEN NULL
-        ELSE NULLIF(REGEXP_REPLACE(diameter, '[^0-9\.]', '', 'g'), '')::NUMERIC
-    END AS diameter,
+    -- Placeholders for raw arrays
+    NULL::jsonb AS residents,
+    NULL::jsonb AS films,
     
-    -- Environment attributes
-    LOWER(COALESCE(climate, 'unknown')) AS climate,
-    LOWER(COALESCE(gravity, 'unknown')) AS gravity,
-    LOWER(COALESCE(terrain, 'unknown')) AS terrain,
+    -- Placeholders for name arrays
+    NULL AS resident_names,
+    NULL AS film_names,
     
-    CASE 
-        WHEN surface_water IS NULL OR lower(surface_water) = 'unknown' THEN NULL
-        ELSE NULLIF(REGEXP_REPLACE(surface_water, '[^0-9\.]', '', 'g'), '')::NUMERIC
-    END AS surface_water,
+    -- Terrain classification flags
+    terrain LIKE '%temperate%' AS is_temperate,
+    terrain LIKE '%forest%' OR terrain LIKE '%jungle%' OR terrain LIKE '%grassland%' AS has_vegetation,
+    terrain LIKE '%ocean%' OR terrain LIKE '%lake%' OR surface_water = '100' AS is_water_world,
+    terrain LIKE '%desert%' AS is_desert_world,
     
-    -- Population with proper handling
-    CASE 
-        WHEN population IS NULL OR lower(population) = 'unknown' THEN NULL
-        ELSE NULLIF(REGEXP_REPLACE(population, '[^0-9\.]', '', 'g'), '')::NUMERIC
-    END AS population,
+    -- Source URL 
+    url,
     
-    -- Entity counts
-    COALESCE(jsonb_array_length(residents), 0) AS resident_count,
-    COALESCE(jsonb_array_length(films), 0) AS film_appearances,
-    
-    -- Keep raw arrays for downstream usage
-    residents,
-    films,
-    
-    -- Derived classifications
-    CASE
-        WHEN lower(climate) LIKE '%temperate%' THEN TRUE
-        ELSE FALSE
-    END AS is_temperate,
-    
-    CASE
-        WHEN lower(terrain) LIKE '%forest%' OR 
-             lower(terrain) LIKE '%jungle%' OR
-             lower(terrain) LIKE '%grasslands%' THEN TRUE
-        ELSE FALSE
-    END AS has_vegetation,
-    
-    CASE
-        WHEN lower(terrain) LIKE '%ocean%' OR 
-             lower(terrain) LIKE '%water%' OR
-             (surface_water IS NOT NULL AND 
-              CASE WHEN surface_water ~ '^[0-9\.]+$' 
-                   THEN surface_water::NUMERIC > 50 
-                   ELSE FALSE 
-              END) THEN TRUE
-        ELSE FALSE
-    END AS is_water_world,
-    
-    CASE
-        WHEN lower(terrain) LIKE '%desert%' OR 
-             lower(climate) LIKE '%arid%' OR
-             (surface_water IS NOT NULL AND TRY_CAST(surface_water AS NUMERIC) < 5) THEN TRUE
-        ELSE FALSE
-    END AS is_desert_world,
-    
-    -- Planet habitability score (0-100)
-    CASE
-        WHEN lower(climate) LIKE '%temperate%' THEN
-            CASE
-                WHEN lower(terrain) LIKE '%forest%' OR 
-                     lower(terrain) LIKE '%grasslands%' THEN 90
-                ELSE 75
-            END
-        WHEN lower(climate) LIKE '%tropical%' OR lower(climate) LIKE '%humid%' THEN 65
-        WHEN lower(climate) LIKE '%arid%' OR lower(climate) LIKE '%hot%' THEN 35
-        WHEN lower(climate) LIKE '%frozen%' OR lower(climate) LIKE '%frigid%' THEN 15
-        ELSE 50
-    END AS habitability_score,
-    
-    -- Notable planet flag
-    CASE
-        WHEN name IN ('Tatooine', 'Alderaan', 'Yavin IV', 'Hoth', 'Dagobah', 
-                      'Bespin', 'Endor', 'Naboo', 'Coruscant', 'Kamino', 'Geonosis') 
-        THEN TRUE
-        ELSE FALSE
-    END AS is_notable_planet,
-    
-    -- API metadata
+    -- ETL tracking fields
+    NULL::TIMESTAMP AS fetch_timestamp,
+    NULL::TIMESTAMP AS processed_timestamp,
     created::TIMESTAMP AS created_at,
     edited::TIMESTAMP AS updated_at,
-    
-    -- Add data tracking fields
     CURRENT_TIMESTAMP AS dbt_loaded_at
     
 FROM raw_data

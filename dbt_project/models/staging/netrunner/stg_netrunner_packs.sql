@@ -17,7 +17,7 @@ WITH raw_data AS (
         date_release,
         size,
         cycle_code
-    FROM raw.netrunner_packs
+    FROM {{ source('netrunner', 'packs') }}  -- Updated to use source macro
     WHERE code IS NOT NULL -- Filter out invalid entries
 )
 
@@ -35,7 +35,7 @@ SELECT
     
     -- Pack attributes
     position AS pack_position,
-    NULLIF(size, 0)::INTEGER AS card_count,
+    NULLIF(size::TEXT, '0')::INTEGER AS card_count,  -- Fixed type casting
     cycle_code,
     
     -- Derived fields

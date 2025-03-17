@@ -66,12 +66,12 @@ type_effectiveness AS (
 -- Count Pokémon with each primary and secondary type combination
 pokemon_type_counts AS (
     SELECT
-        primary_type,
-        secondary_type,
+        type_list[0] AS primary_type,
+        type_list[1] AS secondary_type,  -- Get secondary type from array
         COUNT(*) AS pokemon_count
     FROM {{ ref('stg_pokeapi_pokemon') }}
-    WHERE primary_type IS NOT NULL
-    GROUP BY primary_type, secondary_type
+    WHERE type_list[0] IS NOT NULL  -- Only include Pokémon with at least one type
+    GROUP BY type_list[0], type_list[1]
 ),
 
 -- Get dual-type defending Pokémon and calculate combined effectiveness
@@ -86,7 +86,28 @@ dual_type_effectiveness AS (
     FROM pokemon_type_counts ptc
     JOIN type_effectiveness te1 ON ptc.primary_type = te1.defending_type
     JOIN type_effectiveness te2 ON ptc.secondary_type = te2.defending_type
-    WHERE ptc.secondary_type IS NOT NULL
+    WHERE ptc.secondary_type IS NOT NULL  -- Only include dual-type Pokémon
+),
+
+-- Calculate type usage statistics
+type_usage_stats AS (
+    SELECT
+        defending_type,
+        SUM(pokemon_count) as type_pokemon_count
+    FROM (
+        -- Count primary type usage
+        SELECT primary_type as defending_type, COUNT(*) as pokemon_count
+        FROM {{ ref('stg_pokeapi_pokemon') }}
+        WHERE type_list[0] IS NOT NULL
+        GROUP BY primary_type
+        UNION ALL
+        -- Count secondary type usage
+        SELECT type_list[1] as defending_type, COUNT(*) as pokemon_count
+        FROM {{ ref('stg_pokeapi_pokemon') }}
+        WHERE type_list[1] IS NOT NULL
+        GROUP BY type_list[1]
+    ) t
+    GROUP BY defending_type
 )
 
 SELECT
@@ -197,7 +218,7 @@ SELECT
     -- Higher = this type is super effective against more types with many Pokémon
     CASE
         WHEN te.effectiveness_multiplier >= 2 THEN 
-            te.effectiveness_multiplier * defending_type_pokemon_count
+            te.effectiveness_multiplier * COALESCE(tus.type_pokemon_count, 0)
         ELSE 0
     END AS coverage_value,
     
@@ -217,4 +238,5 @@ SELECT
 FROM type_effectiveness te
 JOIN {{ ref('dim_pokemon_types') }} at ON te.attacking_type = at.type_name  -- Join for attacking type metadata
 JOIN {{ ref('dim_pokemon_types') }} dt ON te.defending_type = dt.type_name  -- Join for defending type metadata
+LEFT JOIN type_usage_stats tus ON te.defending_type = tus.defending_type  -- Add join for type usage stats
 ORDER BY te.attacking_type, te.effectiveness_multiplier DESC

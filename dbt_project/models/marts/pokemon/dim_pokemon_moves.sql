@@ -1,38 +1,95 @@
 {{
   config(
     materialized = 'table',
-    indexes = [{'columns': ['move_id']}, {'columns': ['name']}, {'columns': ['type']}],
+    indexes = [{'columns': ['move_id']}, {'columns': ['move_name']}, {'columns': ['move_type']}],
     unique_key = 'move_key'
   )
 }}
 
 /*
   Model: dim_pokemon_moves
-  Description: Dimension table for Pokémon moves with comprehensive attributes
-  
-  Notes:
-  - Provides detailed information about all moves in the Pokémon games
-  - Contains move statistics like power, accuracy, and PP
-  - Classifies moves by type, category, and effect
-  - Includes generation information and competitive relevance
-  - Serves as a reference dimension for move-related analyses
+  Description: Dimension table for Pokémon moves
 */
 
 WITH base_moves AS (
+    -- Ensure clean numeric data from source
     SELECT
         id AS move_id,
-        name,
-        NULLIF(type, 'unknown') AS type,
-        NULLIF(power::TEXT, 'null')::INTEGER AS power,
-        NULLIF(pp::TEXT, 'null')::INTEGER AS pp,
-        NULLIF(accuracy::TEXT, 'null')::INTEGER AS accuracy,
+        move_name,
+        NULLIF(type_name, 'unknown') AS move_type,
+        -- Handle numeric conversions safely
+        CASE 
+            WHEN power::TEXT ~ '^[0-9]+$' THEN power::INTEGER
+            ELSE NULL 
+        END AS power,
+        CASE 
+            WHEN pp::TEXT ~ '^[0-9]+$' THEN pp::INTEGER
+            ELSE NULL 
+        END AS pp,
+        CASE 
+            WHEN accuracy::TEXT ~ '^[0-9]+$' THEN accuracy::INTEGER
+            ELSE NULL 
+        END AS accuracy,
+        CASE 
+            WHEN priority::TEXT ~ '^[0-9]+$' THEN priority::INTEGER
+            ELSE 0 
+        END AS priority,
+        damage_class,
+        effect_text,
+        CASE 
+            WHEN effect_chance::TEXT ~ '^[0-9]+$' THEN effect_chance::INTEGER
+            ELSE NULL 
+        END AS effect_chance,
+        CASE 
+            WHEN generation_number::TEXT ~ '^[0-9]+$' THEN generation_number::INTEGER
+            ELSE 1 
+        END AS generation_id
+    FROM {{ ref('stg_pokeapi_moves') }}
+    WHERE id IS NOT NULL
+),
+
+move_classifications AS (
+    -- Pre-calculate move classifications to avoid repetition
+    SELECT
+        move_id,
+        move_name,
+        move_type,
+        power,
+        pp,
+        accuracy,
         priority,
         damage_class,
         effect_text,
         effect_chance,
-        generation_id
-    FROM {{ ref('stg_pokeapi_moves') }}
-    WHERE id IS NOT NULL
+        generation_id,
+        -- Add effect category calculation
+        CASE
+            WHEN effect_text LIKE '%boost%' OR 
+                 effect_text LIKE '%raise%' OR 
+                 effect_text LIKE '%increase%' THEN 'Stat Boost'
+            WHEN effect_text LIKE '%lower%' OR 
+                 effect_text LIKE '%decrease%' OR 
+                 effect_text LIKE '%reduce%' THEN 'Stat Reduction'
+            WHEN effect_text LIKE '%paralyze%' THEN 'Paralyze'
+            WHEN effect_text LIKE '%burn%' THEN 'Burn'
+            WHEN effect_text LIKE '%poison%' OR 
+                 effect_text LIKE '%toxic%' THEN 'Poison'
+            WHEN effect_text LIKE '%sleep%' THEN 'Sleep'
+            WHEN effect_text LIKE '%freeze%' THEN 'Freeze'
+            WHEN effect_text LIKE '%confus%' THEN 'Confusion'
+            WHEN effect_text LIKE '%flinch%' THEN 'Flinch'
+            WHEN effect_text LIKE '%trap%' THEN 'Trap'
+            WHEN effect_text LIKE '%heal%' OR 
+                 effect_text LIKE '%restore%' THEN 'Healing'
+            WHEN effect_text LIKE '%protect%' OR 
+                 effect_text LIKE '%protect%' THEN 'Protection'
+            WHEN effect_text LIKE '%critical%' THEN 'Critical Hit'
+            WHEN effect_text LIKE '%priority%' OR priority > 0 THEN 'Priority'
+            WHEN damage_class = 'status' THEN 'Status Effect'
+            WHEN power > 0 THEN 'Direct Damage'
+            ELSE 'Other'
+        END AS effect_category
+    FROM base_moves
 )
 
 SELECT
@@ -41,10 +98,10 @@ SELECT
     
     -- Core identifiers
     move_id,
-    name,
+    move_name,
     
     -- Move attributes
-    type,
+    move_type,
     COALESCE(power, 0) AS power,
     COALESCE(pp, 0) AS pp,
     COALESCE(accuracy, 0) AS accuracy,
@@ -82,59 +139,34 @@ SELECT
     END AS accuracy_category,
     
     -- Move effect category based on effect text
-    CASE
-        WHEN effect_text LIKE '%boost%' OR 
-             effect_text LIKE '%raise%' OR 
-             effect_text LIKE '%increase%' THEN 'Stat Boost'
-        WHEN effect_text LIKE '%lower%' OR 
-             effect_text LIKE '%decrease%' OR 
-             effect_text LIKE '%reduce%' THEN 'Stat Reduction'
-        WHEN effect_text LIKE '%paralyze%' THEN 'Paralyze'
-        WHEN effect_text LIKE '%burn%' THEN 'Burn'
-        WHEN effect_text LIKE '%poison%' OR 
-             effect_text LIKE '%toxic%' THEN 'Poison'
-        WHEN effect_text LIKE '%sleep%' THEN 'Sleep'
-        WHEN effect_text LIKE '%freeze%' THEN 'Freeze'
-        WHEN effect_text LIKE '%confus%' THEN 'Confusion'
-        WHEN effect_text LIKE '%flinch%' THEN 'Flinch'
-        WHEN effect_text LIKE '%trap%' THEN 'Trap'
-        WHEN effect_text LIKE '%heal%' OR 
-             effect_text LIKE '%restore%' THEN 'Healing'
-        WHEN effect_text LIKE '%protect%' OR 
-             effect_text LIKE '%protect%' THEN 'Protection'
-        WHEN effect_text LIKE '%critical%' THEN 'Critical Hit'
-        WHEN effect_text LIKE '%priority%' OR priority > 0 THEN 'Priority'
-        WHEN damage_class = 'status' THEN 'Status Effect'
-        WHEN power > 0 THEN 'Direct Damage'
-        ELSE 'Other'
-    END AS effect_category,
+    effect_category,
     
     -- Competitive relevance score (1-10)
     CASE
         -- Extremely useful moves in competitive
-        WHEN name IN ('Stealth Rock', 'Spikes', 'Toxic Spikes', 'Defog', 'Rapid Spin',
-                   'Recover', 'Wish', 'Protect', 'Substitute', 'Will-O-Wisp',
-                   'Scald', 'Knock Off', 'U-turn', 'Volt Switch', 'Toxic',
-                   'Thunder Wave', 'Dragon Dance', 'Swords Dance', 'Nasty Plot',
-                   'Calm Mind', 'Quiver Dance', 'Roost', 'Leech Seed') THEN 10
+        WHEN move_name IN ('stealth-rock', 'spikes', 'toxic-spikes', 'defog', 'rapid-spin',
+                   'recover', 'wish', 'protect', 'substitute', 'will-o-wisp',
+                   'scald', 'knock-off', 'u-turn', 'volt-switch', 'toxic',
+                   'thunder-wave', 'dragon-dance', 'swords-dance', 'nasty-plot',
+                   'calm-mind', 'quiver-dance', 'roost', 'leech-seed') THEN 10
                    
         -- Very strong attacks and utility moves
         WHEN (power > 100 AND accuracy >= 90) OR 
-             name IN ('Close Combat', 'Earthquake', 'Ice Beam', 'Thunderbolt',
-                   'Flamethrower', 'Surf', 'Stone Edge', 'Focus Blast',
-                   'Shadow Ball', 'Psyshock', 'Earth Power', 'Draco Meteor', 
-                   'Moonblast', 'Play Rough', 'Gunk Shot', 'Brave Bird') THEN 9
+             move_name IN ('close-combat', 'earthquake', 'ice-beam', 'thunderbolt',
+                   'flamethrower', 'surf', 'stone-edge', 'focus-blast',
+                   'shadow-ball', 'psyshock', 'earth-power', 'draco-meteor', 
+                   'moonblast', 'play-rough', 'gunk-shot', 'brave-bird') THEN 9
                    
         -- Strong utility and common attacks
         WHEN (power >= 80 AND accuracy >= 85) OR
-             name IN ('Taunt', 'Encore', 'Trick', 'Toxic', 'Synthesis', 
-                   'Aromatherapy', 'Heal Bell', 'Sticky Web', 'Trick Room',
-                   'Tailwind', 'Moonlight', 'Morning Sun') THEN 8
+             move_name IN ('taunt', 'encore', 'trick', 'toxic', 'synthesis', 
+                   'aromatherapy', 'heal-bell', 'sticky-web', 'trick-room',
+                   'tailwind', 'moonlight', 'morning-sun') THEN 8
                    
         -- Useful moves but not top tier
         WHEN (power >= 70 AND accuracy >= 80) OR
-             name IN ('Light Screen', 'Reflect', 'Hypnosis', 'Sleep Powder',
-                   'Stun Spore', 'Thunder Wave') THEN 7
+             move_name IN ('light-screen', 'reflect', 'hypnosis', 'sleep-powder',
+                   'stun-spore', 'thunder-wave') THEN 7
                    
         -- Standard damage moves with decent stats
         WHEN power >= 60 AND accuracy >= 90 THEN 6
@@ -158,35 +190,35 @@ SELECT
     -- Move uniqueness rating
     CASE
         -- Signature moves
-        WHEN name IN ('Spacial Rend', 'Roar of Time', 'Seed Flare', 'Blue Flare', 'Bolt Strike',
-                   'Fusion Flare', 'Fusion Bolt', 'Origin Pulse', 'Precipice Blades',
-                   'Dragon Ascent', 'Sacred Fire', 'Aeroblast', 'Shadow Force',
-                   'Doom Desire', 'Psycho Boost', 'Lunar Dance', 'Magma Storm',
-                   'Crush Grip', 'Judgment', 'Secret Sword', 'Relic Song', 'Light of Ruin',
-                   'Steam Eruption', 'Core Enforcer', 'Sunsteel Strike', 'Moongeist Beam',
-                   'Photon Geyser', 'Spectral Thief', 'Plasma Fists') THEN 'Signature'
-                   
+        WHEN move_name IN ('spacial-rend', 'roar-of-time', 'seed-flare', 'blue-flare',
+                         'bolt-strike', 'fusion-flare', 'fusion-bolt', 'origin-pulse',
+                         'precipice-blades', 'dragon-ascent', 'sacred-fire', 'aeroblast',
+                         'shadow-force', 'doom-desire', 'psycho-boost', 'lunar-dance',
+                         'magma-storm', 'crush-grip', 'judgment', 'secret-sword',
+                         'relic-song', 'light-of-ruin', 'steam-eruption', 'core-enforcer',
+                         'sunsteel-strike', 'moongeist-beam', 'photon-geyser',
+                         'spectral-thief', 'plasma-fists') THEN 'Signature'
         -- Very rare moves (limited distribution)
-        WHEN name IN ('Shell Smash', 'Quiver Dance', 'Tail Glow', 'Dragon Dance',
-                   'Shift Gear', 'Coil', 'Geomancy', 'Mind Blown', 'Oblivion Wing',
-                   'Thousand Arrows', 'Thousand Waves', 'Diamond Storm') THEN 'Very Rare'
+        WHEN move_name IN ('shell-smash', 'quiver-dance', 'tail-glow', 'dragon-dance',
+                   'shift-gear', 'coil', 'geomancy', 'mind-blown', 'oblivion-wing',
+                   'thousand-arrows', 'thousand-waves', 'diamond-storm') THEN 'Very Rare'
                    
         -- Rare but distributed moves
-        WHEN name IN ('Spore', 'Dark Void', 'Healing Wish', 'Lunar Dance', 
-                   'Shore Up', 'Belly Drum', 'Fiery Dance', 'King\'s Shield',
-                   'Spiky Shield', 'Baneful Bunker', 'Parting Shot') THEN 'Rare'
+        WHEN move_name IN ('spore', 'dark-void', 'healing-wish', 'lunar-dance', 
+                   'shore-up', 'belly-drum', 'fiery-dance', E'king''s-shield',
+                   'spiky-shield', 'baneful-bunker', 'parting-shot') THEN 'Rare'
                    
         -- Uncommon moves
-        WHEN name IN ('Leech Seed', 'Aromatherapy', 'Heal Bell', 'Sticky Web',
-                   'Defog', 'Rapid Spin', 'Extreme Speed', 'Sucker Punch',
-                   'Bullet Punch', 'Aqua Jet', 'Mach Punch', 'Ice Shard') THEN 'Uncommon'
+        WHEN move_name IN ('leech-seed', 'aromatherapy', 'heal-bell', 'sticky-web',
+                   'defog', 'rapid-spin', 'extreme-speed', 'sucker-punch',
+                   'bullet-punch', 'aqua-jet', 'mach-punch', 'ice-shard') THEN 'Uncommon'
                    
         -- Common coverage moves
-        WHEN name IN ('Ice Beam', 'Thunderbolt', 'Flamethrower', 'Surf',
-                   'Earthquake', 'Stone Edge', 'Close Combat', 'Shadow Ball') THEN 'Standard'
+        WHEN move_name IN ('ice-beam', 'thunderbolt', 'flamethrower', 'surf',
+                   'earthquake', 'stone-edge', 'close-combat', 'shadow-ball') THEN 'Standard'
                    
         -- Very common moves
-        WHEN name IN ('Toxic', 'Protect', 'Rest', 'Sleep Talk', 'Substitute') THEN 'Common'
+        WHEN move_name IN ('toxic', 'protect', 'rest', 'sleep-talk', 'substitute') THEN 'Common'
                    
         -- Handle everything else based on damage class
         WHEN damage_class = 'status' THEN 'Status'
@@ -196,5 +228,5 @@ SELECT
     -- Data tracking field
     CURRENT_TIMESTAMP AS dbt_loaded_at
     
-FROM base_moves
-ORDER BY type, power DESC NULLS LAST, name
+FROM move_classifications
+ORDER BY move_type, power DESC NULLS LAST, move_name

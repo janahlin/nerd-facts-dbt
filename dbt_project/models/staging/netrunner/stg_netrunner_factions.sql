@@ -14,9 +14,8 @@ WITH raw_data AS (
         name,
         side_code,         -- Corporation or Runner side
         is_mini,           -- Whether this is a mini-faction
-        color,             -- Faction color for UI visualization
-        description        -- Faction description text
-    FROM raw.netrunner_factions
+        color             -- Faction color for UI visualization
+    FROM {{ source('netrunner', 'factions') }}
     WHERE code IS NOT NULL -- Ensure we don't include invalid entries
 )
 
@@ -34,9 +33,12 @@ SELECT
     END AS side_name,
     
     -- Faction attributes
-    COALESCE(is_mini, FALSE) AS is_mini, -- Default to FALSE if NULL
+    CASE
+        WHEN is_mini::TEXT = 'true' THEN TRUE
+        WHEN is_mini::TEXT = 'false' THEN FALSE
+        ELSE FALSE  -- Default value for NULL or invalid values
+    END AS is_mini,
     color,
-    description AS faction_description,
     
     -- Additional derived attributes
     CASE

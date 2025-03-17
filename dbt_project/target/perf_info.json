@@ -1,0 +1,51 @@
+{
+    "path_count": 246,
+    "parsed_path_count": 26,
+    "static_analysis_path_count": 20,
+    "static_analysis_parsed_path_count": 8,
+    "is_partial_parse_enabled": true,
+    "is_static_analysis_enabled": true,
+    "read_files_elapsed": 0.04044502298347652,
+    "load_macros_elapsed": 0.0005306679522618651,
+    "parse_project_elapsed": 0.976988798007369,
+    "patch_sources_elapsed": 0.05919988895766437,
+    "process_manifest_elapsed": 0.020061288960278034,
+    "load_all_elapsed": 1.3363782669766806,
+    "projects": [
+        {
+            "project_name": "nerd_facts_dbt",
+            "elapsed": 0.9765712200314738,
+            "parsers": [
+                {
+                    "parser": "model",
+                    "elapsed": 0.2917671140166931,
+                    "parsed_path_count": 20
+                },
+                {
+                    "parser": "test",
+                    "elapsed": 0.6847926269983873,
+                    "parsed_path_count": 6
+                }
+            ],
+            "parsed_path_count": 26
+        },
+        {
+            "project_name": "dbt_postgres",
+            "elapsed": 0,
+            "parsers": [],
+            "parsed_path_count": 0
+        },
+        {
+            "project_name": "dbt",
+            "elapsed": 0,
+            "parsers": [],
+            "parsed_path_count": 0
+        },
+        {
+            "project_name": "dbt_utils",
+            "elapsed": 0,
+            "parsers": [],
+            "parsed_path_count": 0
+        }
+    ]
+}

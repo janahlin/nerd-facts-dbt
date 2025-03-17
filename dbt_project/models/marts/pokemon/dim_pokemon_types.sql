@@ -28,13 +28,13 @@ WITH type_counts AS (
 ),
 
 secondary_type_counts AS (
-    -- Get secondary type usage
+    -- Get secondary type usage from type_list array
     SELECT 
-        COALESCE(secondary_type, 'None') AS type_name,
+        COALESCE(type_list[1], 'None') AS type_name,  -- Changed from secondary_type
         COUNT(*) AS num_secondary
     FROM {{ ref('stg_pokeapi_pokemon') }}
-    WHERE secondary_type IS NOT NULL
-    GROUP BY secondary_type
+    WHERE type_list[1] IS NOT NULL
+    GROUP BY type_list[1]
 ),
 
 combined_counts AS (
@@ -48,7 +48,6 @@ combined_counts AS (
     LEFT JOIN secondary_type_counts s ON t.type_name = s.type_name
 ),
 
--- Comprehensive type effectiveness data with separate immunities
 type_attributes AS (
     SELECT
         type_name,
@@ -77,7 +76,7 @@ type_attributes AS (
         
         -- Resistances (takes 0.5x damage from these types)
         CASE
-            WHEN type_name = 'Normal' THEN ARRAY[]
+            WHEN type_name = 'Normal' THEN ARRAY[]::VARCHAR[]
             WHEN type_name = 'Fire' THEN ARRAY['Fire', 'Grass', 'Ice', 'Bug', 'Steel', 'Fairy']
             WHEN type_name = 'Water' THEN ARRAY['Fire', 'Water', 'Ice', 'Steel']
             WHEN type_name = 'Electric' THEN ARRAY['Electric', 'Flying', 'Steel']
@@ -112,7 +111,7 @@ type_attributes AS (
         
         -- Super effective against (deals 2x damage to these types)
         CASE
-            WHEN type_name = 'Normal' THEN ARRAY[]
+            WHEN type_name = 'Normal' THEN ARRAY[]::VARCHAR[]
             WHEN type_name = 'Fire' THEN ARRAY['Grass', 'Ice', 'Bug', 'Steel']
             WHEN type_name = 'Water' THEN ARRAY['Fire', 'Ground', 'Rock']
             WHEN type_name = 'Electric' THEN ARRAY['Water', 'Flying']

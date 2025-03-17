@@ -21,27 +21,33 @@ WITH card_metrics AS (
         c.type_name,
         c.pack_code,
         
-        -- Core card attributes
+        -- Core card attributes - keep as text for now
         c.cost,
         c.strength,
-        c.advancement_requirement,
+        c.advancement_cost,
         c.agenda_points,
         c.memory_cost,
         c.trash_cost,
+        c.influence_cost,
         
-        -- Calculate cost efficiency metrics
+        -- Calculate cost efficiency metrics with proper type casting
         CASE 
             -- For ICE, calculate strength-to-cost ratio
-            WHEN c.type_name = 'ICE' AND c.cost > 0 AND c.strength IS NOT NULL 
-            THEN ROUND((c.strength::NUMERIC / c.cost), 2)
+            WHEN c.type_name = 'ICE' AND c.cost::TEXT ~ '^[0-9]+$' AND c.cost::NUMERIC > 0 
+                 AND c.strength IS NOT NULL AND c.strength::TEXT ~ '^[0-9]+(\.[0-9]+)?$'
+            THEN ROUND((c.strength::NUMERIC / c.cost::NUMERIC), 2)
             
             -- For Agendas, calculate points-to-advancement ratio
-            WHEN c.type_name = 'Agenda' AND c.advancement_requirement > 0 AND c.agenda_points IS NOT NULL
-            THEN ROUND((c.agenda_points::NUMERIC / c.advancement_requirement), 2)
+            WHEN c.type_name = 'Agenda' AND c.advancement_cost::TEXT ~ '^[0-9]+$' 
+                 AND c.advancement_cost::NUMERIC > 0 AND c.agenda_points IS NOT NULL 
+                 AND c.agenda_points::TEXT ~ '^[0-9]+$'
+            THEN ROUND((c.agenda_points::NUMERIC / c.advancement_cost::NUMERIC), 2)
             
             -- For Programs/Hardware, basic cost efficiency if applicable
-            WHEN c.type_name IN ('Program', 'Hardware') AND c.cost > 0 AND c.strength IS NOT NULL
-            THEN ROUND((c.strength::NUMERIC / c.cost), 2)
+            WHEN c.type_name IN ('Program', 'Hardware') AND c.cost::TEXT ~ '^[0-9]+$' 
+                 AND c.cost::NUMERIC > 0 AND c.strength IS NOT NULL 
+                 AND c.strength::TEXT ~ '^[0-9]+(\.[0-9]+)?$'
+            THEN ROUND((c.strength::NUMERIC / c.cost::NUMERIC), 2)
             
             ELSE NULL
         END AS cost_efficiency_ratio,
@@ -49,12 +55,16 @@ WITH card_metrics AS (
         -- Calculate text length (proxy for card complexity)
         LENGTH(c.card_text) AS text_length,
         
-        -- Calculate influence efficiency (agenda points or strength per influence)
+        -- Calculate influence efficiency with safe type casting
         CASE
-            WHEN c.influence_cost > 0 AND c.agenda_points IS NOT NULL
-            THEN ROUND((c.agenda_points::NUMERIC / c.influence_cost), 2)
-            WHEN c.influence_cost > 0 AND c.strength IS NOT NULL
-            THEN ROUND((c.strength::NUMERIC / c.influence_cost), 2)
+            WHEN c.influence_cost::TEXT ~ '^[0-9]+$' AND c.influence_cost::NUMERIC > 0 
+                 AND c.agenda_points IS NOT NULL AND c.agenda_points::TEXT ~ '^[0-9]+$'
+            THEN ROUND((c.agenda_points::NUMERIC / c.influence_cost::NUMERIC), 2)
+            
+            WHEN c.influence_cost::TEXT ~ '^[0-9]+$' AND c.influence_cost::NUMERIC > 0 
+                 AND c.strength IS NOT NULL AND c.strength::TEXT ~ '^[0-9]+(\.[0-9]+)?$'
+            THEN ROUND((c.strength::NUMERIC / c.influence_cost::NUMERIC), 2)
+            
             ELSE NULL
         END AS influence_efficiency,
         
@@ -68,13 +78,12 @@ WITH card_metrics AS (
         p.release_date,
         p.cycle_code,
         
-        -- Simulated usage data (in a real implementation, this would come from tournament data)
-        -- For demonstration, we'll calculate a "popularity score" based on various factors
+        -- Simulated usage data - no type casting needed here
         CASE
             WHEN c.card_name IN ('Account Siphon', 'Desperado', 'SanSan City Grid', 
                               'Astroscript Pilot Program', 'Hedge Fund', 'Sure Gamble') THEN 95
-            WHEN c.pack_code = 'core' AND c.faction_code IS NOT NULL THEN 70  
-            WHEN c.faction_code IS NULL THEN 30  -- Neutral cards often less used
+            WHEN c.pack_code = 'core' AND c.faction_code IS NOT NULL THEN 70
+            WHEN c.faction_code IS NULL THEN 30
             WHEN p.cycle_code IN ('genesis', 'creation-and-control') THEN 60
             WHEN p.release_date IS NULL THEN 20
             WHEN DATE_PART('year', p.release_date) <= 2014 THEN 65
@@ -105,13 +114,13 @@ SELECT
     cm.type_name,
     cm.pack_code,
     
-    -- Core card metrics
-    COALESCE(cm.cost, 0) AS cost,
-    COALESCE(cm.strength, 0) AS strength,
-    COALESCE(cm.advancement_requirement, 0) AS advancement_requirement,
-    COALESCE(cm.agenda_points, 0) AS agenda_points,
-    COALESCE(cm.memory_cost, 0) AS memory_cost,
-    COALESCE(cm.trash_cost, 0) AS trash_cost,
+    -- Core card metrics with safe type handling
+    CASE WHEN cm.cost::TEXT ~ '^[0-9]+$' THEN cm.cost::INTEGER ELSE 0 END AS cost,
+    CASE WHEN cm.strength::TEXT ~ '^[0-9\.]+$' THEN cm.strength::NUMERIC ELSE 0 END AS strength,
+    CASE WHEN cm.advancement_cost::TEXT ~ '^[0-9]+$' THEN cm.advancement_cost::INTEGER ELSE 0 END AS advancement_requirement,
+    CASE WHEN cm.agenda_points::TEXT ~ '^[0-9]+$' THEN cm.agenda_points::INTEGER ELSE 0 END AS agenda_points,
+    CASE WHEN cm.memory_cost::TEXT ~ '^[0-9]+$' THEN cm.memory_cost::INTEGER ELSE 0 END AS memory_cost,
+    CASE WHEN cm.trash_cost::TEXT ~ '^[0-9]+$' THEN cm.trash_cost::INTEGER ELSE 0 END AS trash_cost,
     
     -- Calculated metrics
     cm.cost_efficiency_ratio,
