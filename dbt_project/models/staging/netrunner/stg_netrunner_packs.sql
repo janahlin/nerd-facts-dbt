@@ -10,49 +10,42 @@
 WITH raw_data AS (
     -- Explicitly list columns to prevent issues if source schema changes
     SELECT
+        -- Primary identifiers
         id,
+
+        -- Text fields
         code,
         name,
-        position,
-        date_release,
-        size,
-        cycle_code
+        cycle_code,
+
+        -- Numeric fields
+        CASE WHEN(position~E'^[0-9]+$') THEN position ELSE NULL END AS position,
+        CASE WHEN(size~E'^[0-9]+$') THEN size ELSE NULL END AS size,
+        CASE WHEN ffg_id~E'^[0-9]+$' THEN ffg_id ELSE NULL END AS ffg_id,
+
+        -- Date fields
+        date_release
+                
     FROM {{ source('netrunner', 'packs') }}  -- Updated to use source macro
     WHERE code IS NOT NULL -- Filter out invalid entries
 )
 
 SELECT
     -- Primary identifiers
-    id,
+    id AS pack_id,
+
+    -- Text fields
     code,
-    name AS pack_name,
-    
-    -- Release information
-    CASE
-        WHEN date_release = '' THEN NULL
-        ELSE TO_DATE(date_release, 'YYYY-MM-DD')
-    END AS release_date,
-    
-    -- Pack attributes
-    position AS pack_position,
-    NULLIF(size::TEXT, '0')::INTEGER AS card_count,  -- Fixed type casting
+    name as pack_name,
     cycle_code,
-    
-    -- Derived fields
-    CASE
-        WHEN name ILIKE '%core%' THEN 'Core'
-        WHEN name ILIKE '%deluxe%' THEN 'Deluxe'
-        WHEN name ILIKE '%draft%' THEN 'Draft'
-        ELSE 'Data Pack'
-    END AS pack_type,
-    
-    -- Calculate approximate rotation status
-    CASE
-        WHEN cycle_code IN ('core', 'genesis', 'creation-and-control', 'spin', 'honor-and-profit', 'lunar') 
-        THEN 'Rotated'
-        WHEN cycle_code IS NULL THEN 'Unknown'
-        ELSE 'Legal'
-    END AS rotation_status,
+
+    -- Numeric fields
+    CAST(position AS NUMERIC) AS position,
+    CAST(size AS NUMERIC) AS size,
+    CAST(ffg_id AS NUMERIC) AS ffg_id, 
+
+    -- Date fields
+    date_release AS release_at,
     
     -- Add data tracking fields
     CURRENT_TIMESTAMP AS dbt_loaded_at

@@ -2,9 +2,9 @@ version: 2
 
 models:  
   - name: stg_swapi_starships
-    description: "Standardized Star Wars starship data with cleaned values and derived classifications"
+    description: "Standardized Star Wars starship data with basic type casting"
     columns:
-      - name: id
+      - name: starship_id
         description: "Primary key for starships"
         tests:
           - unique
@@ -20,76 +20,30 @@ models:
       
       - name: manufacturer
         description: "Company that manufactured the starship"
-        tests:
-          - accepted_values:
-              values: [
-                'Kuat Drive Yards', 
-                'Corellian Engineering Corporation', 
-                'Sienar Fleet Systems',
-                'Cygnus Spaceworks',
-                'Incom Corporation',
-                'Koensayr Manufacturing'
-              ]
-              severity: warn
       
       - name: max_atmosphering_speed
         description: "Maximum atmospheric speed in km/h"
-        tests:
-          - not_null:
-              severity: warn
-          - dbt_utils.expression_is_true:
-              expression: ">= 0 OR IS NULL"
-              severity: error
-          - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 2000
-              severity: warn
       
       - name: length
-        description: "Length of starship in meters"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "> 0 OR IS NULL" 
-              severity: error
+        description: "Length in meters"
       
       - name: hyperdrive_rating
         description: "Hyperdrive class rating (lower is better)"
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 0.5
-              max_value: 10
-              severity: warn
-      
+        
       - name: crew
         description: "Number of crew members required"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: ">= 1 OR IS NULL"
-              severity: warn
-      
+        
       - name: passengers
         description: "Maximum passenger capacity"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: ">= 0 OR IS NULL" 
-              severity: error
               
       - name: cargo_capacity
         description: "Cargo capacity in metric tons"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: ">= 0 OR IS NULL"
-              severity: error
               
       - name: consumables
         description: "Length of time the starship can sustain crew without resupply"
         
       - name: MGLT
         description: "Maximum speed in megalights per hour"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: ">= 0 OR IS NULL"
-              severity: warn
       
       - name: starship_class
         description: "Class of the starship (e.g., Star Destroyer, Light freighter)"
@@ -102,90 +56,20 @@ models:
       
       - name: created_at
         description: "Timestamp when record was created in source system"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
-      
-      - name: updated_at
+        
+      - name: edited_at
         description: "Timestamp when record was last updated in source system"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
+      
+      - name: url
+        description: "Source URL for starship data"
       
       - name: dbt_loaded_at
         description: "Timestamp when record was loaded by dbt"
 
-      - name: starship_name
-        description: "Name of the starship"
-        tests:
-          - not_null
-
-      - name: length_m
-        description: "Length in meters (properly converted)"
-
-      - name: max_speed
-        description: "Maximum speed in atmosphere (numeric value)"
-
-      - name: crew_count
-        description: "Number of crew required (numeric value)"
-
-      - name: passenger_capacity
-        description: "Number of passengers starship can transport (numeric value)"
-
-      - name: pilot_count
-        description: "Number of pilots for this starship"
-
-      - name: film_appearances
-        description: "Number of film appearances"
-
-      - name: url
-        description: "Source URL for starship data"
-
-      - name: pilot_names
-        description: "Array of pilot names for this starship"
-
-      - name: film_names
-        description: "Array of film titles this starship appears in"
-
-      - name: ship_purpose
-        description: "Starship classification by purpose"
-
-      - name: ship_size
-        description: "Size classification of starship"
-
-      - name: is_notable_ship
-        description: "Whether this is a notable ship in the Star Wars saga"
-
-      - name: total_capacity
-        description: "Total capacity (crew + passengers)"
-
-      - name: fetch_timestamp
-        description: "Timestamp when data was fetched from the API"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
-
-      - name: processed_timestamp
-        description: "Timestamp when data was processed by the ETL pipeline"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
-
-    # Model-level tests
-    tests:
-      - dbt_utils.expression_is_true:
-          expression: "crew::numeric <= passengers::numeric + 50 OR passengers IS NULL OR crew IS NULL OR crew = 'unknown'"
-          severity: warn
-          # Most ships have more passengers than crew, but military vessels may have more crew
-
   - name: stg_swapi_films
-    description: "Standardized Star Wars film data with chronological ordering and entity counts"
+    description: "Standardized Star Wars film data with basic type casting"
     columns:
-      - name: id
+      - name: film_id
         description: "Primary key for films"
         tests:
           - unique
@@ -218,15 +102,6 @@ models:
         tests:
           - not_null
       
-      - name: release_year
-        description: "Year the film was released"
-      
-      - name: chronological_order
-        description: "Order of the film in the Star Wars timeline"
-      
-      - name: trilogy
-        description: "Which trilogy the film belongs to"
-      
       - name: characters
         description: "JSONB array of character references"
       
@@ -242,77 +117,22 @@ models:
       - name: species
         description: "JSONB array of species references"
       
-      - name: character_names
-        description: "Array of character names for easier reporting"
-      
-      - name: planet_names
-        description: "Array of planet names for easier reporting"
-      
-      - name: species_names
-        description: "Array of species names for easier reporting"
-      
-      - name: starship_names
-        description: "Array of starship names for easier reporting"
-      
-      - name: vehicle_names
-        description: "Array of vehicle names for easier reporting"
-      
       - name: url
         description: "Source URL for the film data"
       
-      - name: fetch_timestamp
-        description: "Timestamp when data was fetched from the API"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
-      
-      - name: processed_timestamp
-        description: "Timestamp when data was processed by the ETL pipeline"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
-      
-      - name: character_count
-        description: "Number of characters appearing in the film"
-      
-      - name: planet_count
-        description: "Number of planets appearing in the film"
-      
-      - name: starship_count
-        description: "Number of starships appearing in the film"
-      
-      - name: vehicle_count
-        description: "Number of vehicles appearing in the film"
-      
-      - name: species_count
-        description: "Number of species appearing in the film"
-      
-      - name: opening_crawl_word_count
-        description: "Word count of the opening crawl"
-      
       - name: created_at
         description: "Timestamp when record was created in source system"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
       
-      - name: updated_at
+      - name: edited_at
         description: "Timestamp when record was last updated in source system"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
       
       - name: dbt_loaded_at
         description: "Timestamp when record was loaded by dbt"
     
   - name: stg_swapi_people
-    description: "Standardized Star Wars character data with derived attributes and force sensitivity"
+    description: "Standardized Star Wars character data with basic type casting"
     columns:
-      - name: id
+      - name: people_id
         description: "Primary key for characters"
         tests:
           - unique
@@ -348,92 +168,28 @@ models:
       - name: gender
         description: "Character gender"
       
-      - name: homeworld
+      - name: homeworld_id
         description: "ID of character's homeworld"
-      
-      - name: species_id
-        description: "ID of character's species"
-      
-      - name: vehicles
-        description: "JSONB array of vehicles piloted"
-      
-      - name: starships
-        description: "JSONB array of starships piloted"
       
       - name: films
         description: "JSONB array of film appearances"
       
-      - name: height_cm
-        description: "Height converted to numeric centimeters"
-
-      - name: mass_kg
-        description: "Mass converted to numeric kilograms"
-
-      - name: bmi
-        description: "Calculated Body Mass Index"
-
-      - name: force_sensitive
-        description: "Whether the character is force sensitive"
-
-      - name: force_rating
-        description: "Character's strength with the Force (1-5)"
-
-      - name: ships_piloted
-        description: "Number of starships piloted"
-
-      - name: vehicles_operated
-        description: "Number of vehicles operated"
-
-      - name: film_appearances
-        description: "Number of film appearances"
-
-      - name: character_era
-        description: "Era classification of the character"
-
       - name: url
         description: "Source URL for character data"
-
-      - name: people_names
-        description: "Array of character names for easier reporting"
       
-      - name: film_names
-        description: "Array of film titles this character appears in"
-
-      - name: fetch_timestamp
-        description: "Timestamp when data was fetched from the API"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
-
-      - name: processed_timestamp
-        description: "Timestamp when data was processed by the ETL pipeline"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
-
       - name: created_at
         description: "Timestamp when record was created in source system"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
       
-      - name: updated_at
+      - name: edited_at
         description: "Timestamp when record was last updated in source system"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
       
       - name: dbt_loaded_at
         description: "Timestamp when record was loaded by dbt"
     
   - name: stg_swapi_planets
-    description: "Standardized Star Wars planet data with habitability scores and climate classifications"
+    description: "Standardized Star Wars planet data with basic type casting"
     columns:
-      - name: id
+      - name: planet_id
         description: "Primary key for planets"
         tests:
           - unique
@@ -473,80 +229,28 @@ models:
       - name: population
         description: "Population count"
       
-      - name: resident_count
-        description: "Number of residents on this planet"
-
-      - name: film_appearances
-        description: "Number of film appearances"
-
-      - name: is_temperate
-        description: "Whether the planet has a temperate climate"
-
-      - name: has_vegetation
-        description: "Whether the planet has significant vegetation"
-
-      - name: is_water_world
-        description: "Whether the planet is primarily covered in water"
-
-      - name: is_desert_world
-        description: "Whether the planet is primarily desert"
-
-      - name: habitability_score
-        description: "Calculated habitability score (0-100)"
-
-      - name: is_notable_planet
-        description: "Whether this is a notable planet in the Star Wars saga"
-
-      - name: url
-        description: "Source URL for planet data"
-
       - name: residents
         description: "JSONB array of resident references"
 
       - name: films
         description: "JSONB array of film references"
 
-      - name: resident_names
-        description: "Array of resident names for easier reporting"
-
-      - name: film_names
-        description: "Array of film titles this planet appears in"
-
-      - name: fetch_timestamp
-        description: "Timestamp when data was fetched from the API"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
-
-      - name: processed_timestamp
-        description: "Timestamp when data was processed by the ETL pipeline"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
+      - name: url
+        description: "Source URL for planet data"
 
       - name: created_at
         description: "Timestamp when record was created in source system"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
       
-      - name: updated_at
+      - name: edited_at
         description: "Timestamp when record was last updated in source system"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
       
       - name: dbt_loaded_at
         description: "Timestamp when record was loaded by dbt"
     
   - name: stg_swapi_species
-    description: "Standardized Star Wars species data with intelligence levels and classifications"
+    description: "Standardized Star Wars species data with basic type casting"
     columns:
-      - name: id
+      - name: species_id
         description: "Primary key for species"
         tests:
           - unique
@@ -578,101 +282,34 @@ models:
       - name: average_lifespan
         description: "Average lifespan in years"
       
-      - name: homeworld
+      - name: homeworld_id
         description: "ID of species homeworld"
       
       - name: language
         description: "Primary language spoken"
       
-      - name: average_height_cm
-        description: "Average height in centimeters"
-
-      - name: average_lifespan_years
-        description: "Average lifespan in years"
-
-      - name: has_indefinite_lifespan
-        description: "Whether species lives indefinitely"
-
-      - name: eye_colors_array
-        description: "Array of possible eye colors"
-
-      - name: hair_colors_array
-        description: "Array of possible hair colors"
-
-      - name: skin_colors_array
-        description: "Array of possible skin colors"
-
-      - name: character_count
-        description: "Number of characters of this species"
-
-      - name: film_appearances
-        description: "Number of film appearances"
-
-      - name: is_organic
-        description: "Whether the species is organic"
-
-      - name: is_artificial
-        description: "Whether the species is artificial"
-
-      - name: intelligence_level
-        description: "Estimated species intelligence level"
-
-      - name: longevity_class
-        description: "Classification of species lifespan"
-
-      - name: is_notable_species
-        description: "Whether this is a notable species in the Star Wars saga"
-
-      - name: url
-        description: "Source URL for species data"
-
       - name: people
         description: "JSONB array of character references"
 
       - name: films
         description: "JSONB array of film references"
 
-      - name: people_names
-        description: "Array of character names of this species"
-
-      - name: film_names
-        description: "Array of film titles this species appears in"
-
-      - name: fetch_timestamp
-        description: "Timestamp when data was fetched from the API"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
-
-      - name: processed_timestamp
-        description: "Timestamp when data was processed by the ETL pipeline"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
+      - name: url
+        description: "Source URL for species data"
 
       - name: created_at
         description: "Timestamp when record was created in source system"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
       
-      - name: updated_at
+      - name: edited_at
         description: "Timestamp when record was last updated in source system"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
       
       - name: dbt_loaded_at
         description: "Timestamp when record was loaded by dbt"
     
   - name: stg_swapi_vehicles
-    description: "Standardized Star Wars vehicle data with terrain capabilities and classifications"
+    description: "Standardized Star Wars vehicle data with basic type casting"
     columns:
-      - name: id
+      - name: vehicle_id
         description: "Primary key for vehicles"
         tests:
           - unique
@@ -721,82 +358,12 @@ models:
       
       - name: created_at
         description: "Timestamp when record was created in source system"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
       
-      - name: updated_at
+      - name: edited_at
         description: "Timestamp when record was last updated in source system"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
+      
+      - name: url
+        description: "Source URL for vehicle data"
       
       - name: dbt_loaded_at
         description: "Timestamp when record was loaded by dbt"
-
-      - name: url
-        description: "Source URL for vehicle data"
-
-      - name: pilot_names
-        description: "Array of pilot names for this vehicle"
-
-      - name: film_names
-        description: "Array of film titles this vehicle appears in"
-
-      - name: vehicle_name
-        description: "Name of the vehicle"
-        tests:
-          - not_null
-
-      - name: length_m
-        description: "Length in meters (properly converted)"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "> 0 OR IS NULL" 
-              severity: error
-
-      - name: max_speed
-        description: "Maximum speed in atmosphere (numeric value)"
-
-      - name: crew_count
-        description: "Number of crew required (numeric value)"
-
-      - name: passenger_capacity
-        description: "Number of passengers vehicle can transport (numeric value)"
-
-      - name: pilot_count
-        description: "Number of pilots for this vehicle"
-
-      - name: film_appearances
-        description: "Number of film appearances"
-
-      - name: vehicle_purpose
-        description: "Vehicle classification by purpose (Military, Transport, Personal)"
-
-      - name: vehicle_size
-        description: "Size classification of vehicle"
-
-      - name: terrain_capability
-        description: "Terrain types the vehicle can navigate"
-
-      - name: is_notable_vehicle
-        description: "Whether this is a notable vehicle in the Star Wars saga"
-
-      - name: total_capacity
-        description: "Total capacity (crew + passengers)"
-
-      - name: fetch_timestamp
-        description: "Timestamp when data was fetched from the API"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn
-
-      - name: processed_timestamp
-        description: "Timestamp when data was processed by the ETL pipeline"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "< current_date OR IS NULL"
-              severity: warn

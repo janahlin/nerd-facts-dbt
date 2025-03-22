@@ -5,7 +5,7 @@ nerd_facts_dbt:
       type: postgres
       host: localhost
       user: dbt_user
-      password: "610femt!"
+      password: "simple123"
       port: 5432
       dbname: nerd_facts     
       schema: public  # ✅ Add this line (IMPORTANT) 

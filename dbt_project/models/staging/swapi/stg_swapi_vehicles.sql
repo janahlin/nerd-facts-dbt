@@ -12,25 +12,30 @@
 
 WITH raw_data AS (
     SELECT
+        -- Identitfiers
         id,
+
+        -- Text fields
         name,
         model,
         manufacturer,
-        cost_in_credits,
-        length,
-        max_atmosphering_speed,
-        crew,
-        passengers,
-        cargo_capacity,
-        consumables,
         vehicle_class,
-        
-        -- Handle relationship arrays with proper type casting
-        CASE WHEN pilots IS NULL OR pilots = '' THEN NULL::jsonb ELSE pilots::jsonb END AS pilots,
-        CASE WHEN films IS NULL OR films = '' THEN NULL::jsonb ELSE films::jsonb END AS films,
-        
-        -- Source URL and tracking
+        consumables,
         url,
+
+        -- Numeric fields
+        CASE cost_in_credits~'^[0-9,.]+$' WHEN TRUE THEN cost_in_credits ELSE null END AS cost_in_credits,
+        CASE length~'^[0-9,.]+$' WHEN TRUE THEN length ELSE null END AS length,        
+        CASE max_atmosphering_speed~'^[0-9,.]+$' WHEN TRUE THEN max_atmosphering_speed ELSE null END AS max_atmosphering_speed,
+        CASE cargo_capacity~'^[0-9,.]+$' WHEN TRUE THEN cargo_capacity ELSE null END AS cargo_capacity,
+        CASE passengers~'^[0-9,.]+$' WHEN TRUE THEN passengers ELSE null END AS passengers,
+        CASE crew~'^[0-9,.]+$' WHEN TRUE THEN crew ELSE null END AS crew,                        
+        
+        -- Relationship arrays
+        pilots,
+        films,
+        
+        -- Timestamp fields        
         created,
         edited
     FROM {{ source('swapi', 'vehicles') }}
@@ -38,134 +43,32 @@ WITH raw_data AS (
 )
 
 SELECT
-    -- Primary identifiers
-    id,
-    name AS vehicle_name,
-    
-    -- Vehicle specifications with proper numeric handling
+    id as vehicle_id,
+
+    -- Text fields
+    name as vehicle_name,
     model,
     manufacturer,
-    CAST(NULLIF(REPLACE(cost_in_credits, ',', ''), 'unknown') AS NUMERIC) AS cost_in_credits,
-    CAST(NULLIF(length, 'unknown') AS NUMERIC) AS length_m,
-    CAST(NULLIF(REPLACE(max_atmosphering_speed, ',', ''), 'unknown') AS NUMERIC) AS max_speed,
-    
-    -- Convert crew to numeric with error handling
-    CASE
-        WHEN crew ~ '^[0-9,.]+$' THEN CAST(REPLACE(crew, ',', '') AS NUMERIC)
-        WHEN crew LIKE '%-%' THEN 
-            CAST(SPLIT_PART(REPLACE(crew, ',', ''), '-', 1) AS NUMERIC) +
-            (CAST(SPLIT_PART(REPLACE(crew, ',', ''), '-', 2) AS NUMERIC) - 
-             CAST(SPLIT_PART(REPLACE(crew, ',', ''), '-', 1) AS NUMERIC)) / 2
-        ELSE NULL
-    END AS crew_count,
-    
-    -- Convert passengers to numeric with error handling
-    CASE
-        WHEN passengers ~ '^[0-9,.]+$' THEN CAST(REPLACE(passengers, ',', '') AS NUMERIC)
-        WHEN passengers LIKE '%-%' THEN 
-            CAST(SPLIT_PART(REPLACE(passengers, ',', ''), '-', 1) AS NUMERIC) +
-            (CAST(SPLIT_PART(REPLACE(passengers, ',', ''), '-', 2) AS NUMERIC) - 
-             CAST(SPLIT_PART(REPLACE(passengers, ',', ''), '-', 1) AS NUMERIC)) / 2
-        ELSE NULL
-    END AS passenger_capacity,
-    
-    CAST(NULLIF(REPLACE(cargo_capacity, ',', ''), 'unknown') AS NUMERIC) AS cargo_capacity,
-    consumables,
     vehicle_class,
+    consumables,
+    url,
+
+    -- Numeric fields
+    CAST(cost_in_credits AS NUMERIC) AS cost_in_credits,
+    CAST(length AS NUMERIC) AS length,
+    CAST(max_atmosphering_speed AS NUMERIC) AS max_atmosphering_speed,
+    CAST(cargo_capacity AS NUMERIC) AS cargo_capacity,
+    CAST(passengers AS NUMERIC) AS passengers,
+    CAST(crew AS NUMERIC) AS crew,                        
     
-    -- Entity relationships with counts
-    COALESCE(jsonb_array_length(pilots), 0) AS pilot_count,
-    COALESCE(jsonb_array_length(films), 0) AS film_appearances,
-    
-    -- Keep raw arrays for downstream usage
+    -- Relationship arrays
     pilots,
     films,
     
-    -- Create arrays of extracted names (placeholder for future enhancement)
-    NULL AS pilot_names,
-    NULL AS film_names,
-    
-    -- Derived vehicle classifications
-    CASE
-        WHEN LOWER(vehicle_class) LIKE '%walker%' OR LOWER(vehicle_class) LIKE '%tank%' THEN 'Military'
-        WHEN LOWER(vehicle_class) LIKE '%fighter%' OR LOWER(vehicle_class) LIKE '%bomber%' THEN 'Military'
-        WHEN LOWER(vehicle_class) LIKE '%transport%' THEN 'Transport'
-        WHEN LOWER(vehicle_class) LIKE '%speeder%' THEN 
-            CASE
-                WHEN LOWER(name) LIKE '%military%' THEN 'Military'
-                ELSE 'Civilian'
-            END
-        WHEN LOWER(vehicle_class) LIKE '%airspeeder%' THEN
-            CASE
-                WHEN LOWER(name) LIKE '%military%' THEN 'Military'
-                ELSE 'Civilian' 
-            END
-        WHEN LOWER(vehicle_class) LIKE '%shuttle%' THEN 'Transport'
-        WHEN LOWER(vehicle_class) LIKE '%barge%' OR LOWER(vehicle_class) LIKE '%yacht%' THEN 'Leisure/Luxury'
-        WHEN LOWER(vehicle_class) LIKE '%crawler%' OR LOWER(vehicle_class) LIKE '%digger%' THEN 'Industrial'
-        ELSE 'Multipurpose'
-    END AS vehicle_purpose,
-    
-    -- Size classification
-    CASE
-        WHEN CAST(NULLIF(length, 'unknown') AS NUMERIC) > 100 THEN 'Massive'
-        WHEN CAST(NULLIF(length, 'unknown') AS NUMERIC) > 20 THEN 'Large'
-        WHEN CAST(NULLIF(length, 'unknown') AS NUMERIC) > 10 THEN 'Medium'
-        WHEN CAST(NULLIF(length, 'unknown') AS NUMERIC) > 5 THEN 'Small'
-        ELSE 'Tiny'
-    END AS vehicle_size,
-    
-    -- Terrain capabilities
-    CASE
-        WHEN LOWER(vehicle_class) LIKE '%walker%' THEN 'Ground'
-        WHEN LOWER(vehicle_class) LIKE '%speeder%' AND LOWER(vehicle_class) NOT LIKE '%airspeeder%' THEN 'Ground'
-        WHEN LOWER(vehicle_class) LIKE '%airspeeder%' THEN 'Air'
-        WHEN LOWER(vehicle_class) LIKE '%submarine%' THEN 'Water'
-        WHEN LOWER(vehicle_class) LIKE '%crawler%' THEN 'Ground'
-        WHEN LOWER(vehicle_class) LIKE '%barge%' AND LOWER(vehicle_class) LIKE '%sail%' THEN 'Ground/Water'
-        WHEN LOWER(vehicle_class) LIKE '%snowspeeder%' OR LOWER(name) LIKE '%snow%' THEN 'Snow/Ice'
-        WHEN LOWER(vehicle_class) LIKE '%repulsor%' THEN 'Air/Ground'
-        ELSE 'Multi-terrain'
-    END AS terrain_capability,
-    
-    -- Notable vehicle flag
-    CASE
-        WHEN LOWER(name) IN ('at-at', 'at-st', 'snowspeeder', 'speeder bike', 'tie bomber', 
-                           'tie fighter', 'x-34 landspeeder', 'sand crawler', 'sail barge') THEN TRUE
-        ELSE FALSE
-    END AS is_notable_vehicle,
-    
-    -- Calculate total capacity as sum of crew and passengers
-    (
-        CASE
-            WHEN crew ~ '^[0-9,.]+$' THEN CAST(REPLACE(crew, ',', '') AS NUMERIC)
-            WHEN crew LIKE '%-%' THEN 
-                CAST(SPLIT_PART(REPLACE(crew, ',', ''), '-', 1) AS NUMERIC) +
-                (CAST(SPLIT_PART(REPLACE(crew, ',', ''), '-', 2) AS NUMERIC) - 
-                CAST(SPLIT_PART(REPLACE(crew, ',', ''), '-', 1) AS NUMERIC)) / 2
-            ELSE 0
-        END +
-        CASE
-            WHEN passengers ~ '^[0-9,.]+$' THEN CAST(REPLACE(passengers, ',', '') AS NUMERIC)
-            WHEN passengers LIKE '%-%' THEN 
-                CAST(SPLIT_PART(REPLACE(passengers, ',', ''), '-', 1) AS NUMERIC) +
-                (CAST(SPLIT_PART(REPLACE(passengers, ',', ''), '-', 2) AS NUMERIC) - 
-                CAST(SPLIT_PART(REPLACE(passengers, ',', ''), '-', 1) AS NUMERIC)) / 2
-            ELSE 0
-        END
-    ) AS total_capacity,
-    
-    -- Source URL
-    url,
-    
-    -- ETL tracking fields (placeholders for future enhancement)
-    NULL::TIMESTAMP AS fetch_timestamp,
-    NULL::TIMESTAMP AS processed_timestamp,
-    
-    -- API metadata
-    created::TIMESTAMP AS created_at,
-    edited::TIMESTAMP AS updated_at,
-    
+    -- Timestamp fields        
+    CAST(created AS TIMESTAMP) AS created_at,
+    CAST(edited AS TIMESTAMP) AS edited_at,
+
     -- Data tracking field
     CURRENT_TIMESTAMP AS dbt_loaded_at
     

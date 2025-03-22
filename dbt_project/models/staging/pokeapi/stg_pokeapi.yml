@@ -2,9 +2,9 @@ version: 2
 
 models:
   - name: stg_pokeapi_abilities
-    description: "Standardized Pokémon ability data with parsed effects and classifications"
+    description: "Standardized Pokémon ability data with basic type casting"
     columns:
-      - name: id
+      - name: ability_id
         description: "Primary key for abilities"
         tests:
           - unique
@@ -19,7 +19,7 @@ models:
         description: "Generation name when ability was introduced"
         
       - name: generation_number
-        description: "Generation number when ability was introduced (Roman numeral converted to string)"
+        description: "Generation number when ability was introduced"
         
       - name: effect_description
         description: "Full description of ability effect"
@@ -49,13 +49,26 @@ models:
       - name: affects_status_conditions
         description: "Whether ability affects status conditions"
         
+      # Raw JSONB fields - only basic type casting in staging
+      - name: pokemon
+        description: "Raw JSONB array of Pokémon with this ability"
+      
+      - name: created_at
+        description: "Timestamp when record was created in source system"
+        
+      - name: edited_at
+        description: "Timestamp when record was last updated in source system"
+      
+      - name: url
+        description: "Source URL for ability data"
+      
       - name: dbt_loaded_at
         description: "Timestamp when record was loaded by dbt"
   
   - name: stg_pokeapi_pokemon
-    description: "Standardized Pokémon data with typed stats and type effectiveness"
+    description: "Standardized Pokémon data with basic type casting"
     columns:
-      - name: id
+      - name: pokemon_id
         description: "Primary key for Pokémon"
         tests:
           - unique
@@ -65,58 +78,6 @@ models:
         description: "Name of the Pokémon"
         tests:
           - not_null
-      
-      - name: primary_type
-        description: "Primary elemental type"
-        tests:
-          - not_null:
-              severity: warn
-          - accepted_values:
-              values:
-                - 'normal'
-                - 'fire'
-                - 'water'
-                - 'electric'
-                - 'grass'
-                - 'ice'
-                - 'fighting'
-                - 'poison'
-                - 'ground'
-                - 'flying'
-                - 'psychic'
-                - 'bug'
-                - 'rock'
-                - 'ghost'
-                - 'dragon'
-                - 'dark'
-                - 'steel'
-                - 'fairy'
-              severity: warn
-      
-      - name: secondary_type
-        description: "Secondary elemental type (if any)"
-        tests:
-          - accepted_values:
-              values:
-                - 'normal'
-                - 'fire'
-                - 'water'
-                - 'electric'
-                - 'grass'
-                - 'ice'
-                - 'fighting'
-                - 'poison'
-                - 'ground'
-                - 'flying'
-                - 'psychic'
-                - 'bug'
-                - 'rock'
-                - 'ghost'
-                - 'dragon'
-                - 'dark'
-                - 'steel'
-                - 'fairy'
-              severity: warn
       
       - name: height
         description: "Height in meters"
@@ -132,104 +93,241 @@ models:
               expression: "> 0 OR IS NULL" 
               severity: warn
       
-      - name: hp
-        description: "Base HP stat"
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 1
-              max_value: 255
-              severity: error
+      - name: base_experience
+        description: "Base experience gained when defeating this Pokémon"
       
-      - name: attack
-        description: "Base Attack stat"
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 5
-              max_value: 255
-              severity: error
+      - name: is_default
+        description: "Whether this is the default form of this Pokémon"
       
-      - name: defense
-        description: "Base Defense stat"
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 5
-              max_value: 255
-              severity: error
+      - name: order
+        description: "Order for sorting (National Pokédex order by default)"
       
-      - name: special_attack
-        description: "Base Special Attack stat"
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 10
-              max_value: 255
-              severity: error
-      
-      - name: special_defense
-        description: "Base Special Defense stat"
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 20
-              max_value: 255
-              severity: error
-      
-      - name: speed
-        description: "Base Speed stat"
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 5
-              max_value: 255
-              severity: error
-      
-      - name: total_base_stats
-        description: "Sum of all base stats"
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 175
-              max_value: 1125
-              severity: warn
-      
-      - name: is_legendary
-        description: "Whether Pokémon is classified as legendary"
-      
-      - name: is_mythical
-        description: "Whether Pokémon is classified as mythical"
-      
-      - name: generation
-        description: "Generation the Pokémon was introduced"
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 1
-              max_value: 9
-              severity: warn
-      
+      # Raw JSONB fields - only basic type casting in staging
       - name: abilities
-        description: "JSONB array of abilities"
+        description: "Raw JSONB array of abilities"
+      
+      - name: forms
+        description: "Raw JSONB array of forms"
+      
+      - name: game_indices
+        description: "Raw JSONB array of game appearances"
+      
+      - name: held_items
+        description: "Raw JSONB array of items this Pokémon may hold"
       
       - name: moves
-        description: "JSONB array of learnable moves"
+        description: "Raw JSONB array of learnable moves"
+      
+      - name: species
+        description: "Raw JSONB object with species data"
+      
+      - name: sprites
+        description: "Raw JSONB object with sprite URLs"
+      
+      - name: stats
+        description: "Raw JSONB array of base stats"
+      
+      - name: types
+        description: "Raw JSONB array of types"
+        
+      - name: created_at
+        description: "Timestamp when record was created in source system"
+        
+      - name: edited_at
+        description: "Timestamp when record was last updated in source system"
+      
+      - name: url
+        description: "Source URL for Pokémon data"
       
       - name: dbt_loaded_at
         description: "Timestamp when record was loaded by dbt"
   
   - name: stg_pokeapi_moves
-    description: "Standardized Pokémon move data with effect categories and power classifications"
+    description: "Standardized Pokémon move data with basic type casting"
     columns:
-      - name: id
+      - name: move_id
         description: "Primary key for moves"
         tests:
           - unique
           - not_null
       
-      - name: name
+      - name: move_name
         description: "Name of the move"
         tests:
           - not_null
       
-      - name: type
-        description: "Elemental type of the move"
+      - name: accuracy
+        description: "Move accuracy percentage"
         tests:
-          - not_null:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
               severity: warn
+      
+      - name: effect_chance
+        description: "Probability of secondary effect occurring"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              severity: warn
+      
+      - name: pp
+        description: "Base Power Points (usage count)"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 40
+              severity: warn
+      
+      - name: priority
+        description: "Move priority for turn order"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: -7
+              max_value: 5
+              severity: warn
+      
+      - name: power
+        description: "Base power of the move"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 250
+              severity: warn
+      
+      # Raw JSONB fields - only basic type casting in staging
+      - name: contest_combos
+        description: "Raw JSONB object with contest combo data"
+      
+      - name: contest_effect
+        description: "Raw JSONB object with contest effect data"
+      
+      - name: contest_type
+        description: "Raw JSONB object with contest type data"
+      
+      - name: damage_class
+        description: "Raw JSONB object with damage class data"
+      
+      - name: effect_entries
+        description: "Raw JSONB array of effect descriptions"
+      
+      - name: flavor_text_entries
+        description: "Raw JSONB array of flavor text"
+      
+      - name: generation
+        description: "Raw JSONB object with generation data"
+      
+      - name: meta
+        description: "Raw JSONB object with meta data"
+      
+      - name: machines
+        description: "Raw JSONB array of TM/HM data"
+      
+      - name: past_values
+        description: "Raw JSONB array of past generation values"
+      
+      - name: stat_changes
+        description: "Raw JSONB array of stat changes"
+      
+      - name: super_contest_effect
+        description: "Raw JSONB object with super contest effect data"
+      
+      - name: target
+        description: "Raw JSONB object with target data"
+      
+      - name: type
+        description: "Raw JSONB object with type data"
+      
+      - name: created_at
+        description: "Timestamp when record was created in source system"
+        
+      - name: edited_at
+        description: "Timestamp when record was last updated in source system"
+      
+      - name: url
+        description: "Source URL for move data"
+      
+      - name: dbt_loaded_at
+        description: "Timestamp when record was loaded by dbt"
+
+  - name: stg_pokeapi_items
+    description: "Standardized Pokémon item data with basic type casting"
+    columns:
+      - name: item_id
+        description: "Primary key for items"
+        tests:
+          - unique
+          - not_null
+      
+      - name: item_name
+        description: "Name of the item"
+        tests:
+          - not_null
+      
+      - name: cost
+        description: "Purchase cost in Pokémon currency"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0 OR IS NULL"
+              severity: warn
+      
+      - name: fling_power
+        description: "Base power when flung"
+      
+      # Raw JSONB fields - only basic type casting in staging
+      - name: attributes
+        description: "Raw JSONB array of item attributes"
+      
+      - name: category
+        description: "Raw JSONB object with category data"
+      
+      - name: effect_entries
+        description: "Raw JSONB array of effect descriptions"
+      
+      - name: flavor_text_entries
+        description: "Raw JSONB array of flavor text"
+      
+      - name: fling_effect
+        description: "Raw JSONB object with fling effect data"
+      
+      - name: game_indices
+        description: "Raw JSONB array of game indices"
+      
+      - name: held_by_pokemon
+        description: "Raw JSONB array of Pokémon that may hold this item"
+      
+      - name: machines
+        description: "Raw JSONB array of machines this item can be used for"
+      
+      - name: sprites
+        description: "Raw JSONB object with sprite URLs"
+      
+      - name: created_at
+        description: "Timestamp when record was created in source system"
+        
+      - name: edited_at
+        description: "Timestamp when record was last updated in source system"
+      
+      - name: url
+        description: "Source URL for item data"
+      
+      - name: dbt_loaded_at
+        description: "Timestamp when record was loaded by dbt"
+
+  - name: stg_pokeapi_types
+    description: "Standardized Pokémon type data with basic type casting"
+    columns:
+      - name: type_id
+        description: "Primary key for types"
+        tests:
+          - unique
+          - not_null
+      
+      - name: type_name
+        description: "Name of the elemental type"
+        tests:
+          - not_null
           - accepted_values:
               values:
                 - 'normal'
@@ -250,3 +348,34 @@ models:
                 - 'dark'
                 - 'steel'
                 - 'fairy'
+      
+      # Raw JSONB fields - only basic type casting in staging
+      - name: damage_relations
+        description: "Raw JSONB object with damage multiplier relations"
+      
+      - name: game_indices
+        description: "Raw JSONB array of game indices"
+      
+      - name: generation
+        description: "Raw JSONB object with generation data"
+      
+      - name: move_damage_class
+        description: "Raw JSONB object with move damage class data"
+      
+      - name: moves
+        description: "Raw JSONB array of moves of this type"
+      
+      - name: pokemon
+        description: "Raw JSONB array of Pokémon of this type"
+      
+      - name: created_at
+        description: "Timestamp when record was created in source system"
+        
+      - name: edited_at
+        description: "Timestamp when record was last updated in source system"
+      
+      - name: url
+        description: "Source URL for type data"
+      
+      - name: dbt_loaded_at
+        description: "Timestamp when record was loaded by dbt"

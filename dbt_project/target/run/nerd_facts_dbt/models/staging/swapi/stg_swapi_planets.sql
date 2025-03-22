@@ -13,17 +13,24 @@
 
 WITH raw_data AS (
     SELECT
+        -- Identitfiers
         id,
-        name,
-        rotation_period,
-        orbital_period,
-        diameter,
+
+        -- Text fields
+        name,        
         climate,
         gravity,
         terrain,
-        surface_water,
-        population,
         url,
+
+        -- Numeric fields
+        CASE WHEN surface_water~E'^[0-9]+$' THEN surface_water ELSE NULL END AS surface_water,
+        CASE WHEN rotation_period~E'^[0-9]+$' THEN rotation_period ELSE NULL END AS rotation_period,
+        CASE WHEN orbital_period~E'^[0-9]+$' THEN orbital_period ELSE NULL END AS orbital_period,
+        CASE WHEN diameter~E'^[0-9]+$' THEN diameter ELSE NULL END AS diameter,
+        CASE WHEN population~E'^[0-9]+$' THEN population ELSE NULL END AS population,
+        
+        -- Timestamp fields
         created,
         edited
     FROM "nerd_facts"."raw"."swapi_planets"
@@ -32,46 +39,26 @@ WITH raw_data AS (
 
 SELECT
     -- Primary identifiers
-    id,
+    id as planet_id,
     name AS planet_name,
-    
-    -- Physical characteristics with proper numeric handling
-    CAST(NULLIF(rotation_period, 'unknown') AS NUMERIC) AS rotation_period,
-    CAST(NULLIF(orbital_period, 'unknown') AS NUMERIC) AS orbital_period,
-    CAST(NULLIF(diameter, 'unknown') AS NUMERIC) AS diameter,
+
+    -- Text fields
+    name,        
     climate,
     gravity,
     terrain,
-    CAST(NULLIF(surface_water, 'unknown') AS NUMERIC) AS surface_water,
-    CAST(NULLIF(REPLACE(population, ',', ''), 'unknown') AS NUMERIC) AS population,
-    
-    -- Entity relationships - we'll populate these later
-    0 AS resident_count,
-    0 AS film_appearances,
-    
-    -- Placeholders for raw arrays
-    NULL::jsonb AS residents,
-    NULL::jsonb AS films,
-    
-    -- Placeholders for name arrays
-    NULL AS resident_names,
-    NULL AS film_names,
-    
-    -- Terrain classification flags
-    terrain LIKE '%temperate%' AS is_temperate,
-    terrain LIKE '%forest%' OR terrain LIKE '%jungle%' OR terrain LIKE '%grassland%' AS has_vegetation,
-    terrain LIKE '%ocean%' OR terrain LIKE '%lake%' OR surface_water = '100' AS is_water_world,
-    terrain LIKE '%desert%' AS is_desert_world,
-    
-    -- Source URL 
     url,
     
-    -- ETL tracking fields
-    NULL::TIMESTAMP AS fetch_timestamp,
-    NULL::TIMESTAMP AS processed_timestamp,
-    created::TIMESTAMP AS created_at,
-    edited::TIMESTAMP AS updated_at,
-    CURRENT_TIMESTAMP AS dbt_loaded_at
+    -- Physical characteristics with proper numeric handling
+    CAST(surface_water AS NUMERIC) AS surface_water,
+    CAST(rotation_period AS NUMERIC) AS rotation_period,
+    CAST(orbital_period AS NUMERIC) AS orbital_period,
+    CAST(diameter AS NUMERIC) AS diameter,        
+    CAST(population AS NUMERIC) AS population,    
     
+    -- ETL tracking fields
+    CAST(created AS TIMESTAMP) AS created_at,
+    CAST(edited AS TIMESTAMP) AS updated_at,    
+    CURRENT_TIMESTAMP AS dbt_loaded_at    
 FROM raw_data
   );

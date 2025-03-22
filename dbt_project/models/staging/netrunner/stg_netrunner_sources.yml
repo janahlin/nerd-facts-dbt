@@ -1,0 +1,236 @@
+version: 2
+
+sources:
+  - name: netrunner
+    description: "Android: Netrunner card game data"
+    database: nerd_facts
+    schema: raw
+    loader: python_script
+    meta:
+      owner: "Data Team"
+      refresh_frequency: "Monthly"
+    
+    tables:
+      - name: cards
+        identifier: netrunner_cards
+        description: "Raw data about Android: Netrunner cards"
+        columns:
+          - name: code
+            description: "Unique card code identifier"
+            tests:
+              - unique
+              - not_null
+          
+          - name: title
+            description: "Card name"
+            tests:
+              - not_null
+          
+          - name: type_code
+            description: "Code reference to card type"
+          
+          - name: faction_code
+            description: "Code reference to card faction"
+            
+          - name: side_code
+            description: "Reference to card side (corp/runner)"
+            
+          - name: pack_code
+            description: "Code reference to the data pack containing the card"
+            
+          - name: text
+            description: "Card ability text"
+            
+          - name: cost
+            description: "Card play/rez cost"
+            
+          - name: strength
+            description: "ICE/breaker strength value"
+            
+          - name: advancement_cost
+            description: "Advancement requirement for agendas"
+            
+          - name: agenda_points
+            description: "Points given for scoring agendas"
+            
+          - name: memory_cost
+            description: "Memory units required for programs"
+            
+          - name: trash_cost
+            description: "Cost to trash card"
+            
+          - name: base_link
+            description: "Base link for runner identities"
+            
+          - name: influence_limit
+            description: "Influence limit for identities"
+            
+          - name: minimum_deck_size
+            description: "Minimum deck size for identities"
+            
+          - name: flavor
+            description: "Flavor text on card"
+            
+          - name: illustrator
+            description: "Card illustrator"
+            
+          - name: keywords
+            description: "Card subtypes/keywords"
+            
+          - name: image_url
+            description: "URL to card image"
+            
+          - name: quantity
+            description: "Number of copies in the data pack"
+            
+          - name: deck_limit
+            description: "Maximum copies allowed in a deck"
+            
+          - name: uniqueness
+            description: "Whether card is unique (can only have one copy in play)"
+            
+          - name: created_at
+            description: "Timestamp when record was created in source system"
+            
+          - name: edited_at
+            description: "Timestamp when record was last updated in source system"
+      
+      - name: factions
+        identifier: netrunner_factions
+        description: "Faction definitions for Android: Netrunner"
+        columns:
+          - name: code
+            description: "Unique faction code"
+            tests:
+              - unique
+              - not_null
+              
+          - name: name
+            description: "Faction name"
+            tests:
+              - not_null
+              
+          - name: side_code
+            description: "Corp/Runner side indicator"
+            
+          - name: color
+            description: "Faction color code"
+            
+          - name: is_mini
+            description: "Whether faction is a mini-faction"
+            
+          - name: created_at
+            description: "Timestamp when record was created in source system"
+            
+          - name: edited_at
+            description: "Timestamp when record was last updated in source system"
+      
+      - name: types
+        identifier: netrunner_types
+        description: "Card type definitions for Android: Netrunner"
+        columns:
+          - name: code
+            description: "Unique type code"
+            tests:
+              - unique
+              - not_null
+              
+          - name: name
+            description: "Type name"
+            tests:
+              - not_null
+              
+          - name: side_code
+            description: "Corp/Runner side the type belongs to"
+            
+          - name: position
+            description: "Display order position"
+            
+          - name: is_subtype
+            description: "Whether this is a subtype"
+            
+          - name: created_at
+            description: "Timestamp when record was created in source system"
+            
+          - name: edited_at
+            description: "Timestamp when record was last updated in source system"
+              
+      - name: packs
+        identifier: netrunner_packs
+        description: "Data pack definitions for Android: Netrunner"
+        columns:
+          - name: code
+            description: "Unique pack code"
+            tests:
+              - unique
+              - not_null
+              
+          - name: name
+            description: "Pack name"
+            
+          - name: cycle_code
+            description: "Code for the cycle this pack belongs to"
+            
+          - name: date_release
+            description: "Release date of the pack"
+            
+          - name: size
+            description: "Number of cards in the pack"
+            
+          - name: position
+            description: "Position within the cycle"
+            
+          - name: ffg_id
+            description: "Fantasy Flight Games product ID"
+            
+          - name: created_at
+            description: "Timestamp when record was created in source system"
+            
+          - name: edited_at
+            description: "Timestamp when record was last updated in source system"
+            
+      - name: cycles
+        identifier: netrunner_cycles
+        description: "Cycle definitions for Android: Netrunner"
+        columns:
+          - name: code
+            description: "Unique cycle code"
+            tests:
+              - unique
+              - not_null
+              
+          - name: name
+            description: "Cycle name"
+            
+          - name: position
+            description: "Cycle release order position"
+            
+          - name: size
+            description: "Number of data packs in cycle"
+            
+          - name: rotated
+            description: "Whether cycle has rotated out of standard format"
+            
+          - name: created_at
+            description: "Timestamp when record was created in source system"
+            
+          - name: edited_at
+            description: "Timestamp when record was last updated in source system"
+
+      - name: subtypes
+        identifier: netrunner_subtypes
+        description: "Subtype definitions for Android: Netrunner (derived from keywords)"
+        columns:
+          - name: code
+            description: "Unique subtype code"
+            tests:
+              - unique
+              
+          - name: name
+            description: "Subtype name"
+            
+          - name: created_at
+            description: "Timestamp when record was created in source system"
+            
+          - name: edited_at
+            description: "Timestamp when record was last updated in source system"

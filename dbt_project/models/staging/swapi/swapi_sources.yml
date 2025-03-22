@@ -2,9 +2,16 @@ version: 2
 
 sources:
   - name: swapi
-    description: "Star Wars API data source"
+    description: >
+      Star Wars API data source. This data is extracted from swapi.dev and enhanced with additional
+      derived fields during the ETL process. All JSON arrays use JSONB format in PostgreSQL.
     database: nerd_facts
     schema: raw
+    loader: python_script  # Add information about how data is loaded
+    meta:
+      owner: "Data Team"
+      extracted_by: "fetch_swapi.py"
+      refresh_frequency: "Weekly"  # How often the source data is refreshed
     
     tables:
       - name: starships
@@ -44,7 +51,7 @@ sources:
             description: "Maximum passenger capacity"
           
           - name: cargo_capacity
-            description: "Cargo capacity in kg"
+            description: "Cargo capacity in kilograms"  # Changed from kg to kilograms for consistency
           
           - name: consumables
             description: "Length of time the starship can sustain crew without resupply"
@@ -65,10 +72,10 @@ sources:
             description: "JSON array of film references"
           
           - name: pilot_names
-            description: "Array of pilot names for easier reporting"
+            description: "Names of pilots for this vehicle"
           
           - name: film_names
-            description: "Array of film names this starship appears in"
+            description: "Film titles this entity appears in"
           
           - name: created
             description: "Timestamp when record was created in source system"
@@ -116,13 +123,12 @@ sources:
           
           - name: release_date
             description: "Film release date"
+            tests:
+              - not_null  # Add this if release_date should never be null
           
           # Relationship arrays
           - name: characters
             description: "JSON array of character references"
-          
-          - name: people
-            description: "Alternative name for characters array"
           
           - name: planets
             description: "JSON array of planet references"
@@ -211,9 +217,6 @@ sources:
           - name: films
             description: "JSON array of film appearances"
           
-          - name: appearances
-            description: "Alternative name for films array"
-          
           - name: species
             description: "JSON array of species references"
           
@@ -223,8 +226,9 @@ sources:
           - name: starships
             description: "JSON array of starship references"
             
+          # Derived fields added by ETL
           - name: film_names
-            description: "Array of film names this character appears in"
+            description: "Film titles this entity appears in"
           
           - name: species_names
             description: "Array of species names this character belongs to"
@@ -234,6 +238,9 @@ sources:
           
           - name: starship_names
             description: "Array of starship names this character pilots"
+          
+          - name: homeworld_name
+            description: "Name of the character's homeworld"
           
           - name: created
             description: "Timestamp when record was created in source system"
@@ -299,7 +306,7 @@ sources:
             description: "Array of resident names for easier reporting"
           
           - name: film_names
-            description: "Array of film names this planet appears in"
+            description: "Film titles this entity appears in"
           
           - name: created
             description: "Timestamp when record was created in source system"
@@ -368,7 +375,10 @@ sources:
             description: "Array of character names of this species"
           
           - name: film_names
-            description: "Array of film names this species appears in"
+            description: "Film titles this entity appears in"
+          
+          - name: homeworld_name
+            description: "Name of the species' homeworld"
           
           - name: created
             description: "Timestamp when record was created in source system"
@@ -422,7 +432,7 @@ sources:
             description: "Maximum passenger capacity"
           
           - name: cargo_capacity
-            description: "Cargo capacity in kg"
+            description: "Cargo capacity in kilograms"  # Changed from kg to kilograms for consistency
           
           - name: consumables
             description: "Length of time the vehicle can sustain crew without resupply"
@@ -437,10 +447,10 @@ sources:
             description: "JSON array of film references"
           
           - name: pilot_names
-            description: "Array of pilot names for easier reporting"
+            description: "Names of pilots for this vehicle"
           
           - name: film_names
-            description: "Array of film names this vehicle appears in"
+            description: "Film titles this entity appears in"
           
           - name: created
             description: "Timestamp when record was created in source system"

@@ -1,0 +1,8 @@
+# This file was automatically generated
+name: nerd_facts
+type: postgres
+options:
+  database: nerd_facts
+  host: localhost
+  port: 5432
+  schema: public
