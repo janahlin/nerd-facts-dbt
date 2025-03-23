@@ -1,234 +1,195 @@
 {{
   config(
     materialized = 'table',
-    indexes = [{'columns': ['character_id']}, {'columns': ['film_id']}, {'columns': ['character_film_id']}],
-    unique_key = 'character_film_id'
+    indexes = [{'columns': ['character_key']}, {'columns': ['film_key']}, {'columns': ['character_film_key']}],
+    unique_key = 'character_film_key'
   )
 }}
 
 /*
   Model: bridge_sw_characters_films
-  Description: Bridge table connecting Star Wars characters to the films they appear in
-  
-  FIXED - Now using the correct relationship between films and characters
-  - Films contain arrays of character IDs in the characters field
+  Description: Bridge table connecting characters and films with enriched relationship attributes
 */
 
-WITH film_characters AS (
-    -- Extract character references from the films data
-    SELECT
-        f.id AS film_id,
-        f.film_title,
-        f.episode_id,
-        f.release_date,
-        f.director,
-        -- Add trilogy categorization based on episode_id
-        CASE
-            WHEN f.episode_id BETWEEN 1 AND 3 THEN 'Prequel Trilogy'
-            WHEN f.episode_id BETWEEN 4 AND 6 THEN 'Original Trilogy'
-            WHEN f.episode_id BETWEEN 7 AND 9 THEN 'Sequel Trilogy'
-            ELSE 'Anthology Films'
-        END AS trilogy,
-        -- Convert character reference to integer (it's just a plain number from jsonb_array_elements_text)
-        NULLIF(character_ref, '')::INTEGER AS character_id
-    FROM {{ ref('stg_swapi_films') }} f,
-    LATERAL jsonb_array_elements_text(
-        CASE WHEN f.characters IS NULL OR f.characters = 'null' 
-             THEN '[]'::jsonb
-             ELSE f.characters END
-    ) WITH ORDINALITY AS chars(character_ref, idx)
-    WHERE f.id IS NOT NULL
-),
-
--- Join with character information
-character_details AS (
-    SELECT
-        fc.film_id,
-        fc.film_title,
-        fc.episode_id,
-        fc.release_date,
-        fc.director,
-        fc.trilogy,
-        fc.character_id,
-        p.name AS character_name,
-        p.gender,
-        p.birth_year,
-        p.homeworld_id,
-        -- Calculate or derive fields not directly available
-        EXTRACT(YEAR FROM fc.release_date) AS release_year,
-        COALESCE(fc.episode_id, 999) AS chronological_order
-    FROM film_characters fc
-    LEFT JOIN {{ ref('stg_swapi_people') }} p ON fc.character_id = p.id
+WITH character_film_base AS (
+  SELECT
+    fc.film_id,
+    fc.people_id AS character_id,
+    f.title AS film_title,
+    f.episode_id,
+    p.name AS character_name,
+    f.release_date,
+    p.gender,
+    p.birth_year
+  FROM {{ ref('int_swapi_films_characters') }} fc
+  JOIN {{ ref('int_swapi_films') }} f ON fc.film_id = f.film_id
+  JOIN {{ ref('int_swapi_people') }} p ON fc.people_id = p.people_id
 ),
 
 -- Character importance tiers
 character_importance AS (
-    SELECT 
-        cd.*,
-        CASE
-            -- Protagonist/Antagonist tier - central characters
-            WHEN cd.character_name IN ('Luke Skywalker', 'Darth Vader', 'Anakin Skywalker', 
-                                      'Rey', 'Kylo Ren', 'Din Djarin', 'Grogu') 
-                THEN 'Protagonist/Antagonist'
-            
-            -- Major characters
-            WHEN cd.character_name IN ('Han Solo', 'Leia Organa', 'Obi-Wan Kenobi', 
-                                      'Emperor Palpatine', 'Finn', 'Poe Dameron',
-                                      'Padmé Amidala', 'Count Dooku', 'Qui-Gon Jinn',
-                                      'Darth Maul', 'Jyn Erso', 'Cassian Andor', 'Boba Fett') 
-                THEN 'Major'
-            
-            -- Supporting characters
-            WHEN cd.character_name IN ('Chewbacca', 'C-3PO', 'R2-D2', 'Yoda', 
-                                      'Lando Calrissian', 'Mace Windu', 'General Grievous', 
-                                      'Admiral Ackbar', 'BB-8', 'General Hux', 'Rose Tico',
-                                      'Moff Gideon', 'Saw Gerrera', 'Jabba the Hutt',
-                                      'Ahsoka Tano') 
-                THEN 'Supporting'
-                                      
-            -- Additional major characters by ID
-            WHEN cd.character_id IN (1, 2, 3, 4, 5, 10, 11, 13) 
-                THEN 'Major'
-            
-            -- Characters with more details are likely more important
-            WHEN cd.gender IS NOT NULL AND cd.birth_year IS NOT NULL 
-                THEN 'Notable'
-            
-            ELSE 'Minor'
-        END AS character_importance_tier
-    FROM character_details cd
+  SELECT 
+    cfb.*,
+    CASE
+      -- Protagonist/Antagonist tier - central characters
+      WHEN cfb.character_name IN ('Luke Skywalker', 'Darth Vader', 'Anakin Skywalker', 
+                              'Rey', 'Kylo Ren', 'Din Djarin', 'Grogu') 
+        THEN 'Protagonist/Antagonist'
+      
+      -- Major characters
+      WHEN cfb.character_name IN ('Han Solo', 'Leia Organa', 'Obi-Wan Kenobi', 
+                              'Emperor Palpatine', 'Finn', 'Poe Dameron',
+                              'Padmé Amidala', 'Count Dooku', 'Qui-Gon Jinn',
+                              'Darth Maul', 'Jyn Erso', 'Cassian Andor', 'Boba Fett') 
+        THEN 'Major'
+      
+      -- Supporting characters
+      WHEN cfb.character_name IN ('Chewbacca', 'C-3PO', 'R2-D2', 'Yoda', 
+                              'Lando Calrissian', 'Mace Windu', 'General Grievous', 
+                              'Admiral Ackbar', 'BB-8', 'General Hux', 'Rose Tico',
+                              'Moff Gideon', 'Saw Gerrera', 'Jabba the Hutt',
+                              'Ahsoka Tano') 
+        THEN 'Supporting'
+                              
+      -- Additional major characters by ID
+      WHEN cfb.character_id IN (1, 2, 3, 4, 5, 10, 11, 13) 
+        THEN 'Major'
+      
+      -- Characters with more details are likely more important
+      WHEN cfb.gender IS NOT NULL AND cfb.birth_year IS NOT NULL 
+        THEN 'Notable'
+      
+      ELSE 'Minor'
+    END AS character_importance_tier
+  FROM character_film_base cfb
 ),
 
--- Apply film saga classification
-film_saga AS (
-    SELECT
-        ci.*,
-        ci.trilogy AS film_saga,
-        CASE
-            WHEN ci.character_importance_tier = 'Protagonist/Antagonist' THEN 1
-            WHEN ci.character_importance_tier = 'Major' THEN 2
-            WHEN ci.character_importance_tier = 'Supporting' THEN 3
-            WHEN ci.character_importance_tier = 'Notable' THEN 4
-            ELSE 5
-        END AS importance_rank,
-        -- Count characters per film to calculate metrics
-        COUNT(*) OVER (PARTITION BY ci.film_id) AS character_count,
-        CASE
-            WHEN COUNT(*) OVER (PARTITION BY ci.film_id) <= 10 THEN 'Small Cast'
-            WHEN COUNT(*) OVER (PARTITION BY ci.film_id) <= 25 THEN 'Medium Cast'
-            ELSE 'Large Cast'
-        END AS cast_size_category
-    FROM character_importance ci
-)
-
--- Final selection with all metrics
-SELECT
-    -- Primary key
-    {{ dbt_utils.generate_surrogate_key(['fs.character_id', 'fs.film_id']) }} AS character_film_id,
+-- Add trilogy and film appearance information
+character_film_enriched AS (
+  SELECT 
+    ci.*,
+    -- Trilogy classification
+    CASE
+      WHEN ci.episode_id BETWEEN 1 AND 3 THEN 'Prequel Trilogy'
+      WHEN ci.episode_id BETWEEN 4 AND 6 THEN 'Original Trilogy'
+      WHEN ci.episode_id BETWEEN 7 AND 9 THEN 'Sequel Trilogy'
+      ELSE 'Anthology Films'
+    END AS trilogy,
     
-    -- Foreign keys to related dimensions
-    {{ dbt_utils.generate_surrogate_key(['fs.character_id']) }} AS character_key,
-    {{ dbt_utils.generate_surrogate_key(['fs.film_id']) }} AS film_key,
+    -- Extract year for easier querying
+    EXTRACT(YEAR FROM ci.release_date) AS release_year,
     
-    -- Core identifiers
-    fs.character_id,
-    fs.character_name,
-    fs.film_id,
-    fs.film_title,
-    fs.episode_id,
+    -- Character appearance metrics
+    COUNT(*) OVER (PARTITION BY ci.character_id) AS character_film_count,
+    (SELECT COUNT(DISTINCT film_id) FROM {{ ref('int_swapi_films') }}) AS total_films,
     
-    -- Character role classification
-    fs.character_importance_tier AS character_role,
-    
-    -- Film categorization
-    fs.trilogy AS film_saga,
-    fs.release_year,
-    fs.character_count AS total_character_count,
-    fs.cast_size_category,
-    
-    -- Character's homeworld
-    fs.homeworld_id,
-    
-    -- Character significance metrics
-    fs.importance_rank,
-    
-    -- Calculate appearance metrics
+    -- Order of appearance
     ROW_NUMBER() OVER (
-        PARTITION BY fs.character_id 
-        ORDER BY fs.chronological_order
+      PARTITION BY ci.character_id 
+      ORDER BY COALESCE(ci.episode_id, 999)
     ) AS chronological_appearance_number,
     
     ROW_NUMBER() OVER (
-        PARTITION BY fs.character_id 
-        ORDER BY fs.release_date
-    ) AS release_order_appearance_number,
-    
-    -- Character appearance percentage
-    (COUNT(fs.character_id) OVER (PARTITION BY fs.character_id))::FLOAT / 
-    (SELECT COUNT(DISTINCT id) FROM {{ ref('stg_swapi_films') }})::FLOAT * 100 AS saga_appearance_percentage,
-    
-    -- Timeline attributes
-    CASE WHEN ROW_NUMBER() OVER (
-        PARTITION BY fs.character_id 
-        ORDER BY fs.chronological_order
-    ) = 1 THEN TRUE ELSE FALSE END AS is_first_chronological_appearance,
-    
-    CASE WHEN ROW_NUMBER() OVER (
-        PARTITION BY fs.character_id 
-        ORDER BY fs.release_date
-    ) = 1 THEN TRUE ELSE FALSE END AS is_first_release_appearance,
-    
-    -- Narrative role in specific films
-    CASE WHEN fs.character_name IN ('Darth Vader', 'Anakin Skywalker') AND 
-              fs.episode_id BETWEEN 1 AND 3 THEN 'Protagonist'
-         WHEN fs.character_name IN ('Darth Vader') AND 
-              fs.episode_id BETWEEN 4 AND 6 THEN 'Antagonist'
-         WHEN fs.character_name = 'Luke Skywalker' AND 
-              fs.episode_id BETWEEN 4 AND 6 THEN 'Protagonist'
-         WHEN fs.character_name = 'Rey' AND 
-              fs.episode_id BETWEEN 7 AND 9 THEN 'Protagonist'
-         WHEN fs.character_name = 'Kylo Ren' AND 
-              fs.episode_id BETWEEN 7 AND 8 THEN 'Antagonist'
-         WHEN fs.character_name = 'Kylo Ren' AND 
-              fs.episode_id = 9 THEN 'Protagonist'
-         WHEN fs.character_importance_tier = 'Protagonist/Antagonist' THEN 'Key Character'
-         WHEN fs.character_importance_tier = 'Major' THEN 'Major Character'
-         ELSE 'Supporting Character'
-    END AS narrative_role,
-    
-    -- Character alignment (light side/dark side)
-    CASE 
-        WHEN fs.character_name IN ('Darth Vader', 'Emperor Palpatine', 'Darth Maul',
-                                'Count Dooku', 'General Grievous', 'Kylo Ren',
-                                'Captain Phasma', 'General Hux', 'Moff Tarkin',
-                                'Jabba the Hutt', 'Boba Fett', 'Jango Fett') THEN 'Villain'
-        WHEN fs.character_name IN ('Luke Skywalker', 'Leia Organa', 'Han Solo',
-                                'Obi-Wan Kenobi', 'Yoda', 'Rey', 'Finn', 'Poe Dameron',
-                                'Padmé Amidala', 'Qui-Gon Jinn', 'Mace Windu') THEN 'Hero'
-        WHEN fs.character_name IN ('Lando Calrissian', 'Anakin Skywalker') THEN 'Ambiguous'
-        ELSE 'Neutral'
-    END AS character_alignment,
-    
-    -- Film significance
-    CASE
-        WHEN fs.character_importance_tier = 'Protagonist/Antagonist' AND
-             ((fs.character_name = 'Luke Skywalker' AND fs.episode_id IN (4, 5, 6)) OR
-              (fs.character_name = 'Anakin Skywalker' AND fs.episode_id IN (1, 2, 3)) OR
-              (fs.character_name = 'Darth Vader' AND fs.episode_id IN (4, 5, 6)) OR
-              (fs.character_name = 'Rey' AND fs.episode_id IN (7, 8, 9)) OR
-              (fs.character_name = 'Kylo Ren' AND fs.episode_id IN (7, 8, 9))) THEN 'Pivotal'
-        WHEN fs.character_importance_tier = 'Protagonist/Antagonist' THEN 'Crucial'
-        WHEN fs.character_importance_tier = 'Major' THEN 'Significant'
-        WHEN fs.character_importance_tier = 'Supporting' THEN 'Important'
-        ELSE 'Background'
-    END AS film_significance,
-    
-    -- Meta information
-    fs.release_date,
-    fs.director,
-    
-    -- Data tracking field
-    CURRENT_TIMESTAMP AS dbt_loaded_at
-    
-FROM film_saga fs
-ORDER BY COALESCE(fs.episode_id, 999), fs.character_importance_tier, fs.character_name
+      PARTITION BY ci.character_id 
+      ORDER BY ci.release_date
+    ) AS release_order_appearance_number
+  FROM character_importance ci
+)
+
+SELECT
+  -- Primary Key
+  {{ dbt_utils.generate_surrogate_key(['cfe.character_id', 'cfe.film_id']) }} AS character_film_key,
+  
+  -- Foreign Keys
+  {{ dbt_utils.generate_surrogate_key(['cfe.character_id']) }} AS character_key,
+  {{ dbt_utils.generate_surrogate_key(['cfe.film_id']) }} AS film_key,
+  
+  -- Source IDs
+  cfe.character_id,
+  cfe.film_id,
+  
+  -- Basic Attributes
+  cfe.character_name,
+  cfe.film_title,
+  cfe.episode_id,
+  
+  -- Character role in film
+  cfe.character_importance_tier AS character_role,
+  
+  -- Film categorization
+  cfe.trilogy AS film_saga,
+  cfe.release_year,
+  
+  -- Appearance metrics
+  cfe.chronological_appearance_number,
+  cfe.release_order_appearance_number,
+  cfe.character_film_count,
+  
+  -- Character appearance percentage across all films
+  ROUND((cfe.character_film_count * 100.0 / NULLIF(cfe.total_films, 0)), 1) AS saga_appearance_percentage,
+  
+  -- Timeline attributes
+  CASE WHEN cfe.chronological_appearance_number = 1 THEN TRUE ELSE FALSE END AS is_first_chronological_appearance,
+  CASE WHEN cfe.release_order_appearance_number = 1 THEN TRUE ELSE FALSE END AS is_first_release_appearance,
+  
+  -- Narrative role in specific films
+  CASE 
+    WHEN cfe.character_name IN ('Darth Vader', 'Anakin Skywalker') AND 
+         cfe.episode_id BETWEEN 1 AND 3 THEN 'Protagonist'
+    WHEN cfe.character_name IN ('Darth Vader') AND 
+         cfe.episode_id BETWEEN 4 AND 6 THEN 'Antagonist'
+    WHEN cfe.character_name = 'Luke Skywalker' AND 
+         cfe.episode_id BETWEEN 4 AND 6 THEN 'Protagonist'
+    WHEN cfe.character_name = 'Rey' AND 
+         cfe.episode_id BETWEEN 7 AND 9 THEN 'Protagonist'
+    WHEN cfe.character_name = 'Kylo Ren' AND 
+         cfe.episode_id BETWEEN 7 AND 8 THEN 'Antagonist'
+    WHEN cfe.character_name = 'Kylo Ren' AND 
+         cfe.episode_id = 9 THEN 'Protagonist'
+    WHEN cfe.character_importance_tier = 'Protagonist/Antagonist' THEN 'Key Character'
+    WHEN cfe.character_importance_tier = 'Major' THEN 'Major Character'
+    ELSE 'Supporting Character'
+  END AS narrative_role,
+  
+  -- Character alignment (light side/dark side)
+  CASE 
+    WHEN cfe.character_name IN ('Darth Vader', 'Emperor Palpatine', 'Darth Maul',
+                            'Count Dooku', 'General Grievous', 'Kylo Ren',
+                            'Captain Phasma', 'General Hux', 'Moff Tarkin',
+                            'Jabba the Hutt', 'Boba Fett', 'Jango Fett') 
+      THEN 'Villain'
+    WHEN cfe.character_name IN ('Luke Skywalker', 'Leia Organa', 'Han Solo',
+                            'Obi-Wan Kenobi', 'Yoda', 'Rey', 'Finn', 'Poe Dameron',
+                            'Padmé Amidala', 'Qui-Gon Jinn', 'Mace Windu') 
+      THEN 'Hero'
+    WHEN cfe.character_name IN ('Lando Calrissian', 'Anakin Skywalker') 
+      THEN 'Ambiguous'
+    ELSE 'Neutral'
+  END AS character_alignment,
+  
+  -- Film significance
+  CASE
+    WHEN cfe.character_importance_tier = 'Protagonist/Antagonist' AND
+         ((cfe.character_name = 'Luke Skywalker' AND cfe.episode_id IN (4, 5, 6)) OR
+          (cfe.character_name = 'Anakin Skywalker' AND cfe.episode_id IN (1, 2, 3)) OR
+          (cfe.character_name = 'Darth Vader' AND cfe.episode_id IN (4, 5, 6)) OR
+          (cfe.character_name = 'Rey' AND cfe.episode_id IN (7, 8, 9)) OR
+          (cfe.character_name = 'Kylo Ren' AND cfe.episode_id IN (7, 8, 9))) 
+      THEN 'Pivotal'
+    WHEN cfe.character_importance_tier = 'Protagonist/Antagonist' 
+      THEN 'Crucial'
+    WHEN cfe.character_importance_tier = 'Major' 
+      THEN 'Significant'
+    WHEN cfe.character_importance_tier = 'Supporting' 
+      THEN 'Important'
+    ELSE 'Background'
+  END AS film_significance,
+  
+  -- Time Dimension
+  CURRENT_TIMESTAMP AS dbt_loaded_at
+  
+FROM character_film_enriched cfe
+ORDER BY 
+  COALESCE(cfe.episode_id, 999),
+  cfe.character_importance_tier,
+  cfe.character_name

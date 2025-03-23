@@ -13,33 +13,57 @@
 
 WITH starships AS (
     SELECT
-        id AS starship_id,
-        starship_name,
-        model,
-        manufacturer,
-        cost_in_credits,
-        length_m,
-        max_speed,
-        crew_count,
-        passenger_capacity,
-        cargo_capacity,
-        consumables,
-        hyperdrive_rating,
-        MGLT,
-        starship_class,
-        
-        -- Add new fields from enhanced staging model that we know exist
-        film_appearances,
-        film_names,
-        pilot_count,
-        pilot_names,
-        
-        -- Add source tracking
-        url,
-        fetch_timestamp,
-        processed_timestamp
-    FROM {{ ref('stg_swapi_starships') }}
-    WHERE id IS NOT NULL
+        s.starship_id,
+        s.starship_name,
+        s.model,
+        s.manufacturer,
+        s.cost_in_credits,
+        s.length,
+        s.max_atmosphering_speed AS max_speed,
+        s.crew,
+        s.passengers AS passenger_capacity,
+        s.cargo_capacity,
+        s.consumables,
+        s.hyperdrive_rating,
+        s.MGLT,
+        s.starship_class
+    FROM {{ ref('int_swapi_starships') }} s
+    WHERE s.starship_id IS NOT NULL
+),
+
+-- Get film data for starships
+starship_films AS (
+    SELECT
+        fs.starship_id,
+        COUNT(DISTINCT fs.film_id) AS film_count,
+        STRING_AGG(f.title, ', ' ORDER BY f.episode_id) AS film_names
+    FROM {{ ref('int_swapi_films_starships') }} fs
+    JOIN {{ ref('int_swapi_films') }} f ON fs.film_id = f.film_id
+    GROUP BY fs.starship_id
+),
+
+-- Get pilot data for starships
+starship_pilots AS (
+    SELECT
+        sp.starship_id,
+        COUNT(DISTINCT sp.pilot_id) AS pilot_count,
+        STRING_AGG(p.name, ', ' ORDER BY p.name) AS pilot_names
+    FROM {{ ref('bridge_sw_starships_pilots') }} sp
+    JOIN {{ ref('int_swapi_people') }} p ON sp.pilot_id = p.people_id
+    GROUP BY sp.starship_id
+),
+
+-- Combine the base starship data with film and pilot information
+enriched_starships AS (
+    SELECT
+        s.*,
+        COALESCE(sf.film_count, 0) AS film_appearances,
+        COALESCE(sf.film_names, 'None') AS film_names,
+        COALESCE(sp.pilot_count, 0) AS pilot_count,
+        COALESCE(sp.pilot_names, 'None') AS pilot_names
+    FROM starships s
+    LEFT JOIN starship_films sf ON s.starship_id = sf.starship_id
+    LEFT JOIN starship_pilots sp ON s.starship_id = sp.starship_id
 ),
 
 -- Calculate derived metrics for each starship
@@ -56,43 +80,37 @@ starship_metrics AS (
             ELSE FALSE
         END AS is_iconic,
         
-        -- Calculate total capacity as a new field - explicit casting for safety
-        (CASE WHEN s.crew_count ~ '^[0-9]+(\.[0-9]+)?$' THEN s.crew_count::NUMERIC ELSE 0 END) + 
-        (CASE WHEN s.passenger_capacity ~ '^[0-9]+(\.[0-9]+)?$' THEN s.passenger_capacity::NUMERIC ELSE 0 END) 
-        AS total_capacity,
+        -- Calculate total capacity as a new field - using CASE for nulls and non-numeric values
+        CASE 
+            WHEN s.crew IS NULL OR s.crew = '' OR NOT (s.crew::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0 
+            ELSE s.crew::NUMERIC 
+        END +
+        CASE 
+            WHEN s.passenger_capacity IS NULL OR s.passenger_capacity = '' OR NOT (s.passenger_capacity::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0 
+            ELSE s.passenger_capacity::NUMERIC 
+        END AS total_capacity,
         
-        -- Calculate crew efficiency (passengers per crew member) - with explicit casting
+        -- Calculate crew efficiency (passengers per crew member)
         CASE
-            WHEN s.crew_count ~ '^[0-9]+(\.[0-9]+)?$' AND s.crew_count::NUMERIC > 0
-            THEN 
-                CASE 
-                    WHEN s.passenger_capacity ~ '^[0-9]+(\.[0-9]+)?$' 
-                    THEN ROUND(s.passenger_capacity::NUMERIC / s.crew_count::NUMERIC, 2)
-                    ELSE 0
-                END
-            ELSE 0
+            WHEN s.crew IS NULL OR s.crew = '' OR NOT (s.crew::TEXT ~ '^[0-9]+(\.[0-9]+)?$') OR s.crew::NUMERIC <= 0 THEN 0
+            WHEN s.passenger_capacity IS NULL OR s.passenger_capacity = '' OR NOT (s.passenger_capacity::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0
+            ELSE ROUND(s.passenger_capacity::NUMERIC / s.crew::NUMERIC, 2)
         END AS passengers_per_crew,
         
-        -- Calculate cargo efficiency (cargo capacity per meter of length) - with explicit casting
+        -- Calculate cargo efficiency (cargo capacity per meter of length)
         CASE
-            WHEN s.length_m ~ '^[0-9]+(\.[0-9]+)?$' AND s.length_m::NUMERIC > 0
-            THEN
-                CASE 
-                    WHEN s.cargo_capacity ~ '^[0-9]+(\.[0-9]+)?$'
-                    THEN ROUND(s.cargo_capacity::NUMERIC / s.length_m::NUMERIC, 2)
-                    ELSE 0
-                END
-            ELSE 0
+            WHEN s.length IS NULL OR s.length = '' OR NOT (s.length::TEXT ~ '^[0-9]+(\.[0-9]+)?$') OR s.length::NUMERIC <= 0 THEN 0
+            WHEN s.cargo_capacity IS NULL OR s.cargo_capacity = '' OR NOT (s.cargo_capacity::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0
+            ELSE ROUND(s.cargo_capacity::NUMERIC / s.length::NUMERIC, 2)
         END AS cargo_efficiency,
         
-        -- Calculate hyperdrive performance score (lower is better) - with explicit casting
+        -- Calculate hyperdrive performance score (lower is better)
         CASE
-            WHEN s.hyperdrive_rating ~ '^[0-9]+(\.[0-9]+)?$' AND s.hyperdrive_rating::NUMERIC > 0 
-            THEN ROUND(100 / s.hyperdrive_rating::NUMERIC, 1)
-            ELSE 0
+            WHEN s.hyperdrive_rating IS NULL OR s.hyperdrive_rating = '' OR NOT (s.hyperdrive_rating::TEXT ~ '^[0-9]+(\.[0-9]+)?$') OR s.hyperdrive_rating::NUMERIC <= 0 THEN 0
+            ELSE ROUND(100 / s.hyperdrive_rating::NUMERIC, 1)
         END AS hyperdrive_performance_score,
         
-        -- Calculate overall effectiveness score (0-100) - with safe casting
+        -- Calculate overall effectiveness score (0-100)
         CASE
             WHEN s.starship_class IS NOT NULL THEN
                 GREATEST(0, LEAST(100,
@@ -100,34 +118,34 @@ starship_metrics AS (
                     50 +
                     -- Speed bonus
                     CASE
-                        WHEN s.MGLT ~ '^[0-9]+(\.[0-9]+)?$' AND s.MGLT::NUMERIC > 0 
-                        THEN LEAST(20, s.MGLT::NUMERIC / 5)
-                        WHEN s.max_speed ~ '^[0-9]+(\.[0-9]+)?$' AND s.max_speed::NUMERIC > 1000 
-                        THEN 10
+                        WHEN s.MGLT IS NULL OR s.MGLT = '' OR NOT (s.MGLT::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0
+                        WHEN s.MGLT::NUMERIC > 0 THEN LEAST(20, s.MGLT::NUMERIC / 5)
+                        ELSE 0
+                    END +
+                    CASE
+                        WHEN s.max_speed IS NULL OR s.max_speed = '' OR NOT (s.max_speed::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0
+                        WHEN s.max_speed::NUMERIC > 1000 THEN 10
                         ELSE 0
                     END +
                     -- Hyperdrive bonus (lower rating is better)
                     CASE
-                        WHEN s.hyperdrive_rating ~ '^[0-9]+(\.[0-9]+)?$' AND s.hyperdrive_rating::NUMERIC > 0 THEN
-                            CASE
-                                WHEN s.hyperdrive_rating::NUMERIC <= 1 THEN 20
-                                WHEN s.hyperdrive_rating::NUMERIC <= 2 THEN 10
-                                ELSE 0
-                            END
+                        WHEN s.hyperdrive_rating IS NULL OR s.hyperdrive_rating = '' OR NOT (s.hyperdrive_rating::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0
+                        WHEN s.hyperdrive_rating::NUMERIC <= 1 THEN 20
+                        WHEN s.hyperdrive_rating::NUMERIC <= 2 THEN 10
                         ELSE 0
                     END +
                     -- Size bonus for large combat ships
                     CASE
-                        WHEN s.length_m ~ '^[0-9]+(\.[0-9]+)?$' AND s.length_m::NUMERIC > 1000 
-                        AND s.starship_class IN (
-                            'Star Destroyer', 'Dreadnought', 'Battlecruiser', 'Star Dreadnought'
-                        ) THEN 20
-                        WHEN s.length_m ~ '^[0-9]+(\.[0-9]+)?$' AND s.length_m::NUMERIC > 500 THEN 10
+                        WHEN s.length IS NULL OR s.length = '' OR NOT (s.length::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0
+                        WHEN s.length::NUMERIC > 1000 AND 
+                             s.starship_class IN ('Star Destroyer', 'Dreadnought', 'Battlecruiser', 'Star Dreadnought') THEN 20
+                        WHEN s.length::NUMERIC > 500 THEN 10
                         ELSE 0
                     END +
                     -- Cargo capacity bonus
                     CASE
-                        WHEN s.cargo_capacity ~ '^[0-9]+(\.[0-9]+)?$' AND s.cargo_capacity::NUMERIC > 1000000 THEN 10
+                        WHEN s.cargo_capacity IS NULL OR s.cargo_capacity = '' OR NOT (s.cargo_capacity::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0
+                        WHEN s.cargo_capacity::NUMERIC > 1000000 THEN 10
                         ELSE 0
                     END +
                     -- Famous starship bonus
@@ -141,7 +159,7 @@ starship_metrics AS (
                 ))
             ELSE 50
         END AS effectiveness_score
-    FROM starships s
+    FROM enriched_starships s
 )
 
 SELECT
@@ -157,9 +175,9 @@ SELECT
     -- Classification
     sm.starship_class,
     
-    -- Converted hyperspace rating to classification - safe casting
+    -- Converted hyperspace rating to classification
     CASE
-        WHEN NOT (sm.hyperdrive_rating ~ '^[0-9]+(\.[0-9]+)?$') THEN 'Unknown'
+        WHEN sm.hyperdrive_rating IS NULL OR sm.hyperdrive_rating = '' OR NOT (sm.hyperdrive_rating::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 'Unknown'
         WHEN sm.hyperdrive_rating::NUMERIC <= 0.5 THEN 'Ultra Fast'
         WHEN sm.hyperdrive_rating::NUMERIC <= 1.0 THEN 'Very Fast'
         WHEN sm.hyperdrive_rating::NUMERIC <= 2.0 THEN 'Fast'
@@ -206,17 +224,35 @@ SELECT
     END AS faction_affiliation,
     
     -- Physical specifications with proper handling
-    CASE WHEN sm.length_m ~ '^[0-9]+(\.[0-9]+)?$' THEN sm.length_m::NUMERIC ELSE 0 END AS length_m,
-    CASE WHEN sm.max_speed ~ '^[0-9]+(\.[0-9]+)?$' THEN sm.max_speed::NUMERIC ELSE 0 END AS max_atmosphering_speed,
-    CASE WHEN sm.MGLT ~ '^[0-9]+(\.[0-9]+)?$' THEN sm.MGLT::NUMERIC ELSE 0 END AS MGLT,
-    CASE WHEN sm.hyperdrive_rating ~ '^[0-9]+(\.[0-9]+)?$' THEN sm.hyperdrive_rating::NUMERIC ELSE 0 END AS hyperdrive_rating,
+    CASE 
+        WHEN sm.length IS NULL OR sm.length = '' OR NOT (sm.length::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0 
+        ELSE sm.length::NUMERIC 
+    END AS length_m,
+    
+    CASE 
+        WHEN sm.max_speed IS NULL OR sm.max_speed = '' OR NOT (sm.max_speed::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0 
+        ELSE sm.max_speed::NUMERIC 
+    END AS max_atmosphering_speed,
+    
+    CASE 
+        WHEN sm.MGLT IS NULL OR sm.MGLT = '' OR NOT (sm.MGLT::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0 
+        ELSE sm.MGLT::NUMERIC 
+    END AS MGLT,
+    
+    CASE 
+        WHEN sm.hyperdrive_rating IS NULL OR sm.hyperdrive_rating = '' OR NOT (sm.hyperdrive_rating::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0 
+        ELSE sm.hyperdrive_rating::NUMERIC 
+    END AS hyperdrive_rating,
     
     -- Cost information with safe casting
-    CASE WHEN sm.cost_in_credits ~ '^[0-9]+(\.[0-9]+)?$' THEN sm.cost_in_credits::NUMERIC ELSE 0 END AS cost_in_credits,
+    CASE 
+        WHEN sm.cost_in_credits IS NULL OR sm.cost_in_credits = '' OR NOT (sm.cost_in_credits::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0 
+        ELSE sm.cost_in_credits::NUMERIC 
+    END AS cost_in_credits,
     
     -- Format costs in a readable way
     CASE
-        WHEN NOT (sm.cost_in_credits ~ '^[0-9]+(\.[0-9]+)?$') THEN 'unknown'
+        WHEN sm.cost_in_credits IS NULL OR sm.cost_in_credits = '' OR NOT (sm.cost_in_credits::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 'unknown'
         WHEN sm.cost_in_credits::NUMERIC >= 1000000000 THEN TRIM(TO_CHAR(sm.cost_in_credits::NUMERIC/1000000000.0, '999,999,990.99')) || ' billion credits'
         WHEN sm.cost_in_credits::NUMERIC >= 1000000 THEN TRIM(TO_CHAR(sm.cost_in_credits::NUMERIC/1000000.0, '999,999,990.99')) || ' million credits'
         WHEN sm.cost_in_credits::NUMERIC >= 1000 THEN TRIM(TO_CHAR(sm.cost_in_credits::NUMERIC/1000.0, '999,999,990.99')) || ' thousand credits'
@@ -225,7 +261,7 @@ SELECT
     
     -- Value classification - safe casting
     CASE
-        WHEN NOT (sm.cost_in_credits ~ '^[0-9]+(\.[0-9]+)?$') THEN 'Unknown'
+        WHEN sm.cost_in_credits IS NULL OR sm.cost_in_credits = '' OR NOT (sm.cost_in_credits::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 'Unknown'
         WHEN sm.cost_in_credits::NUMERIC >= 1000000000 THEN 'Capital Investment'
         WHEN sm.cost_in_credits::NUMERIC >= 100000000 THEN 'Military Grade'
         WHEN sm.cost_in_credits::NUMERIC >= 10000000 THEN 'Very Expensive'
@@ -235,14 +271,26 @@ SELECT
     END AS cost_category,
     
     -- Capacity information - safe casting
-    CASE WHEN sm.crew_count ~ '^[0-9]+(\.[0-9]+)?$' THEN sm.crew_count::NUMERIC ELSE 0 END AS crew_count,
-    CASE WHEN sm.passenger_capacity ~ '^[0-9]+(\.[0-9]+)?$' THEN sm.passenger_capacity::NUMERIC ELSE 0 END AS passenger_count,
+    CASE 
+        WHEN sm.crew IS NULL OR sm.crew = '' OR NOT (sm.crew::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0 
+        ELSE sm.crew::NUMERIC 
+    END AS crew_count,
+    
+    CASE 
+        WHEN sm.passenger_capacity IS NULL OR sm.passenger_capacity = '' OR NOT (sm.passenger_capacity::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0 
+        ELSE sm.passenger_capacity::NUMERIC 
+    END AS passenger_count,
+    
     sm.total_capacity,
-    CASE WHEN sm.cargo_capacity ~ '^[0-9]+(\.[0-9]+)?$' THEN sm.cargo_capacity::NUMERIC ELSE 0 END AS cargo_capacity,
+    
+    CASE 
+        WHEN sm.cargo_capacity IS NULL OR sm.cargo_capacity = '' OR NOT (sm.cargo_capacity::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 0 
+        ELSE sm.cargo_capacity::NUMERIC 
+    END AS cargo_capacity,
     
     -- Format cargo in a readable way - with safe casting
     CASE
-        WHEN NOT (sm.cargo_capacity ~ '^[0-9]+(\.[0-9]+)?$') THEN 'unknown'
+        WHEN sm.cargo_capacity IS NULL OR sm.cargo_capacity = '' OR NOT (sm.cargo_capacity::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 'unknown'
         WHEN sm.cargo_capacity::NUMERIC >= 1000000000 THEN TRIM(TO_CHAR(sm.cargo_capacity::NUMERIC/1000000000.0, '999,999,990.99')) || ' million tons'
         WHEN sm.cargo_capacity::NUMERIC >= 1000000 THEN TRIM(TO_CHAR(sm.cargo_capacity::NUMERIC/1000000.0, '999,999,990.99')) || ' tons'
         WHEN sm.cargo_capacity::NUMERIC >= 1000 THEN TRIM(TO_CHAR(sm.cargo_capacity::NUMERIC/1000.0, '999,999,990.99')) || ' kg'
@@ -282,13 +330,13 @@ SELECT
     
     -- Calculate size_class directly - with safe casting
     CASE
-        WHEN NOT (sm.length_m ~ '^[0-9]+(\.[0-9]+)?$') THEN 'Unknown'
-        WHEN sm.length_m::NUMERIC > 10000 THEN 'Massive (Station)'
-        WHEN sm.length_m::NUMERIC > 1000 THEN 'Huge (Capital Ship)'
-        WHEN sm.length_m::NUMERIC > 500 THEN 'Very Large'
-        WHEN sm.length_m::NUMERIC > 100 THEN 'Large'
-        WHEN sm.length_m::NUMERIC > 50 THEN 'Medium'
-        WHEN sm.length_m::NUMERIC > 20 THEN 'Small'
+        WHEN sm.length IS NULL OR sm.length = '' OR NOT (sm.length::TEXT ~ '^[0-9]+(\.[0-9]+)?$') THEN 'Unknown'
+        WHEN sm.length::NUMERIC > 10000 THEN 'Massive (Station)'
+        WHEN sm.length::NUMERIC > 1000 THEN 'Huge (Capital Ship)'
+        WHEN sm.length::NUMERIC > 500 THEN 'Very Large'
+        WHEN sm.length::NUMERIC > 100 THEN 'Large'
+        WHEN sm.length::NUMERIC > 50 THEN 'Medium'
+        WHEN sm.length::NUMERIC > 20 THEN 'Small'
         ELSE 'Tiny'
     END AS size_class,
     
@@ -317,16 +365,11 @@ SELECT
         ELSE 'Multiple Eras/Unspecified'
     END AS starship_era,
     
-    -- Relationship counts from staging
+    -- Relationship counts from relations
     sm.pilot_count,
     sm.pilot_names AS notable_pilots,
     sm.film_appearances AS film_appearance_count,
     sm.film_names AS film_names_list,
-    
-    -- Source data metadata
-    sm.url AS source_url,
-    sm.fetch_timestamp,
-    sm.processed_timestamp,
     
     -- Data tracking field
     CURRENT_TIMESTAMP AS dbt_loaded_at

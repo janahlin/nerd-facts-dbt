@@ -1,324 +1,163 @@
 {{
   config(
     materialized = 'table',
-    indexes = [{'columns': ['planet_id']}, {'columns': ['planet_name']}],
+    indexes = [{'columns': ['planet_key']}, {'columns': ['planet_id']}],
     unique_key = 'planet_key'
   )
 }}
 
 /*
   Model: dim_sw_planets
-  Description: Dimension table for Star Wars planets and celestial bodies
-  
-  Notes:
-  - Contains all planets from the Star Wars universe in SWAPI
-  - Provides physical characteristics and environmental classifications
-  - Calculates habitability metrics and significance rankings
-  - Adds contextual information about each planet's role in the saga
-  - Includes galactic region mapping and political affiliations
-  - Enhanced with additional fields from updated staging models
+  Description: Planet dimension table with enriched attributes and classifications
 */
 
-WITH planets AS (
+WITH planet_base AS (
     SELECT
-        id AS planet_id,
-        planet_name,
-        rotation_period,
-        orbital_period,
-        diameter,
-        climate,
-        gravity,
-        terrain,
-        surface_water,
-        population,
-        
-        -- Add new fields from enhanced staging model
-        resident_count,
-        film_appearances,
-        film_names,
-        resident_names,
-        
-        -- Add terrain classifications from staging
-        is_temperate,
-        has_vegetation,
-        is_water_world,
-        is_desert_world,
-        
-        -- Add source tracking
-        url,
-        fetch_timestamp,
-        processed_timestamp
-    FROM {{ ref('stg_swapi_planets') }}
+        p.planet_id,
+        p.name,
+        p.rotation_period,
+        p.orbital_period,
+        p.diameter,
+        p.climate,
+        p.gravity,
+        p.terrain,
+        p.surface_water,
+        p.population
+    FROM {{ ref('int_swapi_planets') }} p
 ),
 
--- Add derived classification attributes with enhanced logic
-planet_attributes AS (
-    SELECT 
-        *,
-        -- Planet size classification with better ranges
-        CASE
-            WHEN diameter IS NULL THEN 'Unknown'
-            WHEN diameter <= 5000 THEN 'Tiny'
-            WHEN diameter <= 10000 THEN 'Small'
-            WHEN diameter <= 15000 THEN 'Medium'
-            WHEN diameter <= 25000 THEN 'Large'
-            ELSE 'Massive'
-        END AS size_class,
-        
-        -- Enhanced climate classification with better pattern matching
-        CASE
-            WHEN climate IS NULL THEN 'Unknown'
-            WHEN climate LIKE '%temperate%' AND climate LIKE '%tropical%' THEN 'Temperate/Tropical Mix'
-            WHEN climate LIKE '%temperate%' OR is_temperate = TRUE THEN 'Temperate'
-            WHEN climate LIKE '%tropical%' THEN 'Tropical'
-            WHEN climate LIKE '%arid%' OR climate LIKE '%hot%' OR climate LIKE '%desert%' 
-                 OR is_desert_world = TRUE THEN 'Hot/Arid'
-            WHEN climate LIKE '%frozen%' OR climate LIKE '%frigid%' OR climate LIKE '%cold%' 
-                 OR climate LIKE '%ice%' THEN 'Cold/Frozen'
-            WHEN climate LIKE '%polluted%' OR climate LIKE '%toxic%' THEN 'Polluted/Toxic'
-            WHEN climate LIKE '%artificial%' OR climate LIKE '%controlled%' THEN 'Artificial/Controlled'
-            WHEN climate LIKE '%moist%' OR climate LIKE '%humid%' OR climate LIKE '%wet%' 
-                 OR is_water_world = TRUE THEN 'Humid/Moist'
-            WHEN climate LIKE '%superheated%' OR climate LIKE '%fiery%' OR climate LIKE '%volcanic%' THEN 'Extreme Heat'
-            ELSE 'Mixed/Other'
-        END AS climate_class,
-        
-        -- Terrain type classification (primary terrain type)
-        CASE
-            WHEN terrain IS NULL THEN 'Unknown'
-            WHEN terrain LIKE '%desert%' OR is_desert_world = TRUE THEN 'Desert'
-            WHEN terrain LIKE '%forest%' AND terrain LIKE '%jungle%' THEN 'Forest/Jungle'
-            WHEN terrain LIKE '%forest%' OR has_vegetation = TRUE THEN 'Forest'
-            WHEN terrain LIKE '%jungle%' THEN 'Jungle'
-            WHEN terrain LIKE '%mountain%' THEN 'Mountainous'
-            WHEN terrain LIKE '%ocean%' OR terrain LIKE '%water%' OR terrain LIKE '%lake%' 
-                 OR is_water_world = TRUE THEN 'Oceanic'
-            WHEN terrain LIKE '%swamp%' OR terrain LIKE '%bog%' THEN 'Swamp/Bog'
-            WHEN terrain LIKE '%urban%' OR terrain LIKE '%cityscape%' OR terrain LIKE '%city%' THEN 'Urban'
-            WHEN terrain LIKE '%grass%' OR terrain LIKE '%plain%' OR terrain LIKE '%prairie%' THEN 'Grassland'
-            WHEN terrain LIKE '%rock%' OR terrain LIKE '%cliff%' OR terrain LIKE '%canyon%' THEN 'Rocky'
-            WHEN terrain LIKE '%ice%' OR terrain LIKE '%glacier%' OR terrain LIKE '%frozen%' THEN 'Ice/Frozen'
-            WHEN terrain LIKE '%gas%' THEN 'Gas Giant'
-            ELSE 'Mixed/Other'
-        END AS terrain_class,
-        
-        -- Improved habitability score (0-100) with more factors
-        CASE
-            WHEN population IS NULL AND climate IS NULL THEN 50
-            ELSE
-                LEAST(100, GREATEST(0, 
-                    -- Base score
-                    40 + 
-                    -- Climate factors
-                    CASE 
-                        WHEN is_temperate = TRUE THEN 20
-                        WHEN climate LIKE '%temperate%' THEN 20 
-                        WHEN climate LIKE '%tropical%' THEN 15
-                        WHEN climate LIKE '%polluted%' OR climate LIKE '%toxic%' THEN -30
-                        WHEN climate LIKE '%frigid%' OR climate LIKE '%frozen%' THEN -20
-                        WHEN climate LIKE '%arid%' OR climate LIKE '%desert%' OR is_desert_world = TRUE THEN -15
-                        ELSE 0 
-                    END +
-                    -- Water factors (crucial for life)
-                    CASE 
-                        WHEN is_water_world = TRUE THEN 15
-                        WHEN surface_water > 50 THEN 15
-                        WHEN surface_water > 30 THEN 10
-                        WHEN surface_water > 10 THEN 5
-                        WHEN surface_water = 0 THEN -10
-                        WHEN surface_water IS NULL THEN 0
-                        ELSE 0 
-                    END +
-                    -- Vegetation factors
-                    CASE
-                        WHEN has_vegetation = TRUE THEN 10
-                        ELSE 0
-                    END +
-                    -- Population factors (evidence of habitability)
-                    CASE 
-                        WHEN population > 1000000000 THEN 25
-                        WHEN population > 100000000 THEN 20
-                        WHEN population > 10000000 THEN 15
-                        WHEN population > 1000000 THEN 10
-                        WHEN population > 0 THEN 5
-                        WHEN population = 0 THEN -10
-                        WHEN population IS NULL THEN 0
-                        ELSE 0 
-                    END +
-                    -- Gravity factors
-                    CASE 
-                        WHEN gravity LIKE '%standard%' THEN 10
-                        WHEN gravity LIKE '%high%' OR gravity LIKE '%heavy%' THEN -5
-                        ELSE 0 
-                    END
-                ))
-        END AS habitability_score,
-        
-        -- Planet's galactic region based on known planets
-        CASE
-            WHEN planet_name IN ('Coruscant', 'Alderaan', 'Corellia', 'Chandrila', 'Hosnian Prime') THEN 'Core Worlds'
-            WHEN planet_name IN ('Kashyyyk', 'Duro', 'Abregado-rae', 'Cato Neimoidia', 'Fondor') THEN 'Colonies/Inner Rim'
-            WHEN planet_name IN ('Naboo', 'Bothawui', 'Mon Cala', 'Onderon', 'Malastare') THEN 'Mid Rim'
-            WHEN planet_name IN ('Tatooine', 'Geonosis', 'Ryloth', 'Dantooine', 'Lothal', 'Kessel') THEN 'Outer Rim'
-            WHEN planet_name IN ('Kamino', 'Mustafar', 'Hoth', 'Bespin', 'Dagobah', 'Endor', 'Yavin IV') THEN 'Outer Rim/Unknown Regions'
-            WHEN planet_name IN ('Exegol', 'Ilum', 'Csilla', 'Rakata Prime') THEN 'Unknown Regions'
-            ELSE 'Unspecified Region'
-        END AS galactic_region
-    FROM planets
+-- Film appearances
+film_appearances AS (
+    SELECT
+        fp.planet_id,
+        COUNT(DISTINCT fp.film_id) AS film_count,
+        STRING_AGG(f.title, ', ' ORDER BY f.episode_id) AS film_appearances
+    FROM {{ ref('int_swapi_films_planets') }} fp
+    JOIN {{ ref('int_swapi_films') }} f ON fp.film_id = f.film_id
+    GROUP BY fp.planet_id
 ),
 
--- Additional planet significance data
-planet_significance AS (
-    SELECT 
-        *,
-        -- Major battles/events on planet
+-- Character counts (residents)
+character_counts AS (
+    SELECT
+        pc.planet_id,
+        COUNT(DISTINCT pc.people_id) AS character_count
+    FROM {{ ref('int_swapi_planets_characters') }} pc
+    GROUP BY pc.planet_id
+),
+
+-- Calculate additional metrics and classifications
+planet_enriched AS (
+    SELECT
+        pb.*,
+        COALESCE(fa.film_count, 0) AS film_count,
+        COALESCE(cc.character_count, 0) AS character_count,
+        COALESCE(fa.film_appearances, 'None') AS film_appearances,
+        
+        -- Planet size classification
         CASE
-            WHEN planet_name = 'Naboo' THEN 'Trade Federation Invasion, Battle of Naboo'
-            WHEN planet_name = 'Geonosis' THEN 'First Battle of Geonosis, Start of Clone Wars'
-            WHEN planet_name = 'Coruscant' THEN 'Senate location, Battle of Coruscant, Order 66'
-            WHEN planet_name = 'Mustafar' THEN 'Anakin vs Obi-Wan duel, Sith stronghold'
-            WHEN planet_name = 'Utapau' THEN 'Battle of Utapau, General Grievous death'
-            WHEN planet_name = 'Kashyyyk' THEN 'Battle of Kashyyyk, Order 66'
-            WHEN planet_name = 'Tatooine' THEN 'Skywalker homeworld, Jabba Palace, Podracing'
-            WHEN planet_name = 'Alderaan' THEN 'Death Star destruction'
-            WHEN planet_name = 'Yavin IV' THEN 'Battle of Yavin, Death Star destruction'
-            WHEN planet_name = 'Hoth' THEN 'Battle of Hoth, Echo Base'
-            WHEN planet_name = 'Dagobah' THEN 'Yoda exile, Luke training'
-            WHEN planet_name = 'Bespin' THEN 'Cloud City, "I am your father" revelation'
-            WHEN planet_name = 'Endor' THEN 'Battle of Endor, Death Star II destruction'
-            WHEN planet_name = 'Jakku' THEN 'Battle of Jakku, Empire defeat, Rey homeworld'
-            WHEN planet_name = 'Starkiller Base' THEN 'Hosnian system destruction, Han Solo death'
-            WHEN planet_name = 'Ahch-To' THEN 'First Jedi temple, Luke exile'
-            WHEN planet_name = 'Crait' THEN 'Battle of Crait, Luke projection'
-            WHEN planet_name = 'Exegol' THEN 'Sith throne, Final Order fleet, Palpatine defeat'
+            WHEN pb.diameter::NUMERIC > 15000 THEN 'Very Large'
+            WHEN pb.diameter::NUMERIC > 10000 THEN 'Large'
+            WHEN pb.diameter::NUMERIC > 5000 THEN 'Medium'
+            WHEN pb.diameter::NUMERIC > 0 THEN 'Small'
+            ELSE 'Unknown'
+        END AS size_classification,
+        
+        -- Population density (people per square km)
+        -- Surface area = 4 * pi * r^2, r = diameter/2
+        CASE 
+            WHEN pb.diameter::NUMERIC > 0 AND pb.population::NUMERIC > 0 
+            THEN pb.population::NUMERIC / (4 * 3.14159 * POWER(pb.diameter::NUMERIC/2, 2))
             ELSE NULL
-        END AS major_events,
+        END AS population_density,
         
-        -- Expanded political affiliation
+        -- Climate type classification
         CASE
-            -- Republic/Empire affiliated
-            WHEN planet_name IN ('Coruscant', 'Hosnian Prime', 'Chandrila', 'Corellia', 'Kamino') THEN 'Republic/Empire'
-            -- Separatist affiliated
-            WHEN planet_name IN ('Geonosis', 'Cato Neimoidia', 'Serenno', 'Skako', 'Raxus') THEN 'Separatist Alliance'
-            -- Rebel/Resistance affiliated
-            WHEN planet_name IN ('Yavin IV', 'Hoth', 'Dantooine', 'D''Qar', 'Ajan Kloss', 'Crait') THEN 'Rebel Alliance/Resistance'
-            -- Neutral/Independent
-            WHEN planet_name IN ('Tatooine', 'Mandalore', 'Naboo', 'Dagobah', 'Ahch-To', 'Bespin') THEN 'Neutral/Independent'
-            -- Hutt/Criminal affiliated
-            WHEN planet_name IN ('Nal Hutta', 'Nar Shaddaa', 'Kessel', 'Cantonica') THEN 'Hutt Space/Criminal Networks'
-            -- First Order/Sith affiliated
-            WHEN planet_name IN ('Exegol', 'Starkiller Base', 'Mustafar', 'Moraband', 'Malachor') THEN 'Sith/First Order'
-            ELSE 'Unspecified Affiliation'
-        END AS political_affiliation,
+            WHEN pb.climate ILIKE '%temperate%' THEN 'Temperate'
+            WHEN pb.climate ILIKE '%tropical%' THEN 'Tropical'
+            WHEN pb.climate ILIKE '%arid%' OR pb.climate ILIKE '%desert%' THEN 'Arid'
+            WHEN pb.climate ILIKE '%frozen%' OR pb.climate ILIKE '%ice%' OR pb.climate ILIKE '%frigid%' THEN 'Frozen'
+            WHEN pb.climate ILIKE '%humid%' OR pb.climate ILIKE '%moist%' THEN 'Humid'
+            WHEN pb.climate ILIKE '%murky%' OR pb.climate ILIKE '%swamp%' THEN 'Swampy'
+            ELSE 'Other'
+        END AS climate_classification,
         
-        -- Galactic significance rating (1-10 scale)
+        -- Primary terrain classification
         CASE
-            WHEN planet_name IN ('Coruscant', 'Exegol', 'Mustafar', 'Naboo', 'Tatooine', 
-                             'Alderaan', 'Yavin IV', 'Hoth', 'Endor') THEN 10
-            WHEN planet_name IN ('Geonosis', 'Kamino', 'Bespin', 'Dagobah', 'Utapau', 
-                             'Jakku', 'Ahch-To', 'Starkiller Base', 'Crait') THEN 8
-            WHEN planet_name IN ('Kashyyyk', 'Mon Cala', 'Mandalore', 'Ryloth', 'Dathomir',
-                             'Corellia', 'Felucia', 'Scarif', 'Jedha') THEN 6
-            WHEN planet_name IN ('Dantooine', 'Onderon', 'Bothawui', 'Lothal', 'Cantonica',
-                             'Batuu', 'Mimban', 'Nevarro', 'Malachor') THEN 4
-            ELSE 2
-        END AS galactic_significance
-    FROM planet_attributes
+            WHEN pb.terrain ILIKE '%mountain%' THEN 'Mountainous'
+            WHEN pb.terrain ILIKE '%jungle%' THEN 'Jungle'
+            WHEN pb.terrain ILIKE '%desert%' THEN 'Desert'
+            WHEN pb.terrain ILIKE '%forest%' THEN 'Forested'
+            WHEN pb.terrain ILIKE '%ocean%' OR pb.terrain ILIKE '%sea%' THEN 'Oceanic'
+            WHEN pb.terrain ILIKE '%swamp%' THEN 'Swamp'
+            WHEN pb.terrain ILIKE '%city%' OR pb.terrain ILIKE '%urban%' THEN 'Urban'
+            ELSE 'Mixed'
+        END AS primary_terrain_classification
+    FROM planet_base pb
+    LEFT JOIN film_appearances fa ON pb.planet_id = fa.planet_id
+    LEFT JOIN character_counts cc ON pb.planet_id = cc.planet_id
 )
 
 SELECT
-    -- Primary key
-    {{ dbt_utils.generate_surrogate_key(['ps.planet_id']) }} AS planet_key,
+    -- Primary Key
+    {{ dbt_utils.generate_surrogate_key(['pe.planet_id']) }} AS planet_key,
     
-    -- Core identifiers
-    ps.planet_id,
-    ps.planet_name,
+    -- Natural Key
+    pe.planet_id,
     
-    -- Physical attributes with better error handling
-    ps.diameter AS diameter_km,
-    ps.rotation_period AS rotation_period_hours,
-    ps.orbital_period AS orbital_period_days,
+    -- Planet Attributes
+    pe.name AS planet_name,
+    pe.rotation_period,
+    pe.orbital_period,
+    pe.diameter,
+    pe.climate,
+    pe.gravity,
+    pe.terrain,
+    pe.surface_water,
+    pe.population,
     
-    -- Environmental attributes
-    ps.climate,
-    ps.climate_class,
-    ps.gravity,
-    ps.terrain,
-    ps.terrain_class,
-    ps.surface_water AS surface_water_percentage,
+    -- Planet Classifications
+    pe.size_classification,
+    pe.climate_classification,
+    pe.primary_terrain_classification,
     
-    -- Size and habitability
-    ps.size_class,
-    ps.habitability_score,
+    -- Derived Metrics
+    pe.population_density,
+    pe.film_count,
+    pe.character_count,
+    pe.film_appearances,
     
-    -- Population data with better formatting and error handling
-    CASE
-        WHEN ps.population >= 1000000000 THEN TRIM(TO_CHAR(ps.population/1000000000.0, '999,999,990.9')) || ' billion'
-        WHEN ps.population >= 1000000 THEN TRIM(TO_CHAR(ps.population/1000000.0, '999,999,990.9')) || ' million'
-        WHEN ps.population >= 1000 THEN TRIM(TO_CHAR(ps.population/1000.0, '999,999,990.9')) || ' thousand'
-        WHEN ps.population IS NOT NULL THEN TRIM(TO_CHAR(ps.population, '999,999,999,999'))
-        ELSE 'unknown'
-    END AS population_formatted,
-    ps.population AS population_count,
-    
-    -- Add resident metrics from staging
-    COALESCE(ps.resident_count, 0) AS known_resident_count,
-    ps.resident_names AS notable_residents,
-    
-    -- Population density if both values are available
+    -- Habitability metrics
     CASE 
-        WHEN ps.population IS NOT NULL AND ps.diameter IS NOT NULL AND ps.diameter > 0 THEN
-            ROUND(ps.population / (3.14159 * POWER(ps.diameter/2, 2)), 2)
-        ELSE NULL
-    END AS population_density_per_km2,
+        WHEN pe.climate ILIKE '%temperate%' AND pe.surface_water::NUMERIC > 0 THEN 'High'
+        WHEN pe.climate NOT ILIKE '%frozen%' AND pe.climate NOT ILIKE '%arid%' THEN 'Medium'
+        ELSE 'Low'
+    END AS habitability,
     
-    -- Habitability classification
+    -- Is Core World
+    CASE 
+        WHEN pe.name IN ('Coruscant', 'Alderaan', 'Corellia', 'Chandrila', 'Hosnian Prime') THEN TRUE
+        ELSE FALSE
+    END AS is_core_world,
+    
+    -- Notable planets
+    CASE 
+        WHEN pe.name IN ('Coruscant', 'Tatooine', 'Naboo', 'Hoth', 'Endor', 'Dagobah', 
+                        'Bespin', 'Mustafar', 'Death Star', 'Jakku', 'Ahch-To', 'Exegol') 
+            OR pe.film_count >= 3
+        THEN TRUE
+        ELSE FALSE
+    END AS is_notable_planet,
+    
+    -- Narrative importance
     CASE
-        WHEN ps.habitability_score >= 80 THEN 'Ideal'
-        WHEN ps.habitability_score >= 60 THEN 'Highly Habitable'
-        WHEN ps.habitability_score >= 40 THEN 'Moderately Habitable'
-        WHEN ps.habitability_score >= 20 THEN 'Marginally Habitable'
-        ELSE 'Barely Habitable/Hostile'
-    END AS habitability_class,
+        WHEN pe.film_count >= 3 THEN 'Major'
+        WHEN pe.film_count >= 2 THEN 'Significant'
+        WHEN pe.film_count = 1 THEN 'Featured'
+        ELSE 'Minor'
+    END AS narrative_importance,
     
-    -- Terrain classifications from staging
-    ps.is_temperate,
-    ps.has_vegetation,
-    ps.is_water_world,
-    ps.is_desert_world,
-    
-    -- Galactic location and significance
-    ps.galactic_region,
-    ps.political_affiliation,
-    ps.major_events,
-    ps.galactic_significance,
-    
-    -- Enhanced key location flag with tiered importance
-    CASE
-        WHEN ps.planet_name IN ('Tatooine', 'Coruscant', 'Naboo', 'Mustafar', 'Alderaan', 
-                             'Hoth', 'Endor', 'Dagobah', 'Yavin IV', 'Exegol') 
-            THEN 'Primary Saga Location'
-        WHEN ps.planet_name IN ('Geonosis', 'Kamino', 'Utapau', 'Kashyyyk', 'Bespin', 'Jakku',
-                             'Ahch-To', 'Crait', 'Starkiller Base', 'Scarif', 'Jedha') 
-            THEN 'Major Location'
-        WHEN ps.planet_name IN ('Dantooine', 'Mon Cala', 'Ryloth', 'Mandalore', 'Corellia', 'Cantonica')
-            THEN 'Notable Location'
-        WHEN ps.galactic_significance >= 6
-            THEN 'Significant Location'
-        ELSE 'Standard Location'
-    END AS location_importance,
-    
-    -- Films appearance data from staging model
-    ps.film_names AS film_names_array,
-    COALESCE(ps.film_appearances, 0) AS film_appearance_count,
-    
-    -- Source data metadata
-    ps.url AS source_url,
-    ps.fetch_timestamp,
-    ps.processed_timestamp,
-    
-    -- Data tracking field
+    -- Data Tracking
     CURRENT_TIMESTAMP AS dbt_loaded_at
-    
-FROM planet_significance ps
-ORDER BY ps.galactic_significance DESC, ps.habitability_score DESC
+
+FROM planet_enriched pe
