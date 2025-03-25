@@ -36,6 +36,7 @@ FROM nerd_facts.universe_stats;
 
 ## Available Dashboards
 
+- [OBT Analysis](obt_analysis)
 - [Star Wars Universe](star_wars_dashboard)
 - [Star Wars Starships](star_wars_starships)
 - [Pokémon Analysis](pokemon_dashboard)

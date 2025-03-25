@@ -1,0 +1,32 @@
+version: 2
+
+# This file defines operational batch tests that can be run as a group
+# Useful for monitoring data quality on a schedule
+
+# OBT for Star Wars Data Quality
+models:
+  - name: operational_batch_sw
+    description: "Operational batch test for Star Wars data quality"
+    tests:
+      - dbt_utils.expression_is_true:
+          name: "test_sw_character_data_quality"
+          expression: "validation_status = 'Valid'"
+          config:
+            severity: error
+          
+      - dbt_utils.expression_is_true:
+          name: "test_sw_films_freshness"
+          expression: "latest_release_date >= comparison_date"
+          config:
+            severity: warn
+            
+  # You can add more model-specific tests here as needed
+
+# Generic tests can be defined in schema.yml files for specific models
+
+# Example of custom tests to verify business rules
+custom:
+  - name: business_rules
+    description: "Tests to verify business rules are maintained"
+    tests:
+      - "{{ test_query('select count(*) from {{ ref(''dim_characters'') }} where height > 300') }}" 

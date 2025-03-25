@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: dim_characters
+    description: "Star Wars characters dimension table"
+    columns:
+      - name: character_id
+        description: "Unique identifier for each character"
+        tests:
+          - unique_column
+          - not_null_column
+      - name: name
+        description: "Character name"
+        tests:
+          - not_null_column
+      - name: height
+        description: "Character height in centimeters"
+      - name: mass
+        description: "Character mass in kilograms"
+      - name: gender
+        description: "Character gender"
+
+  - name: dim_films
+    description: "Star Wars films dimension table"
+    columns:
+      - name: film_id
+        description: "Unique identifier for each film"
+        tests:
+          - unique_column
+          - not_null_column
+      - name: title
+        description: "Film title"
+        tests:
+          - not_null_column
+      - name: release_date
+        description: "Film release date"
+        tests:
+          - not_null_column 

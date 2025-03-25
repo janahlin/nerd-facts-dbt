@@ -1,0 +1,72 @@
+version: 2
+
+models:
+  - name: star_wars_obt
+    description: >
+      One Big Table (OBT) for Star Wars data that denormalizes character, film, planet,
+      and species information into a single table for simplified analytics.
+    columns:
+      - name: character_id
+        description: Unique identifier for the character
+        tests:
+          - not_null
+      - name: character_name
+        description: Character name
+      - name: planet_name
+        description: Name of the character's home planet
+      - name: species_name
+        description: Name of the character's species
+      - name: film_title
+        description: Title of the film the character appears in
+
+  - name: pokemon_obt
+    description: >
+      One Big Table (OBT) for Pokémon data that denormalizes pokemon, type, ability,
+      and stat information into a single table for simplified analytics.
+    columns:
+      - name: pokemon_id
+        description: Unique identifier for the Pokémon
+        tests:
+          - not_null
+      - name: pokemon_name
+        description: Pokémon name
+      - name: type_name
+        description: Name of the Pokémon's type
+      - name: ability_name
+        description: Name of the Pokémon's ability
+      - name: base_stat
+        description: Base stat value
+
+  - name: nerd_universe_obt
+    description: >
+      Master One Big Table (OBT) that unifies data from multiple fictional universes
+      into a standardized structure for cross-universe analysis and reporting.
+    columns:
+      - name: universe
+        description: Name of the fictional universe (Star Wars, Pokemon, etc.)
+        tests:
+          - not_null
+      - name: entity_id
+        description: Unique identifier for the entity within its universe
+        tests:
+          - not_null
+      - name: entity_name
+        description: Name of the entity
+        tests:
+          - not_null
+      - name: entity_type
+        description: Type of entity (character, pokemon, etc.)
+      - name: height_cm
+        description: Height in centimeters, normalized across universes
+      - name: weight_kg
+        description: Weight in kilograms, normalized across universes
+      - name: species
+        description: Species or type of the entity
+      - name: height_category
+        description: Categorized height (Tall, Medium, Short, Unknown)
+      - name: weight_category
+        description: Categorized weight (Heavy, Medium, Light, Unknown)
+      - name: obt_created_at
+        description: Timestamp when this OBT was generated
+        tests:
+          - not_null 

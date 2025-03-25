@@ -1,8 +1,29 @@
-# **Nerd Facts DBT - WIP** 🚀  
+# **Nerd Facts DBT** 🚀  
 
-This repository is a **work in progress** for an **ETL + DBT + Evidence.dev** setup to fetch, transform, and analyze data from multiple public APIs (PokéAPI, SWAPI, and NetrunnerDB). It extracts data, loads it into **PostgreSQL**, and models it using **dbt** before visualizing it in **Evidence.dev**.  
+This repository is an **ETL + DBT + Evidence.dev** setup to fetch, transform, and analyze data from multiple public APIs (PokéAPI, SWAPI, and NetrunnerDB). It extracts data, loads it into **PostgreSQL**, and models it using **dbt** before visualizing it in **Evidence.dev**.  
 
-⚠️ **This project is not yet complete. Expect frequent changes!**  
+## **Project Structure**
+
+### **Data Models**
+
+The project uses a modern data modeling approach with:
+
+1. **Source Layer**: Raw data from APIs loaded into PostgreSQL
+2. **Staging Layer**: Cleaned and standardized data in schemas
+3. **Marts Layer**: Subject-oriented fact and dimension tables
+4. **OBT Layer**: One Big Table (OBT) models for simplified analytics:
+   - `star_wars_obt`: Denormalized Star Wars characters, planets, and films
+   - `pokemon_obt`: Denormalized Pokémon species, types, and abilities
+   - `nerd_universe_obt`: Cross-universe OBT for unified entity analysis
+
+### **Dashboards**
+
+Evidence.dev dashboards available at http://localhost:4000:
+
+1. **Home Dashboard**: Overview and navigation
+2. **Star Wars Dashboard**: Character, planet, and film analysis
+3. **Pokémon Dashboard**: Pokémon stats, types, and abilities
+4. **OBT Analysis Dashboard**: Cross-universe comparisons and OBT pattern showcase
 
 ## **Prerequisites**  
 
@@ -78,12 +99,20 @@ npm run dev
 ```
 Access it in a web browser at http://localhost:4000
 
-## **Current Status & Next Steps**
-✅ ETL pipeline fetches data from APIs  
-✅ Data loads into PostgreSQL  
-✅ DBT models transform and store in public schema  
-✅ Evidence.dev connects for visualization  
-🔄 Next Steps: Improve data models, add more analytics, and automate updates  
+## **Features & Highlights**
 
-## **License**
-📜 MIT License – Free to use and modify.
+- **Multi-universe Data Integration**: Combines data from Star Wars, Pokémon, and Netrunner universes
+- **One Big Table (OBT) Pattern**: Demonstrates denormalized models for analytics
+- **Cross-Universe Analysis**: Compare entities across different fictional universes
+- **Interactive Dashboards**: Rich visualizations with Evidence.dev
+- **Modern Data Stack**: Complete ETL + Transformation + Visualization pipeline
+
+## **OBT Model Pattern**
+
+The One Big Table (OBT) pattern offers several key benefits:
+
+1. **Simplified Queries**: No complex joins required for analysis
+2. **Improved Performance**: Pre-joined data leads to faster queries
+3. **Standardized Metrics**: Common attributes across domains
+4. **Cross-Domain Analysis**: Compare entities from different universes
+5. **Reduced Complexity**: Simplified data model for reporting 
