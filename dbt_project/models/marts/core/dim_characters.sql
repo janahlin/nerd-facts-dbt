@@ -5,9 +5,9 @@
 
 -- Star Wars characters with hardcoded surrogate key inputs
 SELECT
-    {{ dbt_utils.generate_surrogate_key(["'star_wars'", 'id']) }} AS character_key,
+    {{ dbt_utils.generate_surrogate_key(["'star_wars'", 'people_id']) }} AS character_key,
     'star_wars' AS universe,
-    id::TEXT AS character_source_id,  -- Cast to TEXT
+    people_id::TEXT AS character_source_id,  -- Cast to TEXT
     name AS character_name,
     CURRENT_TIMESTAMP AS dbt_loaded_at
 FROM {{ ref('stg_swapi_people') }}
@@ -16,10 +16,10 @@ UNION ALL
 
 -- Pokemon with hardcoded surrogate key inputs
 SELECT
-    {{ dbt_utils.generate_surrogate_key(["'pokemon'", 'id']) }} AS character_key,
+    {{ dbt_utils.generate_surrogate_key(["'pokemon'", 'pokemon_id']) }} AS character_key,
     'pokemon' AS universe,
-    id::TEXT AS character_source_id,  -- Cast to TEXT
-    name AS character_name,
+    pokemon_id::TEXT AS character_source_id,  -- Cast to TEXT
+    pokemon_name AS character_name,
     CURRENT_TIMESTAMP AS dbt_loaded_at
 FROM {{ ref('stg_pokeapi_pokemon') }}
 
@@ -33,4 +33,4 @@ SELECT
     card_name AS character_name,
     CURRENT_TIMESTAMP AS dbt_loaded_at
 FROM {{ ref('stg_netrunner_cards') }}
-WHERE type_name = 'Identity'
+WHERE type_code = 'identity'

@@ -4,7 +4,7 @@
   "scripts": {
     "build": "evidence build",
     "build:strict": "evidence build:strict",
-    "dev": "evidence dev --host 0.0.0.0 --port 4000",
+    "dev": "evidence dev --host 0.0.0.0",    
     "test": "evidence build",
     "sources": "evidence sources",
     "sources:strict": "evidence sources --strict",
@@ -15,12 +15,10 @@
     "node": ">=18.0.0"
   },
   "type": "module",
-  "dependencies": {
-    "@evidence-dev/bigquery": "^2.0.10",
-    "@evidence-dev/core-components": "^5.2.0",
-    "@evidence-dev/csv": "^1.0.14",
-    "@evidence-dev/evidence": "^40.1.1",
-    "@evidence-dev/postgres": "^1.0.7"
+  "dependencies": {    
+    "@evidence-dev/core-components": "^5.2.0",    
+    "@evidence-dev/postgres": "^1.0.7",    
+    "@evidence-dev/source-javascript": "^0.0.3"    
   },
   "overrides": {
     "jsonwebtoken": "9.0.0",

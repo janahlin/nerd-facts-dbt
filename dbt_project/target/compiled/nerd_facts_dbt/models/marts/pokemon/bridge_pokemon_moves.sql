@@ -14,14 +14,52 @@
 WITH pokemon_base AS (
     -- Get base Pokemon data from staging
     SELECT
-        p.id,
-        p.name,
-        p.primary_type,
-        p.type_list[1] AS secondary_type,
-        p.generation_number,
-        p.total_base_stats
+        p.pokemon_id,
+        p.pokemon_name,
+        (SELECT jsonb_extract_path_text(pt.type_json::jsonb, 'name')
+         FROM (
+             SELECT
+                 pokemon_id,
+                 jsonb_array_elements(
+                     COALESCE(NULLIF(types::text, 'null')::jsonb, '[]'::jsonb)
+                 )->>'type' AS type_json,
+                 (jsonb_array_elements(
+                     COALESCE(NULLIF(types::text, 'null')::jsonb, '[]'::jsonb)
+                 )->'slot')::int AS type_slot
+             FROM "nerd_facts"."public"."stg_pokeapi_pokemon" p2
+             WHERE p2.pokemon_id = p.pokemon_id
+         ) pt
+         WHERE pt.type_slot = 1
+         LIMIT 1) AS primary_type,
+        (SELECT jsonb_extract_path_text(pt.type_json::jsonb, 'name')
+         FROM (
+             SELECT
+                 pokemon_id,
+                 jsonb_array_elements(
+                     COALESCE(NULLIF(types::text, 'null')::jsonb, '[]'::jsonb)
+                 )->>'type' AS type_json,
+                 (jsonb_array_elements(
+                     COALESCE(NULLIF(types::text, 'null')::jsonb, '[]'::jsonb)
+                 )->'slot')::int AS type_slot
+             FROM "nerd_facts"."public"."stg_pokeapi_pokemon" p2
+             WHERE p2.pokemon_id = p.pokemon_id
+         ) pt
+         WHERE pt.type_slot = 2
+         LIMIT 1) AS secondary_type,
+        -- These fields need to be handled differently as they're not in staging
+        NULL AS generation_number,
+        (SELECT SUM((stat_data->>'base_stat')::integer)
+         FROM (
+             SELECT
+                 pokemon_id,
+                 jsonb_array_elements(
+                     COALESCE(NULLIF(stats::text, 'null')::jsonb, '[]'::jsonb)
+                 ) AS stat_data
+             FROM "nerd_facts"."public"."stg_pokeapi_pokemon" p2
+             WHERE p2.pokemon_id = p.pokemon_id
+         ) st) AS total_base_stats
     FROM "nerd_facts"."public"."stg_pokeapi_pokemon" p
-    WHERE p.id IS NOT NULL
+    WHERE p.pokemon_id IS NOT NULL
 ),
 
 pokemon_moves_raw AS (
@@ -36,8 +74,8 @@ pokemon_moves_raw AS (
 pokemon_moves AS (
     -- Extract move references from the raw data with improved error handling
     SELECT
-        pb.id AS pokemon_id,
-        pb.name AS pokemon_name,
+        pb.pokemon_id,
+        pb.pokemon_name,
         pb.primary_type,
         pb.secondary_type,
         pb.generation_number,
@@ -58,14 +96,11 @@ pokemon_moves AS (
             LIMIT 1
         ) AS level_learned_at
     FROM pokemon_base pb
-    JOIN pokemon_moves_raw pmr ON pb.id = pmr.id
+    JOIN pokemon_moves_raw pmr ON pb.pokemon_id = pmr.id
     CROSS JOIN LATERAL jsonb_array_elements(
-        CASE 
-            WHEN pmr.moves_json IS NULL OR pmr.moves_json = 'null'::jsonb THEN '[]'::jsonb
-            ELSE pmr.moves_json
-        END
+        COALESCE(NULLIF(pmr.moves_json::text, 'null')::jsonb, '[]'::jsonb)
     ) AS move_data
-    WHERE pb.id IS NOT NULL
+    WHERE pb.pokemon_id IS NOT NULL
 )
 
 SELECT

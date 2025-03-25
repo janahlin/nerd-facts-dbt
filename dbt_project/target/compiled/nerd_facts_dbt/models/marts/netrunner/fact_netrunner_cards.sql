@@ -14,11 +14,11 @@ WITH card_metrics AS (
     -- Calculate and derive card-specific metrics
     SELECT
         c.code AS card_code,
-        c.id AS card_id,
+        c.card_id,
         c.card_name,
         c.faction_code,
         c.side_code,
-        c.type_name,
+        c.type_code,
         c.pack_code,
         
         -- Core card attributes - keep as text for now
@@ -28,23 +28,23 @@ WITH card_metrics AS (
         c.agenda_points,
         c.memory_cost,
         c.trash_cost,
-        c.influence_cost,
+        c.faction_cost,
         
         -- Calculate cost efficiency metrics with proper type casting
         CASE 
             -- For ICE, calculate strength-to-cost ratio
-            WHEN c.type_name = 'ICE' AND c.cost::TEXT ~ '^[0-9]+$' AND c.cost::NUMERIC > 0 
+            WHEN c.type_code = 'ice' AND c.cost::TEXT ~ '^[0-9]+$' AND c.cost::NUMERIC > 0 
                  AND c.strength IS NOT NULL AND c.strength::TEXT ~ '^[0-9]+(\.[0-9]+)?$'
             THEN ROUND((c.strength::NUMERIC / c.cost::NUMERIC), 2)
             
             -- For Agendas, calculate points-to-advancement ratio
-            WHEN c.type_name = 'Agenda' AND c.advancement_cost::TEXT ~ '^[0-9]+$' 
+            WHEN c.type_code = 'agenda' AND c.advancement_cost::TEXT ~ '^[0-9]+$' 
                  AND c.advancement_cost::NUMERIC > 0 AND c.agenda_points IS NOT NULL 
                  AND c.agenda_points::TEXT ~ '^[0-9]+$'
             THEN ROUND((c.agenda_points::NUMERIC / c.advancement_cost::NUMERIC), 2)
             
             -- For Programs/Hardware, basic cost efficiency if applicable
-            WHEN c.type_name IN ('Program', 'Hardware') AND c.cost::TEXT ~ '^[0-9]+$' 
+            WHEN c.type_code IN ('program', 'hardware') AND c.cost::TEXT ~ '^[0-9]+$' 
                  AND c.cost::NUMERIC > 0 AND c.strength IS NOT NULL 
                  AND c.strength::TEXT ~ '^[0-9]+(\.[0-9]+)?$'
             THEN ROUND((c.strength::NUMERIC / c.cost::NUMERIC), 2)
@@ -53,29 +53,29 @@ WITH card_metrics AS (
         END AS cost_efficiency_ratio,
         
         -- Calculate text length (proxy for card complexity)
-        LENGTH(c.card_text) AS text_length,
+        LENGTH(c.text) AS text_length,
         
         -- Calculate influence efficiency with safe type casting
         CASE
-            WHEN c.influence_cost::TEXT ~ '^[0-9]+$' AND c.influence_cost::NUMERIC > 0 
+            WHEN c.faction_cost::TEXT ~ '^[0-9]+$' AND c.faction_cost::NUMERIC > 0 
                  AND c.agenda_points IS NOT NULL AND c.agenda_points::TEXT ~ '^[0-9]+$'
-            THEN ROUND((c.agenda_points::NUMERIC / c.influence_cost::NUMERIC), 2)
+            THEN ROUND((c.agenda_points::NUMERIC / c.faction_cost::NUMERIC), 2)
             
-            WHEN c.influence_cost::TEXT ~ '^[0-9]+$' AND c.influence_cost::NUMERIC > 0 
+            WHEN c.faction_cost::TEXT ~ '^[0-9]+$' AND c.faction_cost::NUMERIC > 0 
                  AND c.strength IS NOT NULL AND c.strength::TEXT ~ '^[0-9]+(\.[0-9]+)?$'
-            THEN ROUND((c.strength::NUMERIC / c.influence_cost::NUMERIC), 2)
+            THEN ROUND((c.strength::NUMERIC / c.faction_cost::NUMERIC), 2)
             
             ELSE NULL
         END AS influence_efficiency,
         
         -- Keywords count
-        CASE WHEN c.keywords_array IS NOT NULL 
-             THEN ARRAY_LENGTH(c.keywords_array, 1) 
+        CASE WHEN c.keywords IS NOT NULL 
+             THEN COALESCE(ARRAY_LENGTH(STRING_TO_ARRAY(c.keywords, ' - '), 1), 0)
              ELSE 0 
         END AS keyword_count,
         
         -- Reference pack info
-        p.release_date,
+        p.release_at,
         p.cycle_code,
         
         -- Simulated usage data - no type casting needed here
@@ -85,9 +85,9 @@ WITH card_metrics AS (
             WHEN c.pack_code = 'core' AND c.faction_code IS NOT NULL THEN 70
             WHEN c.faction_code IS NULL THEN 30
             WHEN p.cycle_code IN ('genesis', 'creation-and-control') THEN 60
-            WHEN p.release_date IS NULL THEN 20
-            WHEN DATE_PART('year', p.release_date) <= 2014 THEN 65
-            WHEN DATE_PART('year', p.release_date) <= 2016 THEN 50
+            WHEN p.release_at IS NULL THEN 20
+            WHEN DATE_PART('year', p.release_at::timestamp) <= 2014 THEN 65
+            WHEN DATE_PART('year', p.release_at::timestamp) <= 2016 THEN 50
             ELSE 40
         END AS popularity_score
         
@@ -105,13 +105,13 @@ SELECT
     md5(cast(coalesce(cast(cm.card_code as TEXT), '_dbt_utils_surrogate_key_null_') as TEXT)) AS card_key,
     md5(cast(coalesce(cast(cm.faction_code as TEXT), '_dbt_utils_surrogate_key_null_') as TEXT)) AS faction_key,
     md5(cast(coalesce(cast(cm.pack_code as TEXT), '_dbt_utils_surrogate_key_null_') as TEXT)) AS pack_key,
-    md5(cast(coalesce(cast(cm.side_code as TEXT), '_dbt_utils_surrogate_key_null_') || '-' || coalesce(cast(cm.type_name as TEXT), '_dbt_utils_surrogate_key_null_') as TEXT)) AS card_type_key,
+    md5(cast(coalesce(cast(cm.side_code as TEXT), '_dbt_utils_surrogate_key_null_') || '-' || coalesce(cast(cm.type_code as TEXT), '_dbt_utils_surrogate_key_null_') as TEXT)) AS card_type_key,
     
     -- Essential card attributes 
     cm.card_name,
     cm.faction_code,
     cm.side_code,
-    cm.type_name,
+    cm.type_code,
     cm.pack_code,
     
     -- Core card metrics with safe type handling
@@ -146,7 +146,7 @@ SELECT
     END AS deck_impact,
     
     -- Time dimensions
-    cm.release_date,
+    cm.release_at,
     cm.cycle_code,
     CASE 
         WHEN cm.cycle_code IN ('core', 'genesis', 'creation-and-control', 'spin') THEN 'First Rotation'
@@ -168,7 +168,7 @@ SELECT
     ROUND(
         (COALESCE(cm.popularity_score, 0) * 0.6) + 
         (COALESCE(cm.cost_efficiency_ratio, 0) * 20) +
-        (CASE WHEN cm.type_name = 'Identity' THEN 30 ELSE 0 END) +
+        (CASE WHEN cm.type_code = 'identity' THEN 30 ELSE 0 END) +
         (CASE WHEN cm.card_name IN ('Account Siphon', 'Astroscript Pilot Program', 'Jackson Howard') THEN 40 ELSE 0 END)
     ) AS card_value_index,
     

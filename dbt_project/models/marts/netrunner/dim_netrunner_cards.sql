@@ -8,20 +8,20 @@
 SELECT
     -- Primary identifiers
     code AS card_code,
-    id AS card_id,
+    card_id,
     card_name,
     
     -- Card classifications  
-    type_name,
-    faction_name,
+    type_code,
+    faction_code,
     side_code,
     
     -- Raw values without any casting
-    influence_cost,
+    faction_cost AS influence_cost,
     cost,
     
     -- Boolean value
-    is_unique_card,
+    uniqueness AS is_unique_card,
     
     -- Pack information
     pack_code,
@@ -30,4 +30,4 @@ SELECT
     CURRENT_TIMESTAMP AS dbt_loaded_at
 FROM {{ ref('stg_netrunner_cards') }}
 WHERE code IS NOT NULL
-ORDER BY side_code, faction_name, type_name
+ORDER BY side_code, faction_code, type_code

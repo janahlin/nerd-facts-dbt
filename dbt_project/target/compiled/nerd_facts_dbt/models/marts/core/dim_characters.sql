@@ -5,9 +5,9 @@
 
 -- Star Wars characters with hardcoded surrogate key inputs
 SELECT
-    md5(cast(coalesce(cast('star_wars' as TEXT), '_dbt_utils_surrogate_key_null_') || '-' || coalesce(cast(id as TEXT), '_dbt_utils_surrogate_key_null_') as TEXT)) AS character_key,
+    md5(cast(coalesce(cast('star_wars' as TEXT), '_dbt_utils_surrogate_key_null_') || '-' || coalesce(cast(people_id as TEXT), '_dbt_utils_surrogate_key_null_') as TEXT)) AS character_key,
     'star_wars' AS universe,
-    id::TEXT AS character_source_id,  -- Cast to TEXT
+    people_id::TEXT AS character_source_id,  -- Cast to TEXT
     name AS character_name,
     CURRENT_TIMESTAMP AS dbt_loaded_at
 FROM "nerd_facts"."public"."stg_swapi_people"
@@ -16,10 +16,10 @@ UNION ALL
 
 -- Pokemon with hardcoded surrogate key inputs
 SELECT
-    md5(cast(coalesce(cast('pokemon' as TEXT), '_dbt_utils_surrogate_key_null_') || '-' || coalesce(cast(id as TEXT), '_dbt_utils_surrogate_key_null_') as TEXT)) AS character_key,
+    md5(cast(coalesce(cast('pokemon' as TEXT), '_dbt_utils_surrogate_key_null_') || '-' || coalesce(cast(pokemon_id as TEXT), '_dbt_utils_surrogate_key_null_') as TEXT)) AS character_key,
     'pokemon' AS universe,
-    id::TEXT AS character_source_id,  -- Cast to TEXT
-    name AS character_name,
+    pokemon_id::TEXT AS character_source_id,  -- Cast to TEXT
+    pokemon_name AS character_name,
     CURRENT_TIMESTAMP AS dbt_loaded_at
 FROM "nerd_facts"."public"."stg_pokeapi_pokemon"
 
@@ -33,4 +33,4 @@ SELECT
     card_name AS character_name,
     CURRENT_TIMESTAMP AS dbt_loaded_at
 FROM "nerd_facts"."public"."stg_netrunner_cards"
-WHERE type_name = 'Identity'
+WHERE type_code = 'identity'

@@ -32,10 +32,7 @@ WITH ability_usage AS (
         COUNT(*) AS num_pokemon
     FROM "nerd_facts"."public"."stg_pokeapi_pokemon" p
     CROSS JOIN LATERAL jsonb_array_elements(
-        CASE 
-            WHEN p.ability_list IS NULL OR p.ability_list::text = 'null' THEN '[]'::jsonb
-            ELSE p.ability_list
-        END
+        COALESCE(NULLIF(p.abilities::text, 'null')::jsonb, '[]'::jsonb)
     ) AS ability_ref
     WHERE ability_ref->'ability'->>'name' IS NOT NULL
     GROUP BY ability_ref->'ability'->>'name'
@@ -252,106 +249,117 @@ SELECT
                              'Disguise', 'Intimidate', 'Filter', 'Solid Rock', 'Prism Armor',
                              'Sturdy', 'Magic Guard', 'Thick Fat', 'Wonder Guard', 'Levitate',
                              'Water Absorb', 'Volt Absorb', 'Flash Fire', 'Bulletproof', 'Heatproof',
-                             'Battle Armor', 'Shell Armor', 'Dauntless Shield', 'Ice Scales')
+                             'Storm Drain', 'Water Bubble', 'Ice Body', 'Marvel Scale', 'Regenerator')
         THEN 'Defensive'
         
-        -- Utility/Support battle style
-        WHEN a.effect_type IN ('Weather', 'Opponent Effect', 'Entry Hazard', 'Priority', 'Contact Effect') OR
-             u.ability_name IN ('Drought', 'Drizzle', 'Sand Stream', 'Snow Warning', 'Unaware',
-                             'Prankster', 'Queenly Majesty', 'Dazzling', 'Pressure', 'Trace',
-                             'Synchronize', 'Neutralizing Gas', 'Harvest', 'Healer', 'Regenerator',
-                             'Unnerve', 'Sticky Hold', 'Magnet Pull', 'Arena Trap', 'Shadow Tag')
+        -- Utility battle style
+        WHEN a.effect_type IN ('Weather', 'Entry Hazard', 'Form Change', 'Item Effect', 'Priority') OR
+             u.ability_name IN ('Drought', 'Drizzle', 'Sand Stream', 'Snow Warning', 'Prankster',
+                             'Serene Grace', 'Queenly Majesty', 'Dazzling', 'Magic Bounce', 'Trace',
+                             'Natural Cure', 'Shed Skin', 'Grassy Surge', 'Electric Surge', 'Psychic Surge',
+                             'Misty Surge', 'Harvest', 'Pickpocket', 'Magician', 'Unburden', 'Hydration',
+                             'Lightning Rod', 'Magnet Pull', 'Sticky Hold', 'Stealth Rock')
         THEN 'Utility'
         
-        -- Setup-based battle style
-        WHEN u.ability_name IN ('Speed Boost', 'Moody', 'Simple', 'Contrary', 'Power Construct',
-                             'Shields Down', 'Battle Bond', 'Schooling', 'Stance Change',
-                             'Berserk', 'Weak Armor', 'Slush Rush', 'Swift Swim', 'Chlorophyll',
-                             'Sand Rush', 'Surge Surfer', 'Unburden', 'Compound Eyes')
-        THEN 'Setup'
+        -- Support battle style
+        WHEN a.effect_type IN ('Opponent Effect', 'Contact Effect') OR
+             u.ability_name IN ('Intimidate', 'Unnerve', 'Pressure', 'Mummy', 'Synchronize',
+                             'Effect Spore', 'Static', 'Flame Body', 'Poison Point', 'Gooey',
+                             'Friend Guard', 'Healer', 'Cursed Body', 'Iron Barbs', 'Rough Skin',
+                             'Aftermath', 'Frisk', 'Ice Face', 'Cotton Down', 'Neutralizing Gas',
+                             'Arena Trap', 'Shadow Tag', 'Speed Boost', 'Immunity', 'Rain Dish')
+        THEN 'Support'
         
-        -- Default
-        ELSE 'Miscellaneous'
+        ELSE 'Balanced'
     END AS battle_style,
     
-    -- Improved generation introduced information
+    -- Generation affinity using comprehensive list
     CASE
-        WHEN u.ability_name IN ('Overgrow', 'Blaze', 'Torrent', 'Swarm', 'Intimidate', 'Static', 'Levitate',
-                             'Sturdy', 'Chlorophyll', 'Wonder Guard', 'Speed Boost', 'Synchronize', 'Keen Eye',
-                             'Hyper Cutter', 'Guts', 'Sand Stream', 'Drizzle', 'Drought', 'Flash Fire',
-                             'Wonder Guard', 'Pressure', 'Thick Fat', 'Hustle', 'Truant', 'Cloud Nine',
-                             'Compound Eyes', 'Battle Armor', 'Clear Body', 'Swift Swim', 'Huge Power',
-                             'Sand Veil', 'Arena Trap', 'Water Veil', 'Liquid Ooze', 'Rock Head', 'Early Bird',
-                             'Sticky Hold', 'Shed Skin', 'Run Away', 'Serene Grace', 'Shadow Tag', 'Pure Power',
-                             'Vital Spirit', 'White Smoke', 'Shell Armor', 'Air Lock') THEN 3  -- Gen 3 (first with abilities)
-                             
-        WHEN u.ability_name IN ('Aftermath', 'Anticipation', 'Bad Dreams', 'Download', 'Dry Skin',
-                             'Filter', 'Flower Gift', 'Forewarn', 'Frisk', 'Gluttony', 'Heatproof',
-                             'Honey Gather', 'Hydration', 'Ice Body', 'Iron Fist', 'Klutz', 'Leaf Guard',
-                             'Magic Guard', 'Mold Breaker', 'Motor Drive', 'Multitype', 'No Guard',
-                             'Normalize', 'Poison Heal', 'Quick Feet', 'Reckless', 'Rivalry', 'Scrappy',
-                             'Simple', 'Skill Link', 'Slow Start', 'Sniper', 'Snow Cloak', 'Snow Warning',
-                             'Solar Power', 'Solid Rock', 'Stall', 'Steadfast', 'Storm Drain', 'Suction Cups',
-                             'Tangled Feet', 'Technician', 'Tinted Lens', 'Unaware') THEN 4  -- Gen 4
-                             
-        WHEN u.ability_name IN ('Analytic', 'Big Pecks', 'Contrary', 'Cursed Body', 'Defeatist', 'Defiant',
-                             'Flare Boost', 'Friend Guard', 'Harvest', 'Healer', 'Heavy Metal', 'Illusion',
-                             'Imposter', 'Infiltrator', 'Iron Barbs', 'Light Metal', 'Magic Bounce', 'Moody',
-                             'Moxie', 'Multiscale', 'Mummy', 'Overcoat', 'Pickpocket', 'Poison Touch',
-                             'Prankster', 'Rattled', 'Regenerator', 'Sand Force', 'Sand Rush', 'Sap Sipper',
-                             'Sheer Force', 'Telepathy', 'Teravolt', 'Toxic Boost', 'Turboblaze', 'Unnerve',
-                             'Victory Star', 'Zen Mode') THEN 5  -- Gen 5
-                             
-        WHEN u.ability_name IN ('Aroma Veil', 'Aura Break', 'Bulletproof', 'Cheek Pouch', 'Competitive',
-                             'Dark Aura', 'Fairy Aura', 'Flower Veil', 'Fur Coat', 'Gale Wings',
-                             'Gooey', 'Grass Pelt', 'Magician', 'Mega Launcher', 'Parental Bond',
-                             'Pixilate', 'Protean', 'Refrigerate', 'Strong Jaw', 'Stance Change',
-                             'Sweet Veil', 'Symbiosis', 'Tough Claws') THEN 6  -- Gen 6
-                             
-        WHEN u.ability_name IN ('Battery', 'Beast Boost', 'Comatose', 'Corrosion', 'Dazzling',
-                             'Disguise', 'Electric Surge', 'Emergency Exit', 'Fluffy', 'Full Metal Body',
-                             'Galvanize', 'Grassy Surge', 'Innards Out', 'Liquid Voice', 'Long Reach',
-                             'Merciless', 'Misty Surge', 'Neuroforce', 'Power Construct', 'Power of Alchemy',
-                             'Prism Armor', 'Psychic Surge', 'Queenly Majesty', 'RKS System', 'Receiver',
-                             'Schooling', 'Shadow Shield', 'Shields Down', 'Slush Rush', 'Soul-Heart',
-                             'Stamina', 'Stakeout', 'Steelworker', 'Surge Surfer', 'Tangling Hair',
-                             'Triage', 'Water Bubble', 'Water Compaction', 'Wimp Out') THEN 7  -- Gen 7
-                             
-        WHEN u.ability_name IN ('As One', 'Ball Fetch', 'Cotton Down', 'Curious Medicine', 'Dauntless Shield',
-                             E'dragon''s-maw', 'Gorilla Tactics', 'Gulp Missile', 'Hunger Switch', 'Ice Face',
-                             'Ice Scales', 'Intrepid Sword', 'Libero', 'Mirror Armor', 'Neutralizing Gas',
-                             'Pastel Veil', 'Perish Body', 'Power Spot', 'Propeller Tail', 'Punk Rock',
-                             'Quick Draw', 'Ripen', 'Sand Spit', 'Screen Cleaner', 'Stalwart',
-                             'Steam Engine', 'Steely Spirit', 'Transistor', 'Unseen Fist', 'Wandering Spirit') 
-        THEN 8  -- Gen 8
-                             
-        WHEN u.ability_name IN ('Angular Wing', 'Armor Tail', 'Beads of Ruin', 'Commander', 'Cud Chew',
-                             'Earth Eater', 'Electromorphosis', 'Good as Gold', 'Guard Dog', 'Hadron Engine',
-                             'Lingering Aroma', 'Mycelium Might', 'Opportunist', 'Orichalcum Pulse', 'Protosynthesis',
-                             'Purifying Salt', 'Quark Drive', 'Seed Sower', 'Sharpness', 'Supreme Overlord',
-                             'Sword of Ruin', 'Tablets of Ruin', 'Thermal Exchange', 'Toxic Debris', 'Vessel of Ruin',
-                             'Well-Baked Body', 'Wind Power', 'Wind Rider', 'Zero to Hero') THEN 9  -- Gen 9
-                             
-        ELSE NULL  -- Likely errors or future abilities
-    END AS generation_introduced,
+        -- Gen 1 signature/themed abilities
+        WHEN u.ability_name IN ('Blaze', 'Torrent', 'Overgrow', 'Swarm', 'Static', 'Thick Fat',
+                             'Shell Armor', 'Battle Armor', 'Early Bird', 'Chlorophyll',
+                             'Rock Head', 'Sturdy', 'Guts', 'Run Away', 'Intimidate', 'Clear Body')
+        THEN 1
+        
+        -- Gen 2 signature/themed abilities
+        WHEN u.ability_name IN ('Flash Fire', 'Swift Swim', 'Inner Focus', 'Levitate',
+                             'Forecast', 'Intimidate', 'Shed Skin', 'Rough Skin', 'Pressure',
+                             'Trace', 'Pure Power', 'Huge Power', 'Shadow Tag', 'Wonder Guard',
+                             'Synchronize', 'Natural Cure', 'Lightning Rod', 'Drizzle', 'Drought')
+        THEN 2
+        
+        -- Gen 3 signature/themed abilities
+        WHEN u.ability_name IN ('Sand Stream', 'Truant', 'Slaking', 'Soundproof', 'Magic Guard',
+                             'Compoundeyes', 'Speed Boost', 'Marvel Scale', 'Steadfast',
+                             'Poison Point', 'Air Lock', 'Filter', 'Solid Rock', 'Levitate')
+        THEN 3
+        
+        -- Gen 4 signature/themed abilities
+        WHEN u.ability_name IN ('Adaptability', 'Technician', 'Download', 'Motor Drive',
+                             'Ice Body', 'Snow Warning', 'Snow Cloak', 'Slow Start', 'Bad Dreams',
+                             'Multitype', 'Flower Gift', 'Iron Fist', 'Tinted Lens', 'Scrappy')
+        THEN 4
+        
+        -- Gen 5 signature/themed abilities
+        WHEN u.ability_name IN ('Teravolt', 'Turboblaze', 'Analytic', 'Sand Force', 'Sand Rush',
+                             'Victory Star', 'Zen Mode', 'Defiant', 'Prankster', 'Illusion',
+                             'Moxie', 'Justified', 'Unaware', 'Magic Bounce', 'Heavy Metal')
+        THEN 5
+        
+        -- Gen 6 signature/themed abilities
+        WHEN u.ability_name IN ('Protean', 'Aerilate', 'Pixilate', 'Refrigerate', 'Parental Bond',
+                             'Dark Aura', 'Fairy Aura', 'Aura Break', 'Stance Change', 'Gale Wings',
+                             'Sweet Veil', 'Gooey', 'Bulletproof', 'Competitive', 'Cheek Pouch')
+        THEN 6
+        
+        -- Gen 7 signature/themed abilities
+        WHEN u.ability_name IN ('Beast Boost', 'Disguise', 'RKS System', 'Electric Surge',
+                             'Psychic Surge', 'Grassy Surge', 'Misty Surge', 'Full Metal Body',
+                             'Neuroforce', 'Soul-Heart', 'Schooling', 'Shields Down', 'Fluffy')
+        THEN 7
+        
+        -- Gen 8 signature/themed abilities
+        WHEN u.ability_name IN ('Libero', 'Intrepid Sword', 'Dauntless Shield', 'Ball Fetch',
+                             'Cotton Down', 'Steam Engine', 'Sand Spit', 'Mirror Armor',
+                             'Hunger Switch', 'Ice Face', 'Power Spot', 'Ice Scales', 'Punk Rock',
+                             'Gorilla Tactics', 'Neutralizing Gas', 'Ripen', 'Gulp Missile')
+        THEN 8
+        
+        -- Default to most recent generation
+        ELSE 8
+    END AS generation_affinity,
     
-    -- Numerical power rating (1-10 scale)
+    -- Additional stat context
     CASE
-        WHEN a.tier = 'S' THEN 10
-        WHEN a.tier = 'A' THEN 8
-        WHEN a.tier = 'B' THEN 6
-        WHEN a.tier = 'C' THEN 4
-        WHEN a.tier = 'D' THEN 2
-        WHEN a.tier = 'F' THEN 1
-        ELSE 3
-    END AS power_rating,
+        WHEN a.effect_type = 'Stat Modifier' THEN
+            CASE
+                WHEN u.ability_name IN ('Huge Power', 'Pure Power', 'Gorilla Tactics',
+                                    'Intrepid Sword', 'Moxie', 'Beast Boost', 'Swords Dance',
+                                    'Dragon Dance') THEN 'Attack'
+                                    
+                WHEN u.ability_name IN ('Solar Power', 'Competitive', 'Beast Boost',
+                                    'Soul-Heart', 'Nasty Plot', 'Calm Mind') THEN 'Special Attack'
+                                    
+                WHEN u.ability_name IN ('Speed Boost', 'Swift Swim', 'Chlorophyll',
+                                    'Sand Rush', 'Slush Rush', 'Unburden', 'Surge Surfer') THEN 'Speed'
+                                    
+                WHEN u.ability_name IN ('Intimidate', 'Fur Coat', 'Marvel Scale',
+                                    'Filter', 'Solid Rock', 'Prism Armor', 'Ice Face') THEN 'Defense'
+                                    
+                WHEN u.ability_name IN ('Multiscale', 'Shadow Shield', 'Natural Cure',
+                                    'Regenerator', 'Hydration', 'Shed Skin') THEN 'HP/Recovery'
+                                    
+                ELSE 'Mixed'
+            END
+        ELSE NULL
+    END AS primary_stat,
     
-    -- Data tracking field
+    -- Add data tracking field
     CURRENT_TIMESTAMP AS dbt_loaded_at
     
 FROM ability_usage u
 JOIN ability_ranks r ON u.ability_name = r.ability_name
-LEFT JOIN ability_attributes a ON u.ability_name = a.ability_name
-ORDER BY a.tier, u.num_pokemon DESC
+JOIN ability_attributes a ON u.ability_name = a.ability_name
+ORDER BY u.num_pokemon DESC, u.ability_name
   );
   

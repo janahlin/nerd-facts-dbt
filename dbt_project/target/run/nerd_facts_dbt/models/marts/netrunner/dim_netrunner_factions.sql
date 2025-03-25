@@ -21,10 +21,14 @@
 
 WITH faction_base AS (
     SELECT DISTINCT
-        f.faction_code,
+        f.code AS faction_code,
         f.faction_name,
         f.side_code,
-        f.side_name,
+        CASE 
+            WHEN f.side_code = 'corp' THEN 'Corp'
+            WHEN f.side_code = 'runner' THEN 'Runner'
+            ELSE 'Unknown'
+        END AS side_name,
         f.is_mini AS is_mini_faction,
         f.color
     FROM "nerd_facts"."public"."stg_netrunner_factions" f
@@ -33,19 +37,19 @@ WITH faction_base AS (
 card_counts AS (
     SELECT
         faction_code,
-        COUNT(DISTINCT c.id) AS num_cards,  -- Added c. prefix to resolve ambiguity
-        COUNT(DISTINCT CASE WHEN type_name = 'Identity' THEN c.id END) AS num_identities,
-        COUNT(DISTINCT CASE WHEN type_name = 'ICE' THEN c.id END) AS num_ice,
-        COUNT(DISTINCT CASE WHEN type_name = 'Program' AND card_text ILIKE '%Icebreaker%' THEN c.id END) AS num_icebreakers,
-        COUNT(DISTINCT CASE WHEN type_name = 'Agenda' THEN c.id END) AS num_agendas,
-        COUNT(DISTINCT CASE WHEN type_name IN ('Event', 'Operation') THEN c.id END) AS num_events_operations,
-        COUNT(DISTINCT CASE WHEN card_text ILIKE '%gain%credit%' OR 
-                              card_text ILIKE '%take%credit%' OR
-                              card_text ILIKE '%credit for each%' THEN c.id END) AS num_economy_cards,
+        COUNT(DISTINCT c.card_id) AS num_cards,
+        COUNT(DISTINCT CASE WHEN type_code = 'identity' THEN c.card_id END) AS num_identities,
+        COUNT(DISTINCT CASE WHEN type_code = 'ice' THEN c.card_id END) AS num_ice,
+        COUNT(DISTINCT CASE WHEN type_code = 'program' AND text ILIKE '%Icebreaker%' THEN c.card_id END) AS num_icebreakers,
+        COUNT(DISTINCT CASE WHEN type_code = 'agenda' THEN c.card_id END) AS num_agendas,
+        COUNT(DISTINCT CASE WHEN type_code IN ('event', 'operation') THEN c.card_id END) AS num_events_operations,
+        COUNT(DISTINCT CASE WHEN text ILIKE '%gain%credit%' OR 
+                              text ILIKE '%take%credit%' OR
+                              text ILIKE '%credit for each%' THEN c.card_id END) AS num_economy_cards,
         -- Add first release date
-        MIN(p.release_date) AS first_release_date,
+        MIN(p.release_at) AS first_release_date,
         -- Add most recent card release date
-        MAX(p.release_date) AS latest_release_date
+        MAX(p.release_at) AS latest_release_date
     FROM "nerd_facts"."public"."stg_netrunner_cards" c
     LEFT JOIN "nerd_facts"."public"."stg_netrunner_packs" p ON c.pack_code = p.code
     GROUP BY faction_code

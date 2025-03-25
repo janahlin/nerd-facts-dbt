@@ -15,7 +15,7 @@
 
 WITH sw_planets_minimal AS (
     SELECT
-        'sw_' || id AS source_id,
+        'sw_' || planet_id AS source_id,
         'star_wars' AS universe,
         planet_name AS location_name,
         'Planet' AS location_type,
@@ -31,25 +31,14 @@ WITH sw_planets_minimal AS (
 ),
 
 pokemon_regions_minimal AS (
-    -- Extract distinct regions from Pokémon data with minimal fields
-    SELECT DISTINCT
-        'pkm_' || md5(cast(coalesce(cast(region as TEXT), '_dbt_utils_surrogate_key_null_') as TEXT)) AS source_id,
-        'pokemon' AS universe,
-        region AS location_name,
-        'Region' AS location_type,
-        NULL::TEXT AS diameter,  -- Cast NULL to TEXT
-        NULL::TEXT AS rotation_period,  -- Cast NULL to TEXT
-        NULL::TEXT AS orbital_period,  -- Cast NULL to TEXT
-        '1 standard' AS gravity,
-        CASE  
-            WHEN region = 'Kanto' THEN '10000000'
-            ELSE '5000000'
-        END AS population,  -- String literals
-        'varied' AS climate,
-        'varied' AS terrain,
-        '30' AS surface_water  -- String literal
-    FROM "nerd_facts"."public"."stg_pokeapi_pokemon"
-    WHERE region IS NOT NULL
+    -- Create hardcoded Pokémon regions since staging data doesn't have them
+    SELECT * FROM (VALUES
+        ('pkm_1', 'pokemon', 'Kanto', 'Region', NULL::TEXT, NULL::TEXT, NULL::TEXT, '1 standard', '10000000', 'varied', 'varied', '30'),
+        ('pkm_2', 'pokemon', 'Johto', 'Region', NULL::TEXT, NULL::TEXT, NULL::TEXT, '1 standard', '8000000', 'varied', 'varied', '40'),
+        ('pkm_3', 'pokemon', 'Hoenn', 'Region', NULL::TEXT, NULL::TEXT, NULL::TEXT, '1 standard', '7000000', 'tropical', 'mountainous', '60'),
+        ('pkm_4', 'pokemon', 'Sinnoh', 'Region', NULL::TEXT, NULL::TEXT, NULL::TEXT, '1 standard', '5000000', 'temperate', 'varied', '35')
+    ) AS v(source_id, universe, location_name, location_type, diameter, rotation_period, 
+           orbital_period, gravity, population, climate, terrain, surface_water)
 ),
 
 netrunner_locations_minimal AS (

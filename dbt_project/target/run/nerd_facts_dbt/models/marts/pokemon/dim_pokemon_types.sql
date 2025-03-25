@@ -22,23 +22,75 @@
   - Adds type categorization and generation data
 */
 
-WITH type_counts AS (
-    -- Get primary type usage
+WITH pokemon_types AS (
     SELECT
-        COALESCE(primary_type, 'Unknown') AS type_name,
+        type_name,
+        slot,
+        COUNT(*) AS pokemon_count
+    FROM (
+        SELECT
+            (jsonb_array_elements(
+                COALESCE(NULLIF(types::text, 'null')::jsonb, '[]'::jsonb)
+            )->'type')::jsonb->>'name' AS type_name,
+            (jsonb_array_elements(
+                COALESCE(NULLIF(types::text, 'null')::jsonb, '[]'::jsonb)
+            )->>'slot')::int AS slot
+        FROM "nerd_facts"."public"."stg_pokeapi_pokemon"
+        WHERE types IS NOT NULL
+    ) t
+    GROUP BY type_name, slot
+),
+
+type_counts AS (
+    -- Extract primary types from all pokemon
+    SELECT
+        primary_type AS type_name,
         COUNT(*) AS num_primary
-    FROM "nerd_facts"."public"."stg_pokeapi_pokemon"
+    FROM (
+        SELECT
+            pokemon_id,
+            (SELECT jsonb_extract_path_text(pt.type_json::jsonb, 'name')
+             FROM (
+                 SELECT
+                     jsonb_array_elements(
+                         COALESCE(NULLIF(types::text, 'null')::jsonb, '[]'::jsonb)
+                     ) AS type_json
+                 FROM "nerd_facts"."public"."stg_pokeapi_pokemon" p2
+                 WHERE p2.pokemon_id = p.pokemon_id
+             ) pt
+             WHERE jsonb_extract_path_text(pt.type_json::jsonb, 'slot') = '1'
+             LIMIT 1
+            ) AS primary_type
+        FROM "nerd_facts"."public"."stg_pokeapi_pokemon" p
+    ) primary_types
+    WHERE primary_type IS NOT NULL
     GROUP BY primary_type
 ),
 
 secondary_type_counts AS (
-    -- Get secondary type usage from type_list array
-    SELECT 
-        COALESCE(type_list[1], 'None') AS type_name,  -- Changed from secondary_type
+    -- Extract secondary types from pokemon
+    SELECT
+        secondary_type AS type_name,
         COUNT(*) AS num_secondary
-    FROM "nerd_facts"."public"."stg_pokeapi_pokemon"
-    WHERE type_list[1] IS NOT NULL
-    GROUP BY type_list[1]
+    FROM (
+        SELECT
+            pokemon_id,
+            (SELECT jsonb_extract_path_text(pt.type_json::jsonb, 'name')
+             FROM (
+                 SELECT
+                     jsonb_array_elements(
+                         COALESCE(NULLIF(types::text, 'null')::jsonb, '[]'::jsonb)
+                     ) AS type_json
+                 FROM "nerd_facts"."public"."stg_pokeapi_pokemon" p2
+                 WHERE p2.pokemon_id = p.pokemon_id
+             ) pt
+             WHERE jsonb_extract_path_text(pt.type_json::jsonb, 'slot') = '2'
+             LIMIT 1
+            ) AS secondary_type
+        FROM "nerd_facts"."public"."stg_pokeapi_pokemon" p
+    ) secondary_types
+    WHERE secondary_type IS NOT NULL
+    GROUP BY secondary_type
 ),
 
 combined_counts AS (

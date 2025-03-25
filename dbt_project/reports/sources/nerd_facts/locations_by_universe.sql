@@ -1,7 +1,7 @@
+-- Query to get location counts by universe
 SELECT
     universe,
-    COUNT(*) as location_count,
-    array_agg(DISTINCT location_type) as location_types
+    COUNT(*) as location_count
 FROM
     public.dim_locations
 GROUP BY

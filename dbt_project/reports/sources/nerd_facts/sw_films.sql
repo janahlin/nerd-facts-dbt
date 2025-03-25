@@ -1,11 +1,10 @@
-SELECT
-    sf.film_title,
-    sf.episode_id,
-    sf.director,
-    sf.producer,
-    sf.release_date,
-    sf.opening_crawl
-FROM
-    public.stg_swapi_films sf
-ORDER BY
-    sf.episode_id;
+-- Query to get Star Wars films timeline
+SELECT 
+    f.episode_id,
+    f.film_title,
+    f.director,
+    f.release_date
+FROM 
+    public.dim_sw_films f
+ORDER BY 
+    f.episode_id; 

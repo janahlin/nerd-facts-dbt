@@ -2,21 +2,21 @@
 title: Star Wars Universe Dashboard
 ---
 
-# Star Wars Universe
+# Star Wars Dashboard
 
 <small>Data powered by the Star Wars API (SWAPI)</small>
 
 ## Films Timeline
 
 ```sql sw_films
-SELECT 
+select 
   episode_id,
   film_title,
   director,
   release_date
-FROM
+from
   nerd_facts.sw_films
-ORDER BY episode_id;
+order by episode_id
 ```
 
 <DataTable data={sw_films} columns={[ {name: 'episode_id', label: 'Episode'}, {name: 'film_title', label: 'Title'}, {name: 'director', label: 'Director'}, {name: 'release_date', label: 'Release Date'}, ]} />
@@ -24,9 +24,9 @@ ORDER BY episode_id;
 ## Characters per film
 
 ```sql characters_per_film
-SELECT 
+select 
     film_title,
-    episode_id
+    episode_id,
     film_saga,
     character_count,
     pivotal_characters,
@@ -34,10 +34,35 @@ SELECT
     supporting_characters,
     heroes,
     villains    
-FROM 
-  nerd_facts.characterd_per_film;
+from 
+    nerd_facts.characters_per_film
 ```
 
-<BarChart data={characters_per_film} x=film_title y=character_count title="Total Characters per Film" />
+<BarChart data={characters_per_film} x="film_title" y="character_count" title="Total Characters per Film" />
 
-<BarChart data={characters_per_film} x=film_title series={['heroes', 'villains']} type="grouped" title="Heroes vs Villains by Film" />
+<BarChart 
+  data={characters_per_film} 
+  x="film_title" 
+  y="heroes" 
+  title="Heroes by Film" 
+/>
+
+<BarChart 
+  data={characters_per_film} 
+  x="film_title" 
+  y="villains" 
+  title="Villains by Film" 
+/>
+
+## Character Distribution
+
+```sql character_distribution
+select * from nerd_facts.character_distribution
+```
+
+<BarChart 
+  data={character_distribution} 
+  x="universe" 
+  y="character_count"
+  title="Character Count by Universe"
+/>

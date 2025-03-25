@@ -1,20 +1,20 @@
-SELECT
-    'Characters' as entity_type,
+-- Query to get overall universe statistics
+WITH base_data AS (
+    SELECT
+        universe,
+        entity_type,
+        COUNT(*) as count
+    FROM (
+        SELECT 'Characters' as entity_type, universe FROM public.dim_characters
+        UNION ALL
+        SELECT 'Locations' as entity_type, universe FROM public.dim_locations
+    ) combined
+    GROUP BY
+        universe,
+        entity_type
+)
+SELECT 
     universe,
-    COUNT(*) as count
-FROM
-    public.dim_characters
-GROUP BY
-    universe
-UNION ALL
-SELECT
-    'Locations' as entity_type,
-    universe,
-    COUNT(*) as count
-FROM
-    public.dim_locations
-GROUP BY
-    universe
-ORDER BY
     entity_type,
-    count DESC;
+    count
+FROM base_data;

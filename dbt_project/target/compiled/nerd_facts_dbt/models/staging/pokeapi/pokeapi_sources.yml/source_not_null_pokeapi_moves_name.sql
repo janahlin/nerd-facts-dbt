@@ -5,7 +5,7 @@
 
 
 select name
-from "pokemon_db"."public"."moves"
+from "nerd_facts"."raw"."pokeapi_moves"
 where name is null
 
 

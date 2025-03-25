@@ -21,17 +21,81 @@
 -- First get the core Pokémon data we need
 WITH pokemon_data AS (
     SELECT
-        p.id,
-        p.name,
-        p.primary_type,
-        p.type_list[1] AS secondary_type,
-        p.generation_number,
-        p.is_legendary,
-        p.is_mythical,
-        p.total_base_stats,
-        p.ability_count  -- Using ability count instead of ability data
+        p.pokemon_id,
+        p.pokemon_name,
+        -- Extract primary type
+        (SELECT jsonb_extract_path_text(pt.type_json::jsonb, 'name')
+         FROM (
+             SELECT
+                 pokemon_id,
+                 jsonb_array_elements(
+                     COALESCE(NULLIF(types::text, 'null')::jsonb, '[]'::jsonb)
+                 )->>'type' AS type_json,
+                 (jsonb_array_elements(
+                     COALESCE(NULLIF(types::text, 'null')::jsonb, '[]'::jsonb)
+                 )->'slot')::int AS type_slot
+             FROM {{ ref('stg_pokeapi_pokemon') }} p2
+             WHERE p2.pokemon_id = p.pokemon_id
+         ) pt
+         WHERE pt.type_slot = 1
+         LIMIT 1) AS primary_type,
+        -- Extract secondary type
+        (SELECT jsonb_extract_path_text(pt.type_json::jsonb, 'name')
+         FROM (
+             SELECT
+                 pokemon_id,
+                 jsonb_array_elements(
+                     COALESCE(NULLIF(types::text, 'null')::jsonb, '[]'::jsonb)
+                 )->>'type' AS type_json,
+                 (jsonb_array_elements(
+                     COALESCE(NULLIF(types::text, 'null')::jsonb, '[]'::jsonb)
+                 )->'slot')::int AS type_slot
+             FROM {{ ref('stg_pokeapi_pokemon') }} p2
+             WHERE p2.pokemon_id = p.pokemon_id
+         ) pt
+         WHERE pt.type_slot = 2
+         LIMIT 1) AS secondary_type,
+        -- Extract species data for generation, legendary, mythical
+        (SELECT 
+            CASE 
+                WHEN gen.gen_num IS NOT NULL THEN gen.gen_num::integer
+                ELSE NULL
+            END
+         FROM {{ ref('stg_pokeapi_pokemon') }} p2
+         LEFT JOIN LATERAL (
+             SELECT (regexp_matches(jsonb_extract_path_text(species, 'url'), '/generation/([0-9]+)/'))[1] AS gen_num
+             WHERE jsonb_extract_path_text(species, 'url') ~ '/generation/([0-9]+)/'
+         ) gen ON true
+         WHERE p2.pokemon_id = p.pokemon_id) AS generation_number,
+        (SELECT COALESCE(jsonb_extract_path_text(species, 'is_legendary')::boolean, false)
+         FROM {{ ref('stg_pokeapi_pokemon') }} p2
+         WHERE p2.pokemon_id = p.pokemon_id) AS is_legendary,
+        (SELECT COALESCE(jsonb_extract_path_text(species, 'is_mythical')::boolean, false)
+         FROM {{ ref('stg_pokeapi_pokemon') }} p2
+         WHERE p2.pokemon_id = p.pokemon_id) AS is_mythical,
+        -- Calculate total base stats
+        (SELECT SUM((stat_data->>'base_stat')::integer)
+         FROM (
+             SELECT
+                 pokemon_id,
+                 jsonb_array_elements(
+                     COALESCE(NULLIF(stats::text, 'null')::jsonb, '[]'::jsonb)
+                 ) AS stat_data
+             FROM {{ ref('stg_pokeapi_pokemon') }} p2
+             WHERE p2.pokemon_id = p.pokemon_id
+         ) st) AS total_base_stats,
+        -- Count abilities
+        (SELECT COUNT(*)
+         FROM (
+             SELECT
+                 jsonb_array_elements(
+                     COALESCE(NULLIF(abilities::text, 'null')::jsonb, '[]'::jsonb)
+                 ) AS ability_data
+             FROM {{ ref('stg_pokeapi_pokemon') }} p2
+             WHERE p2.pokemon_id = p.pokemon_id
+         ) ab) AS ability_count
     FROM {{ ref('stg_pokeapi_pokemon') }} p
-    WHERE p.id IS NOT NULL
+    WHERE p.pokemon_id IS NOT NULL
 ),
 
 -- Access raw data directly to get the abilities
@@ -46,8 +110,8 @@ pokemon_abilities_raw AS (
 -- Extract ability references from the raw data
 pokemon_abilities AS (
     SELECT
-        pd.id AS pokemon_id,
-        pd.name AS pokemon_name,
+        pd.pokemon_id,
+        pd.pokemon_name,
         pd.primary_type,
         pd.secondary_type,
         pd.generation_number,
@@ -58,14 +122,11 @@ pokemon_abilities AS (
         (ability_ref->>'is_hidden')::boolean AS is_hidden,
         (ability_ref->>'slot')::integer AS slot_number
     FROM pokemon_data pd
-    JOIN pokemon_abilities_raw par ON pd.id = par.id
+    JOIN pokemon_abilities_raw par ON pd.pokemon_id = par.id
     CROSS JOIN LATERAL jsonb_array_elements(
-        CASE
-            WHEN par.abilities_json IS NULL OR par.abilities_json = 'null'::jsonb THEN '[]'::jsonb
-            ELSE par.abilities_json
-        END
+        COALESCE(NULLIF(par.abilities_json::text, 'null')::jsonb, '[]'::jsonb)
     ) AS ability_ref
-    WHERE pd.id IS NOT NULL
+    WHERE pd.pokemon_id IS NOT NULL
 )
 
 SELECT

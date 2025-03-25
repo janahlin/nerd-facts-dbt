@@ -18,9 +18,9 @@
 WITH base_moves AS (
     -- Ensure clean numeric data from source
     SELECT
-        id AS move_id,
+        move_id,
         move_name,
-        NULLIF(type_name, 'unknown') AS move_type,
+        type->>'name' AS move_type,
         -- Handle numeric conversions safely
         CASE 
             WHEN power::TEXT ~ '^[0-9]+$' THEN power::INTEGER
@@ -38,18 +38,19 @@ WITH base_moves AS (
             WHEN priority::TEXT ~ '^[0-9]+$' THEN priority::INTEGER
             ELSE 0 
         END AS priority,
-        damage_class,
-        effect_text,
+        damage_class->>'name' AS damage_class,
+        jsonb_array_elements(effect_entries::jsonb)->>'effect' AS effect_text,
         CASE 
             WHEN effect_chance::TEXT ~ '^[0-9]+$' THEN effect_chance::INTEGER
             ELSE NULL 
         END AS effect_chance,
         CASE 
-            WHEN generation_number::TEXT ~ '^[0-9]+$' THEN generation_number::INTEGER
+            WHEN (generation->>'url')::TEXT ~ 'generation/([0-9]+)/' 
+            THEN REGEXP_REPLACE((generation->>'url')::TEXT, '.*generation/([0-9]+)/.*', '\1')::INTEGER
             ELSE 1 
         END AS generation_id
     FROM "nerd_facts"."public"."stg_pokeapi_moves"
-    WHERE id IS NOT NULL
+    WHERE move_id IS NOT NULL
 ),
 
 move_classifications AS (
