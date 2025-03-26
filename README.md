@@ -18,7 +18,7 @@ The project uses a modern data modeling approach with:
 
 ### **Dashboards**
 
-Evidence.dev dashboards available at http://localhost:4000:
+Evidence.dev dashboards available at http://localhost:3000:
 
 1. **Home Dashboard**: Overview and navigation
 2. **Star Wars Dashboard**: Character, planet, and film analysis
@@ -41,7 +41,7 @@ Before cloning and running this project, ensure you have:
 
 ### **1. Clone the Repository**  
 ```sh
-git clone https://github.com/YOUR_USERNAME/nerd-facts-dbt.git
+git clone https://github.com/janahlin/nerd-facts-dbt.git
 cd nerd-facts-dbt
 ```
 
@@ -97,7 +97,7 @@ cd dbt_project/reports
 npm install
 npm run dev
 ```
-Access it in a web browser at http://localhost:4000
+Access it in a web browser at http://localhost:3000
 
 ## **Features & Highlights**
 
@@ -116,3 +116,9 @@ The One Big Table (OBT) pattern offers several key benefits:
 3. **Standardized Metrics**: Common attributes across domains
 4. **Cross-Domain Analysis**: Compare entities from different universes
 5. **Reduced Complexity**: Simplified data model for reporting 
+
+## **Coming Improvements**
+
+1. **More data from API**: Getting detailed data from Pokeapi and NetrunnerDB
+2. **Optimize data models**: The data models are rudimentary get a prototype out, need work to work better
+3. **Visualize more data**: Not all data is visualized
